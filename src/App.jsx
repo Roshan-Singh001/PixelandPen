@@ -229,8 +229,6 @@ const PixelAndPenHomepage = () => {
             ))}
           </div>
         </section>
-
-        <Footer />
       </div>
     </>
   );

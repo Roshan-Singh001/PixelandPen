@@ -3,6 +3,8 @@ import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import "./index.css";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
 import Navbar from "./components/Navbar.jsx";
 
@@ -12,6 +14,7 @@ import Category from "./pages/Category";
 import Signin from "./pages/Signin";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import Footer from "./components/Footer.jsx";
 
 const router = createBrowserRouter([
   {
@@ -20,6 +23,7 @@ const router = createBrowserRouter([
       <>
         <Navbar />
         <App />
+        <Footer />
       </>
     ),
   },
@@ -29,6 +33,7 @@ const router = createBrowserRouter([
       <>
         <Navbar />
         <Blog />
+        <Footer />
       </>
     ),
   },
@@ -38,6 +43,7 @@ const router = createBrowserRouter([
       <>
         <Navbar />
         <Category />
+        <Footer />
       </>
     ),
   },
@@ -47,6 +53,7 @@ const router = createBrowserRouter([
       <>
         <Navbar />
         <About />
+        <Footer />
       </>
     ),
   },
@@ -56,6 +63,7 @@ const router = createBrowserRouter([
       <>
         <Navbar />
         <Contact />
+        <Footer />
       </>
     ),
   },
