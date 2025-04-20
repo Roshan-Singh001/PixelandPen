@@ -72,7 +72,7 @@ const Category = () => {
             </h1>
           </div>
           <div className="slider-container w-[98%] m-auto">
-            <Slider {...settings} className="flex">
+            <Slider {...settings} className="flex ">
               {combine.map((com, idx) => (
                 <div
                   key={idx}
@@ -81,7 +81,7 @@ const Category = () => {
                   <img
                     src={com.url}
                     alt={com.name}
-                    className="md:h-48 w-full rounded-lg"
+                    className="category-panel-card rounded-lg w-full"
                   />
 
                   <div className="absolute bottom-0 left-0 w-[100%] bg-gradient-to-r from-black via-gray-800 to-black bg-opacity-80 rounded-l-lg rounded-br-lg rounded-t-none  flex opacity-65 justify-center items-center p-3 shadow-lg">
