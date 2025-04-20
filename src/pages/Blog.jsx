@@ -146,7 +146,7 @@ const BlogCard = () => {
 const HomePage = () => {
   return (
     <>
-      <div className="background-colors text-black dark:text-white">
+      <div className="background-colors m-4 text-black dark:text-white">
         <Slider />
         <div className=" dark:bg-gray-800 relative m-auto dark:text-white  bg-gray-200 rounded-md text-black text-xl flex-col mt-[2rem] md:w-[97%]  p-2 w-[100%] ">
           <div className="heading flex justify-center">
@@ -160,9 +160,6 @@ const HomePage = () => {
             ))}
           </div>
         </div>
-      </div>
-      <div className="mt-5">
-        <Footer />
       </div>
     </>
   );

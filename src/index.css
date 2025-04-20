@@ -14,6 +14,30 @@
         @apply text-[1.3rem] my-2 font-bold;
     }
 
+    /* In your CSS file */
+  .slick-slide > div {
+    margin: 0 10px;
+  }
+
+      
+    
+   
+    .flex-shrink-0 {
+        @apply w-full sm:w-64 md:w-56 lg:w-64 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 mx-1;
+    }
+
+    .w-full {
+        @apply h-40 sm:h-32 md:h-36 lg:h-40 object-cover rounded-2xl;
+    }
+
+    .bg-white {
+        @apply px-4 py-3;
+    }
+
+    .text-lg {
+        @apply font-semibold text-gray-800;
+    }
+
     .background-colors{
         @apply bg-gray-50 dark:bg-gray-900;
     }
@@ -29,4 +53,22 @@
     .share-icons{
         @apply flex justify-center p-[0.3rem]  size-[2rem] overflow-hidden rounded-sm bg-sky-300 hover:bg-cyan-700 dark:bg-slate-600 dark:hover:bg-slate-700;
     }
+}
+
+
+
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@layer utilities {
+  .animate-scroll {
+    animation: scroll 15s linear infinite; /* Use the scroll keyframes */
+  }
 }
