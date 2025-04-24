@@ -10,6 +10,15 @@
   }
 
 @layer components{
+    .active{
+      width: 200px;
+      position: absolute;
+      height: 100%;
+    }
+
+    .notActive{
+      width: 100px;
+    }
     .sub-heading{
         @apply text-[1.3rem] my-2 font-bold;
     }
