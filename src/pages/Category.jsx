@@ -3,7 +3,8 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { FaAnglesRight } from "react-icons/fa6";
-const API_KEY = "FavQGwLy5WRGoCTP3HGueoiVwBlfVPjKz2gLJ9wcgS8";
+
+const API_KEY = import.meta.env.VITE_API_KEY;
 
 const navStyle = {
   cursor: "pointer",
