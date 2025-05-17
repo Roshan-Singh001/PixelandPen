@@ -5,7 +5,7 @@ import Footer from "../components/Footer";
 const Slider = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [images, setImages] = useState(Array(4).fill(null));
-  const API_KEY = "FavQGwLy5WRGoCTP3HGueoiVwBlfVPjKz2gLJ9wcgS8";
+  const API_KEY = " ";
 
   useEffect(() => {
     const fetchImages = async () => {
@@ -93,7 +93,7 @@ const Slider = () => {
 // Enhanced BlogCard component with image fetching
 const BlogCard = () => {
   const [cardImage, setCardImage] = useState(null);
-  const API_KEY = "FavQGwLy5WRGoCTP3HGueoiVwBlfVPjKz2gLJ9wcgS8";
+  const API_KEY = " ";
 
   useEffect(() => {
     const fetchCardImage = async () => {
