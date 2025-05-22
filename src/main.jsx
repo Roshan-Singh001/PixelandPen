@@ -11,12 +11,12 @@ import Navbar from "./components/Navbar.jsx";
 import App from "./App.jsx";
 import Blog from "./pages/Blog";
 import Category from "./pages/Category";
-import Signin from "./pages/Login_page.jsx";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Footer from "./components/Footer.jsx";
 import Login_page from "./pages/Login_page.jsx";
-import Sign_In_Page from "./pages/Sign_In_Page.jsx";
+import Sign_Up_Page from "./pages/Sign_Up_Page.jsx";
+import OtpVerification from "./pages/OtpVerification.jsx";
 
 const router = createBrowserRouter([
   {
@@ -81,7 +81,15 @@ const router = createBrowserRouter([
     path: "/register",
     element: (
       <>
-        <Sign_In_Page />
+        <Sign_Up_Page />
+      </>
+    ),
+  },
+  {
+    path: "/verify-otp",
+    element: (
+      <>
+        <OtpVerification />
       </>
     ),
   },

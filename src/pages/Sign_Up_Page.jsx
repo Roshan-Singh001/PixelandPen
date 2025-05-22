@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { TbMessageChatbot } from "react-icons/tb";
+import axios from "axios";
 import { GiCoffeeCup } from "react-icons/gi";
 import { IoMdPerson } from "react-icons/io";
 import { MdEmail } from "react-icons/md";
@@ -7,14 +8,16 @@ import { FcGoogle } from "react-icons/fc";
 import { BiLogoFacebookCircle } from "react-icons/bi";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { FaApple } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import LogoDark from "../assets/images/Pixel & Pen(B&W).png";
 
-function Sign_In_Page() {
+function Sign_Up_Page() {
+  const navigate = useNavigate();
   const [showPassword, setshowPassword] = useState(false);
   const [showConfirmPassword, setshowConfirmPassword] = useState();
+  const [role, setRole] = useState("");
   const [form, setForm] = useState({
     pass: "",
     cpass: "",
@@ -61,17 +64,13 @@ function Sign_In_Page() {
   };
 
   function CheckPasswordStrength(e) {
-    // Update the form state with the password value
     setForm({ ...form, [e.target.name]: e.target.value });
-    // Get the password from the event (the value being typed)
+
     let password = e.target.value;
 
-    // If the password is empty, set strength to empty string
     if (password.length === 0) {
       setStrength("");
-    }
-    // Check if the password is strong (length >= 8 and contains lower, upper, digit, special character)
-    else if (
+    } else if (
       password.length >= 8 &&
       /[a-z]/.test(password) &&
       /\d/.test(password) &&
@@ -79,9 +78,7 @@ function Sign_In_Page() {
       /[^A-Za-z0-9]/.test(password)
     ) {
       setStrength("Password is Strong");
-    }
-    // Check if the password is medium (length >= 8, and contains lower, upper, and digit)
-    else if (
+    } else if (
       password.length >= 8 &&
       /[a-z]/.test(password) &&
       /\d/.test(password) &&
@@ -95,7 +92,6 @@ function Sign_In_Page() {
     } else {
       setStrength("Password is Very Weak");
     }
-    console.log(password);
   }
 
   const strengthClasses = {
@@ -107,21 +103,17 @@ function Sign_In_Page() {
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
+    setRole(e.target.value);
     console.log(form);
   }
 
   async function checkUsernameExist(username) {
     if (username) {
       try {
-        const response = await fetch(
+        const response = await axios.get(
           `http://localhost:3000/check-username/${username}`
         );
-        if (response.ok) {
-          let data = await response.json();
-          setisUserExist(data.exists);
-        } else {
-          throw new Error("Email check failed");
-        }
+        setisUserExist(response.data.exists);
       } catch (err) {
         console.log("Error checking email existence:", err);
       }
@@ -140,15 +132,10 @@ function Sign_In_Page() {
   async function checkEmailExist(email) {
     if (email) {
       try {
-        const response = await fetch(
+        const response = await axios.get(
           `http://localhost:3000/check-email/${email}`
         );
-        if (response.ok) {
-          let data = await response.json();
-          setisEmailExist(data.exists);
-        } else {
-          throw new Error("Email check failed");
-        }
+        setisEmailExist(response.data.exists);
       } catch (err) {
         console.log("Error checking email existence:", err);
       }
@@ -179,33 +166,33 @@ function Sign_In_Page() {
       toast.error("Email or username already exists!");
       return; // Don't submit the form
     } else {
+      if (!form.RegisterAs) {
+        toast.error("Please select a user role");
+        return;
+      }
       try {
-        const response = await fetch("http://localhost:3000/submit", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            username: form.username,
-            password: form.pass,
-            email: form.email,
-          }),
+        const response = await axios.post("http://localhost:3000/submit", {
+          username: form.username,
+          password: form.pass,
+          email: form.email,
+          RegisterAs: form.RegisterAs,
         });
-        const result = await response.json();
-        if (response.ok) {
-          toast.success("You are successfully registered, now you can login");
-        } else {
-          toast.error(result.message || "An error occurred");
-        }
+
+        console.log("Navigating to /verify-otp with email:", form.email);
+        navigate("/verify-otp", {
+          state: { email: form.email },
+        });
+
+        toast.success("You are successfully registered, now you can login");
       } catch (err) {
-        toast.error("An error occured");
+        const message = err.response?.data?.message || "An error occurred";
+        toast.error(message);
       }
 
       setForm({ pass: "", cpass: "", email: "", username: "" });
       setStrength("");
       setvaluePassMatch("");
       console.log("Form submitted successfully");
-      // toast.result("You are successfully ")
     }
   }
 
@@ -242,9 +229,18 @@ function Sign_In_Page() {
               <div className="Register-choice bg-gray-300 p-1 rounded-md">
                 <select
                   name="RegisterAs"
-                  className="w-full p-2 border text-slate-500 bg-white rounded-sm focus:outline-none focus:ring-2 focus:bg-white"
+                  value={form.RegisterAs}
+                  onChange={(e) => {
+                    handleChange(e);
+                    setRole(e.target.value);
+                  }}
+                  className={`w-full p-2 border bg-white rounded-sm focus:outline-none focus:ring-2 focus:bg-white ${
+                    form.RegisterAs === "" ? "text-gray-400" : "text-gray-600"
+                  }`}
                 >
-                  <option value="">Sign Up as...</option>
+                  <option value="" hidden>
+                    Sign Up as...
+                  </option>
                   <option value="Admin">SignUp as Admin</option>
                   <option value="Contributor">SignUp as Contributor</option>
                   <option value="Reader">SignUp as Reader</option>
@@ -411,4 +407,4 @@ function Sign_In_Page() {
   );
 }
 
-export default Sign_In_Page;
+export default Sign_Up_Page;
