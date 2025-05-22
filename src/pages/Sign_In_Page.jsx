@@ -10,6 +10,7 @@ import { FaApple } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import LogoDark from "../assets/images/Pixel & Pen(B&W).png";
 
 function Sign_In_Page() {
   const [showPassword, setshowPassword] = useState(false);
@@ -19,6 +20,7 @@ function Sign_In_Page() {
     cpass: "",
     email: "",
     username: "",
+    RegisterAs: "",
   });
   const [Strength, setStrength] = useState();
   const [valuePassMatch, setvaluePassMatch] = useState();
@@ -35,19 +37,20 @@ function Sign_In_Page() {
   };
 
   function checkPasswordMatch(e) {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    const updatedForm = { ...form, [name]: value };
+    setForm(updatedForm);
 
-    let cpass = e.target.value;
-    let pass = form.pass;
-    if (form.pass !== "") {
-      if (form.pass === cpass) {
+    if (name === "pass" || name === "cpass") {
+      const { pass, cpass } = updatedForm;
+
+      if (!pass || !cpass) {
+        setvaluePassMatch("Password field can't be left Empty");
+      } else if (pass === cpass) {
         setvaluePassMatch("Password Matched");
-        console.log(`${form.cpass} === ${form.pass}`);
       } else {
         setvaluePassMatch("Password didn't Match");
       }
-    } else {
-      setvaluePassMatch("Password field can't be left Empty");
     }
   }
 
@@ -161,6 +164,11 @@ function Sign_In_Page() {
     }
   }, [form.email]);
 
+  function handlePasswordChange(e) {
+    checkPasswordMatch(e);
+    CheckPasswordStrength(e);
+  }
+
   async function handleFormSubmit(e) {
     e.preventDefault();
 
@@ -204,16 +212,16 @@ function Sign_In_Page() {
   return (
     <>
       <main className="flex md:items-center bg-white md:bg-slate-200 h-[100vh]  justify-center">
-        <div className="page h-[90vh]  md:justify-center flex w-[90%] lg:w-[60%]">
-          <div className="bg-gradient-to-b md:rounded-bl-md md:rounded-tl-md hidden md:flex  p-2 justify-center items-center from-blue-400 w-2/5 to-violet-400 h-full ">
+        <div className="page sm:h-[95vh]  h-auto md:justify-center flex w-[90%] lg:w-[60%]">
+          {/* Left Side */}
+          <div className="bg-gradient-to-b   sm:rounded-bl-sm sm:rounded-tl-sm hidden sm:flex  p-3 justify-center items-center from-blue-400 w-2/5 to-violet-400 h-full ">
             <div className="design space-y-16  flex flex-col justify-center items-center">
               <div className="logo flex flex-col  justify-center items-center">
-                <TbMessageChatbot size={90} color="white" />
-                <p className="text-white font-bold text-2xl">ConvoNest</p>
+                <img src={LogoDark} alt="WebsiteLogo" />
               </div>
               <div className="w-4/5">
                 <p className="text-white font-bold text-2xl font-mono">
-                  Share your smile with this world and find friends
+                  “A pixel paints, a pen writes—together, they build worlds.”
                 </p>
               </div>
               <div className="flex flex-col justify-center items-center">
@@ -222,12 +230,8 @@ function Sign_In_Page() {
               </div>
             </div>
           </div>
-          <div className="md:w-3/5 w-[99%] md:rounded-br-md md:rounded-tr-md bg-white main-login space-y-4 flex flex-col items-center p-2">
-            <div className="logo md:hidden flex flex-col  justify-center items-center">
-              <TbMessageChatbot size={30} color="black" />
-              <p className=" font-bold text-2xl">ConvoNest</p>
-            </div>
-            <p className="head text-transparent bg-clip-text bg-gradient-to-b from-blue-400 to-purple-500 font-medium text-2xl">
+          <div className="md:w-3/5 w-[99%] rounded-md md:rounded-br-md md:rounded-tr-md bg-white main-login space-y-4 flex flex-col items-center p-2">
+            <p className="head animated-gradient text-transparent bg-clip-text bg-gradient-to-b from-blue-400 to-purple-500 font-medium text-2xl">
               SIGN UP HERE
             </p>
             <form
@@ -235,6 +239,18 @@ function Sign_In_Page() {
               onSubmit={handleFormSubmit}
               className="flex flex-col space-y-6 w-full mt-9 md:w-[80%] lg:w-[70%]"
             >
+              <div className="Register-choice bg-gray-300 p-1 rounded-md">
+                <select
+                  name="RegisterAs"
+                  className="w-full p-2 border text-slate-500 bg-white rounded-sm focus:outline-none focus:ring-2 focus:bg-white"
+                >
+                  <option value="">Sign Up as...</option>
+                  <option value="Admin">SignUp as Admin</option>
+                  <option value="Contributor">SignUp as Contributor</option>
+                  <option value="Reader">SignUp as Reader</option>
+                </select>
+              </div>
+
               <div className="input-email relative w-full">
                 <input
                   type="email"
@@ -292,7 +308,7 @@ function Sign_In_Page() {
                   maxLength={16}
                   minLength={4}
                   name="pass"
-                  onChange={CheckPasswordStrength}
+                  onChange={handlePasswordChange}
                   className="border-b-2 border-gray-300 w-full xs:w-full focus:outline-none focus:border-blue-500 text-gray-600 py-2 px-4"
                   placeholder="Enter Password"
                 />
@@ -319,7 +335,7 @@ function Sign_In_Page() {
                 </p>
               </div>
 
-              <div className="input-pass  py-2 relative w-full">
+              <div className="input-cpass  py-2 relative w-full">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   required
@@ -327,7 +343,7 @@ function Sign_In_Page() {
                   name="cpass"
                   className="border-b-2 border-gray-300 w-full xs:w-full focus:outline-none focus:border-blue-500 text-gray-600 py-2 px-4"
                   placeholder="Enter Confirm Password"
-                  onChange={checkPasswordMatch}
+                  onChange={handlePasswordChange}
                 />
                 <div
                   className="absolute right-4 top-1/2 transform -translate-y-1/2"
@@ -356,7 +372,7 @@ function Sign_In_Page() {
               <input
                 type="submit"
                 value="Continue"
-                className="bg-gradient-to-r text-white hover:from-blue-500 hover:to-purple-600 hover:cursor-pointer p-3 rounded-md from-blue-400 to-purple-500 font-medium text-2xl"
+                className="bg-gradient-to-r  text-white hover:from-blue-500 hover:to-purple-600 animated-gradient hover:cursor-pointer sm:p-3 p-2 rounded-md from-blue-400 to-purple-500 font-medium text-2xl"
               />
               <ToastContainer />
             </form>
