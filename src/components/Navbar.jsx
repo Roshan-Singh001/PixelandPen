@@ -228,6 +228,12 @@ const Navbar = () => {
               <button className="lang-btn mx-3 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
                 <img className="w-6 h-6" src={LanguageIcon} alt="language" />
               </button>
+
+              <Link to="/login">
+                <button className="p-2 bg-blue-500 rounded-md text-white hover:bg-blue-600 transition-colors duration-200">
+                  Login
+                </button>
+              </Link>
             </div>
           </ul>
         </div>

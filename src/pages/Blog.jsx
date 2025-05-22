@@ -94,6 +94,7 @@ const Slider = () => {
 // Enhanced BlogCard component with image fetching
 const BlogCard = () => {
   const [cardImage, setCardImage] = useState(null);
+  const API_KEY = "FavQGwLy5WRGoCTP3HGueoiVwBlfVPjKz2gLJ9wcgS8";
 
   useEffect(() => {
     const fetchCardImage = async () => {
