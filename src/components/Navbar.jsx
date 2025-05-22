@@ -8,6 +8,7 @@ import LogoDark from "../assets/images/Pixel & Pen(B&W).png";
 import MoonIcon from "../assets/images/moon-svgrepo-com.svg";
 import SunIcon from "../assets/images/light-mode-svgrepo-com.svg";
 import LanguageIcon from "../assets/images/language-svgrepo-com.svg";
+import { IoIosSearch } from "react-icons/io";
 
 const Navbar = () => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -142,10 +143,10 @@ const Navbar = () => {
             </ul>
 
             <ul className="lg:flex space-x-5 p-2 items-center">
-              <button class="flex space-x-1 rounded-lg text-black bg-gray-200 p-2">
-                <img src={SearchIcon} alt="search" />
-                <p class="text-base">Enter text to search</p>
-              </button>
+              <div class="flex justify-center items-center space-x-1 rounded-lg text-black bg-gray-200 p-2">
+                <IoIosSearch className="w-10 h-6"/>
+                <input type="search" placeholder="Enter text to search" class="text-base w-full bg-transparent outline-none"></input>
+              </div>
               <Link to="/login">
                 <button className="p-2 bg-blue-500 rounded-md text-white hover:bg-blue-600 transition-colors duration-200">
                   Login
@@ -199,10 +200,10 @@ const Navbar = () => {
           </ul>
 
           <ul className="lg:flex lg:space-x-10 flex flex-col p-2 border-t-2 border-gray-200 dark:border-gray-700">
-            <button class="flex space-x-1 rounded-lg text-black bg-gray-200 p-2">
-              <img src={SearchIcon} alt="search" />
-              <p class="text-base">Enter text to search</p>
-            </button>
+            <div class="flex justify-center items-center space-x-1 rounded-lg text-black bg-gray-200 p-2">
+            <IoIosSearch className="w-10 h-6"/>
+              <input type="search" placeholder="Enter text to search" class="text-base w-full bg-transparent outline-none"></input>
+            </div>
             <div
               className="my-4 flex items-center"
               style={{ marginTop: "10px" }}

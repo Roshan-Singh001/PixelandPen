@@ -1,6 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
+import { IoBookOutline } from "react-icons/io5";
+import { RiUserCommunityLine } from "react-icons/ri";
+import { TbUsersGroup } from "react-icons/tb";
+
 // Components
 import Footer from "./components/Footer";
 
@@ -8,20 +12,7 @@ const PixelAndPenHomepage = () => {
   const features = [
     {
       icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-10 h-10 text-blue-600 dark:text-blue-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-          />
-        </svg>
+        <IoBookOutline className="w-10 h-10 text-blue-600 dark:text-blue-400" />
       ),
       title: "Diverse Content",
       description:
@@ -29,20 +20,7 @@ const PixelAndPenHomepage = () => {
     },
     {
       icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-10 h-10 text-green-600 dark:text-green-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.768-.231-1.484-.634-2.026M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.768.231-1.484.634-2.026M14 10a4 4 0 11-8 0 4 4 0 018 0z"
-          />
-        </svg>
+        <RiUserCommunityLine className="w-10 h-10 text-green-600 dark:text-green-400" />
       ),
       title: "Community-Driven",
       description:
@@ -50,20 +28,7 @@ const PixelAndPenHomepage = () => {
     },
     {
       icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-10 h-10 text-purple-600 dark:text-purple-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-          />
-        </svg>
+        <TbUsersGroup className="w-10 h-10 text-purple-600 dark:text-purple-400" />
       ),
       title: "Role-Based Platform",
       description:
