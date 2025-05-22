@@ -11,10 +11,12 @@ import Navbar from "./components/Navbar.jsx";
 import App from "./App.jsx";
 import Blog from "./pages/Blog";
 import Category from "./pages/Category";
-import Signin from "./pages/Signin";
+import Signin from "./pages/Login_page.jsx";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Footer from "./components/Footer.jsx";
+import Login_page from "./pages/Login_page.jsx";
+import Sign_In_Page from "./pages/Sign_In_Page.jsx";
 
 const router = createBrowserRouter([
   {
@@ -71,7 +73,15 @@ const router = createBrowserRouter([
     path: "/login",
     element: (
       <>
-        <Signin />
+        <Login_page />
+      </>
+    ),
+  },
+  {
+    path: "/register",
+    element: (
+      <>
+        <Sign_In_Page />
       </>
     ),
   },
