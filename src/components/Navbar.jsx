@@ -9,6 +9,7 @@ import MoonIcon from "../assets/images/moon-svgrepo-com.svg";
 import SunIcon from "../assets/images/light-mode-svgrepo-com.svg";
 import LanguageIcon from "../assets/images/language-svgrepo-com.svg";
 import { IoIosSearch } from "react-icons/io";
+import axios from "axios";
 
 const Navbar = () => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -22,6 +23,7 @@ const Navbar = () => {
     return false;
   });
   const [Sidebar, setSidebar] = useState(false);
+  const [loggedIn, setloggedIn] = useState(false);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -33,12 +35,42 @@ const Navbar = () => {
     }
   }, [isDarkMode]);
 
+  async function checkIfLoggedIn() {
+    const token = localStorage.getItem("authToken");
+
+    if (token) {
+      console.log("Token found:", token);
+      setloggedIn(true);
+    } else {
+      console.log("No token found");
+      navigate("/login"); // redirect to login if not authenticated
+    }
+  }
+
+  useEffect(() => {
+    checkIfLoggedIn();
+  }, []);
+
   const toggleDark = () => {
     setIsDarkMode(!isDarkMode);
   };
 
   const toggleSidebar = () => {
     setSidebar(!Sidebar);
+  };
+
+  const handleLogout = async () => {
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/logout",
+        {},
+        { withCredentials: true }
+      );
+      localStorage.removeItem("authToken");
+      console.log(response.data.message); // "Logged out successfully"
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   return (
@@ -143,15 +175,30 @@ const Navbar = () => {
             </ul>
 
             <ul className="lg:flex space-x-5 p-2 items-center">
-              <div class="flex justify-center items-center space-x-1 rounded-lg text-black bg-gray-200 p-2">
-                <IoIosSearch className="w-10 h-6"/>
-                <input type="search" placeholder="Enter text to search" class="text-base w-full bg-transparent outline-none"></input>
+              <div className="flex justify-center items-center space-x-1 rounded-lg text-black bg-gray-200 p-2">
+                <IoIosSearch className="w-10 h-6" />
+                <input
+                  type="search"
+                  placeholder="Enter text to search"
+                  className="text-base w-full bg-transparent outline-none"
+                ></input>
               </div>
-              <Link to="/login">
-                <button className="p-2 bg-blue-500 rounded-md text-white hover:bg-blue-600 transition-colors duration-200">
-                  Login
-                </button>
-              </Link>
+              {loggedIn ? (
+                <Link to="/login">
+                  <button
+                    onClick={handleLogout}
+                    className="p-2 bg-red-500 rounded-md text-white hover:bg-red-600 transition-colors duration-200"
+                  >
+                    Logout
+                  </button>
+                </Link>
+              ) : (
+                <Link to="/login">
+                  <button className="p-2 bg-blue-500 rounded-md text-white hover:bg-blue-600 transition-colors duration-200">
+                    Login
+                  </button>
+                </Link>
+              )}
               <button
                 className={`moon-btn p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 ${
                   isDarkMode ? "hidden" : ""
@@ -200,9 +247,13 @@ const Navbar = () => {
           </ul>
 
           <ul className="lg:flex lg:space-x-10 flex flex-col p-2 border-t-2 border-gray-200 dark:border-gray-700">
-            <div class="flex justify-center items-center space-x-1 rounded-lg text-black bg-gray-200 p-2">
-            <IoIosSearch className="w-10 h-6"/>
-              <input type="search" placeholder="Enter text to search" class="text-base w-full bg-transparent outline-none"></input>
+            <div className="flex justify-center items-center space-x-1 rounded-lg text-black bg-gray-200 p-2">
+              <IoIosSearch className="w-10 h-6" />
+              <input
+                type="search"
+                placeholder="Enter text to search"
+                className="text-base w-full bg-transparent outline-none"
+              ></input>
             </div>
             <div
               className="my-4 flex items-center"

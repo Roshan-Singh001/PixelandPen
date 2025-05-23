@@ -6,9 +6,27 @@ import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import Nodemailer from "nodemailer";
 import { MailtrapTransport } from "mailtrap";
+import jwt from "jsonwebtoken";
+import cookieParser from "cookie-parser";
 
 const app = express();
 const PORT = 3000;
+app.use(cookieParser());
+app.use(express.json());
+dotenv.config({
+  path: "/home/suraj/Documents/PixelAndPen/PixelandPen/backend/.env",
+});
+
+const databasePass = process.env.DATABASE_PASS;
+const db_host = process.env.DB_HOST;
+const db_user = process.env.DB_USER;
+
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
 let db;
 const MyDbName = "Pixel&Pen";
@@ -17,9 +35,9 @@ async function connectToDatabase() {
   try {
     // First, connect to MySQL server (no database yet)
     const serverConnection = await mysql.createConnection({
-      host: "localhost",
-      user: "root",
-      password: "110619Suraj@",
+      host: db_host,
+      user: db_user,
+      password: databasePass,
     });
 
     await serverConnection.query(
@@ -28,11 +46,10 @@ async function connectToDatabase() {
     console.log(`Database "${MyDbName}" created or already exists.`);
     await serverConnection.end();
 
-    // Now connect to the actual database
     db = await mysql.createConnection({
-      host: "localhost",
-      user: "root",
-      password: "110619Suraj@",
+      host: db_host,
+      user: db_user,
+      password: databasePass,
       database: MyDbName,
     });
 
@@ -68,7 +85,6 @@ connectToDatabase().then(() => {
 });
 
 app.use(bodyParser.json());
-app.use(cors());
 
 app.get("/check-email/:email", async (req, res) => {
   try {
@@ -180,6 +196,7 @@ app.post("/OtpVerification", async (req, res) => {
     }
 
     // Use transaction to move user from temp_user to user atomically
+    // Starts a new SQL transaction so that either both the insert and delete happen, or none do. Ensures atomicity (no partial operations).
     await db.beginTransaction();
 
     const moveUserQuery = `
@@ -191,7 +208,7 @@ app.post("/OtpVerification", async (req, res) => {
     const deleteTempUserQuery = "DELETE FROM temp_users WHERE email = ?";
     await db.execute(deleteTempUserQuery, [email]);
 
-    await db.commit();
+    await db.commit(); //If everything succeeded, the changes are saved permanently with commit.
 
     res.status(200).json({ message: "OTP verified successfully" });
   } catch (err) {
@@ -199,4 +216,68 @@ app.post("/OtpVerification", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Failed to verify OTP" });
   }
+});
+
+app.post("/validate", async (req, res) => {
+  const JWT_SECRET = "MY_SECRET";
+  const { username, password, role } = req.body;
+
+  if (!username || !role || !password) {
+    return res
+      .status(400)
+      .json({ message: "Username, password, and role are required." });
+  }
+
+  try {
+    const query = "SELECT * FROM users WHERE username = ? AND role = ?";
+    const [result] = await db.execute(query, [username, role]);
+
+    if (result.length === 0) {
+      return res.status(401).json({ message: "Invalid username or role." });
+    }
+
+    const {
+      password: hashedPassword,
+      id: userId,
+      username: userName,
+    } = result[0];
+
+    const isPasswordCorrect = await bcrypt.compare(password, hashedPassword);
+
+    if (isPasswordCorrect) {
+      const token = jwt.sign(
+        { id: userId, role: role, username: userName },
+        JWT_SECRET,
+        { expiresIn: "1h" }
+      );
+
+      // Set token in cookie properly:
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: false, // set true if using HTTPS in production
+        sameSite: "lax",
+        maxAge: 3600000, // 1 hour
+      });
+
+      // Send token in response JSON as well
+      res.status(200).json({ message: "Login successful", token });
+    } else {
+      res.status(401).json({ message: "Incorrect password." });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+app.post("/logout", (req, res) => {
+  res.cookie("token", "", {
+    httpOnly: true,
+    secure: false, // Set to true if your site uses HTTPS
+    sameSite: "strict",
+    expires: new Date(0), // Expire immediately
+    path: "/", // Make sure path matches the cookie path used during login
+  });
+
+  res.status(200).json({ message: "Logged out successfully" });
 });

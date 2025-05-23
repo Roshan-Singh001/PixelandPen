@@ -123,19 +123,6 @@ function OtpVerification() {
             Time remaining: {formatTime(timer)}
           </div>
         </form>
-        <div className="mt-4 text-center">
-          <button
-            className="text-blue-500 hover:underline text-sm"
-            onClick={() => {
-              setOtp(Array(6).fill(""));
-              setError("");
-              setSuccess(false);
-              setTimer(600); // Reset timer to 10 minutes
-            }}
-          >
-            Resend OTP
-          </button>
-        </div>
       </div>
     </div>
   );
