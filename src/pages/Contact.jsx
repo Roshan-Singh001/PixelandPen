@@ -2,28 +2,28 @@ import React from 'react';
 import { FaGithub, FaLinkedin} from 'react-icons/fa';
 import { FaXTwitter } from "react-icons/fa6";
 
-const teamMembers = [
-  {
-    name: 'Roshan Singh',
-    github: 'https://github.com/Roshan-Singh001',
-    linkedin: 'https://www.linkedin.com/in/roshan-singh-b430132b1',
-    twitter: 'https://x.com/oRoshanSingh',
-  },
-  {
-    name: 'Suraj Singh Bhoj',
-    github: '#',
-    linkedin: '#',
-    twitter: '#',
-  },
-  {
-    name: 'Md Javed',
-    github: '#',
-    linkedin: '#',
-    twitter: '#',
-  },
-];
-
 const Contact = () => {
+  const teamMembers = [
+    {
+      name: 'Roshan Singh',
+      github: 'https://github.com/Roshan-Singh001',
+      linkedin: 'https://www.linkedin.com/in/roshan-singh-b430132b1',
+      twitter: 'https://x.com/oRoshanSingh',
+    },
+    {
+      name: 'Suraj Singh Bhoj',
+      github: '#',
+      linkedin: '#',
+      twitter: '#',
+    },
+    {
+      name: 'Md Javed',
+      github: '#',
+      linkedin: '#',
+      twitter: '#',
+    },
+  ];
+
   return (
     <section className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 px-4 py-12 sm:px-8 md:px-16 lg:px-24 xl:px-32">
       <div className="max-w-4xl mx-auto text-center">
