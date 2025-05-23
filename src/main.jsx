@@ -16,7 +16,9 @@ import Contact from "./pages/Contact";
 import Footer from "./components/Footer.jsx";
 import Login_page from "./pages/Login_page.jsx";
 import Sign_In_Page from "./pages/Sign_In_Page.jsx";
-import Admin from "./pages/dashboard/admin_dashboard.jsx"
+import Admin from "./pages/dashboard/admin_dashboard.jsx";
+import Sign_Up_Page from "./pages/Sign_Up_Page.jsx";
+import OtpVerification from "./pages/OtpVerification.jsx";
 
 const router = createBrowserRouter([
   {
