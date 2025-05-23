@@ -81,7 +81,15 @@ const router = createBrowserRouter([
     path: "/register",
     element: (
       <>
-        <Sign_In_Page />
+        <Sign_Up_Page />
+      </>
+    ),
+  },
+  {
+    path: "/verify-otp",
+    element: (
+      <>
+        <OtpVerification />
       </>
     ),
   },

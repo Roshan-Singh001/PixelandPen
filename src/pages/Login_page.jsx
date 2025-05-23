@@ -14,10 +14,12 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import LogoLight from "../assets/images/Pixel & Pen.png";
 import LogoDark from "../assets/images/Pixel & Pen(B&W).png";
+import axios from "axios";
 
 function Login_page() {
   const [showPassword, setshowPassword] = useState(false);
-  const [form, setform] = useState({ username: "", pass: "" });
+  const [role, setRole] = useState("");
+  const [form, setform] = useState({ username: "", pass: "", loginAs: "" });
   const navigate = useNavigate();
   const showPasswordToggle = () => {
     setshowPassword((prevState) => !prevState);
@@ -25,39 +27,38 @@ function Login_page() {
 
   function handleChange(e) {
     setform({ ...form, [e.target.name]: e.target.value });
+
+    console.log(form);
   }
 
   async function handleFormValidation(e) {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:3000/validate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: form.username,
-          password: form.pass,
-        }),
+      const response = await axios.post("http://localhost:3000/validate", {
+        username: form.username, // assuming `form.username` is the email
+        password: form.pass,
+        role: form.loginAs,
       });
 
-      const result = await response.json();
+      const result = response.data;
+      console.log("Login successful:", result.message);
 
-      if (response.ok) {
-        // Save the JWT token in localStorage
+      // Save the JWT token in localStorage
+      if (result.token) {
         localStorage.setItem("authToken", result.token);
-        console.log("Login successful:", result.token);
-        // Redirect to Dashboard
-        navigate("/Dashboard");
+        // continue login success flow...
       } else {
-        // Handle failed login with appropriate error message
-        console.error("Login failed:", result.message || "Unknown error");
-        toast.error(result.message || "Login failed, please try again.");
+        console.error("No token received from backend");
       }
+
+      // Redirect to Dashboard
+      navigate("/blog");
     } catch (err) {
-      // Handle any network or unexpected errors
+      // Handle any errors like 401, 400, network issues
+      const errorMessage =
+        err.response?.data?.message || "Login failed, please try again.";
       console.error("Error during login:", err);
-      toast.error(`Error: ${err.message || err}`);
+      toast.error(`Error: ${errorMessage}`);
     }
   }
 
@@ -94,9 +95,18 @@ function Login_page() {
               <div className="login-choice bg-gray-300 p-1 rounded-md">
                 <select
                   name="loginAs"
-                  className="w-full p-2 border text-slate-500 bg-white rounded-sm focus:outline-none focus:ring-2 focus:bg-white"
+                  value={form.loginAs}
+                  onChange={(e) => {
+                    handleChange(e);
+                    setRole(e.target.value);
+                  }}
+                  className={`w-full p-2 border bg-white rounded-sm focus:outline-none focus:ring-2 focus:bg-white ${
+                    form.loginAs === "" ? "text-gray-400" : "text-gray-600"
+                  }`}
                 >
-                  <option value="">Sign In as...</option>
+                  <option value="" hidden>
+                    Sign In as...
+                  </option>
                   <option value="Admin">SignIn as Admin</option>
                   <option value="Contributor">SignIn as Contributor</option>
                   <option value="Reader">SignIn as Reader</option>
@@ -170,7 +180,7 @@ function Login_page() {
 
             <div className="register-link flex space-x-3">
               <p className="text-gray-600 font-semibold ">
-                Already Have an account?
+                Don't Have an account?
               </p>
               <Link
                 to="/register"
