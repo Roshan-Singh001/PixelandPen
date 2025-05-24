@@ -12,6 +12,11 @@ function OtpVerification() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [timer, setTimer] = useState(600); // 10 minutes in seconds
+  const AxiosInstance = axios.create({
+    baseURL: 'http://localhost:3000/',
+    timeout: 3000,
+    headers: {'X-Custom-Header': 'foobar'}
+  });
 
   useEffect(() => {
     if (timer > 0) {
@@ -65,7 +70,7 @@ function OtpVerification() {
       return;
     }
     try {
-      await axios.post("http://localhost:3000/OtpVerification", {
+      await AxiosInstance.post("/OtpVerification", {
         email,
         otp: otp.join(""),
       });
@@ -114,10 +119,11 @@ function OtpVerification() {
             </div>
           )}
           <button
+            disabled={timer === 0}
             type="submit"
             className="w-full mt-2 py-2 bg-gradient-to-r text-white from-blue-500 to-purple-600 animated-gradient rounded-md font-semibold hover:bg-blue-700 transition"
           >
-            Verify OTP
+            {timer === 0 ? "OTP Expired" : "Verify OTP"}
           </button>
           <div className="mt-4 text-gray-600 text-sm">
             Time remaining: {formatTime(timer)}

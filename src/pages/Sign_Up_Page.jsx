@@ -31,6 +31,12 @@ function Sign_Up_Page() {
   const [isEmailExist, setisEmailExist] = useState(null);
   const [isUserExist, setisUserExist] = useState(null);
 
+  const AxiosInstance = axios.create({
+    baseURL: 'http://localhost:3000/',
+    timeout: 3000,
+    headers: {'X-Custom-Header': 'foobar'}
+  });
+
   const showTogglePassword = () => {
     setshowPassword((prevState) => !prevState);
   };
@@ -110,8 +116,8 @@ function Sign_Up_Page() {
   async function checkUsernameExist(username) {
     if (username) {
       try {
-        const response = await axios.get(
-          `http://localhost:3000/check-username/${username}`
+        const response = await AxiosInstance.get(
+          `/check-username/${username}`
         );
         setisUserExist(response.data.exists);
       } catch (err) {
@@ -132,8 +138,8 @@ function Sign_Up_Page() {
   async function checkEmailExist(email) {
     if (email) {
       try {
-        const response = await axios.get(
-          `http://localhost:3000/check-email/${email}`
+        const response = await AxiosInstance.get(
+          `/check-email/${email}`
         );
         setisEmailExist(response.data.exists);
       } catch (err) {
@@ -171,7 +177,7 @@ function Sign_Up_Page() {
         return;
       }
       try {
-        const response = await axios.post("http://localhost:3000/submit", {
+        const response = await AxiosInstance.post("/submit", {
           username: form.username,
           password: form.pass,
           email: form.email,

@@ -21,6 +21,11 @@ function Login_page() {
   const [role, setRole] = useState("");
   const [form, setform] = useState({ username: "", pass: "", loginAs: "" });
   const navigate = useNavigate();
+  const AxiosInstance = axios.create({
+    baseURL: 'http://localhost:3000/',
+    timeout: 3000,
+    headers: {'X-Custom-Header': 'foobar'}
+  });
   const showPasswordToggle = () => {
     setshowPassword((prevState) => !prevState);
   };
@@ -34,7 +39,7 @@ function Login_page() {
   async function handleFormValidation(e) {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:3000/validate", {
+      const response = await AxiosInstance.post("/validate", {
         username: form.username, // assuming `form.username` is the email
         password: form.pass,
         role: form.loginAs,
