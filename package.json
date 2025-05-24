@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.4",
     "@hookform/resolvers": "^5.0.1",
     "axios": "^1.9.0",
     "bcryptjs": "^3.0.2",
@@ -29,6 +30,7 @@
     "react-router-dom": "^7.5.0",
     "react-slick": "^0.30.3",
     "react-toastify": "^11.0.5",
+    "recharts": "^2.15.3",
     "slick-carousel": "^1.8.1",
     "yup": "^1.6.1"
   },

@@ -8,14 +8,19 @@ import Nodemailer from "nodemailer";
 import { MailtrapTransport } from "mailtrap";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
+import path from 'path';
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({
+  path: path.resolve(__dirname, ".env"),
+});
 
 const app = express();
 const PORT = 3000;
 app.use(cookieParser());
 app.use(express.json());
-dotenv.config({
-  path: "/home/suraj/Documents/PixelAndPen/PixelandPen/backend/.env",
-});
 
 const databasePass = process.env.DATABASE_PASS;
 const db_host = process.env.DB_HOST;
@@ -73,6 +78,37 @@ async function connectToDatabase() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`;
     await db.execute(query_user_table);
+
+    const query_admin_table = `CREATE TABLE IF NOT EXISTS admin (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      username VARCHAR(100) NOT NULL,
+      email VARCHAR(100) NOT NULL UNIQUE,
+      password VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (email) REFERENCES users(email) ON DELETE CASCADE
+    )`;
+    await db.execute(query_admin_table);
+
+    const query_contributor_table = `CREATE TABLE IF NOT EXISTS contributor (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      username VARCHAR(100) NOT NULL,
+      email VARCHAR(100) NOT NULL UNIQUE,
+      password VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (email) REFERENCES users(email) ON DELETE CASCADE
+    )`;
+    await db.execute(query_contributor_table);
+
+    const query_subscriber_table = `CREATE TABLE IF NOT EXISTS reader (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      username VARCHAR(100) NOT NULL,
+      email VARCHAR(100) NOT NULL UNIQUE,
+      password VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (email) REFERENCES users(email) ON DELETE CASCADE
+    )`;
+    await db.execute(query_subscriber_table);
+
   } catch (error) {
     console.error("Database connection error:", error.message);
   }
@@ -176,14 +212,14 @@ app.post("/OtpVerification", async (req, res) => {
 
     // Fetch OTP and expiry for the given email from temp_user
     const query =
-      "SELECT otp, otp_expiry FROM temp_users WHERE email = ? ORDER BY id DESC LIMIT 1";
+      "SELECT * FROM temp_users WHERE email = ? ORDER BY id DESC LIMIT 1";
     const [result] = await db.execute(query, [email]);
 
     if (result.length === 0) {
       return res.status(404).json({ message: "Email not found" });
     }
 
-    const { otp: storedOtp, otp_expiry: otpExpiry } = result[0];
+    const { username, password, role,otp: storedOtp, otp_expiry: otpExpiry } = result[0];
 
     // Check if OTP matches
     if (storedOtp !== otp) {
@@ -204,6 +240,19 @@ app.post("/OtpVerification", async (req, res) => {
       SELECT username, email, password, role FROM temp_users WHERE email = ? AND otp = ?
     `;
     await db.execute(moveUserQuery, [email, otp]);
+
+    if (role == "Admin") {
+      const finalSetAdmin = `INSERT INTO admin (username, email, password) VALUES (?,?,?)`;
+      await db.execute(finalSetAdmin,[username,email,password]);
+    }
+    else if(role == "Contributor"){
+      const finalSetContri = `INSERT INTO contributor (username, email, password) VALUES (?,?,?)`;
+      await db.execute(finalSetContri,[username,email,password]);
+    }
+    else if(role == "Reader"){
+      const finalSetSubs = `INSERT INTO reader (username, email, password) VALUES (?,?,?)`;
+      await db.execute(finalSetSubs,[username,email,password]);
+    }
 
     const deleteTempUserQuery = "DELETE FROM temp_users WHERE email = ?";
     await db.execute(deleteTempUserQuery, [email]);
