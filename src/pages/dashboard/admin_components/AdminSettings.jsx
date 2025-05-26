@@ -1,28 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Switch } from '@headlessui/react';
+import { useTheme } from '../../../contexts/ThemeContext';
 
 const AdminSettings = () => {
-  const [darkMode, setDarkMode] = useState(false);
-
-  // Load theme on first render
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-      setDarkMode(true);
-      document.documentElement.classList.add('dark');
-    }
-  }, []);
-
-  // Apply theme on toggle
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [darkMode]);
+  const { isDarkMode, toggleDark } = useTheme();
 
   return (
     <>
@@ -37,16 +18,16 @@ const AdminSettings = () => {
             <p className="text-sm text-gray-500 dark:text-gray-400">Enable or disable dark mode</p>
           </div>
           <Switch
-            checked={darkMode}
-            onChange={setDarkMode}
+            checked={isDarkMode}
+            onChange={toggleDark}
             className={`${
-              darkMode ? 'bg-indigo-600' : 'bg-gray-300'
+              isDarkMode ? 'bg-indigo-600' : 'bg-gray-300'
             } relative inline-flex items-center h-6 rounded-full w-11`}
           >
             <span className="sr-only">Toggle Dark Mode</span>
             <span
               className={`${
-                darkMode ? 'translate-x-6' : 'translate-x-1'
+                isDarkMode ? 'translate-x-6' : 'translate-x-1'
               } inline-block w-4 h-4 transform bg-white rounded-full transition`}
             />
           </Switch>

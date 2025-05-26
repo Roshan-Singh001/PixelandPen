@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, Legend
 } from 'recharts';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
 import { FaCheckCircle, FaTimesCircle, FaUserPlus, FaBars } from 'react-icons/fa';
 import { BiSolidDashboard } from "react-icons/bi";
 import { MdArticle, MdAnalytics, MdLogout } from "react-icons/md";
@@ -13,11 +16,37 @@ import ArticleRequests from './admin_components/ArticleRequests';
 import ContriRequest from './admin_components/ContriRequest';
 import SiteAnalytics from './admin_components/SiteAnalytics';
 import AdminSettings from './admin_components/AdminSettings';
+import { useAuth } from "../../contexts/AuthContext";
+import { ThemeProvider } from '../../contexts/ThemeContext';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuMinimize, setMenuMinimize] = useState(false);
   const [menuOption, setMenuOption] = useState("Dashboard");
+  const [userData, setUserData] = useState({});
+  const { loggedIn, logout } = useAuth();
+  const AxiosInstance = axios.create({
+      baseURL: 'http://localhost:3000/',
+      timeout: 3000,
+      headers: {'X-Custom-Header': 'foobar'},
+      withCredentials: true,
+    });
+
+  if (!loggedIn) return navigate("/login");
+  
+  const fetchUserData = async () => {
+    const response = await AxiosInstance.get("/auth/profile");
+    const { username, role } = response.data;
+    setUserData({ userName: username, userRole: role });
+    console.log("User data fetched:", username);
+  }
+  fetchUserData();
+  // useEffect(() => {
+  // },[]);
+
+
+  
 
   const trafficData = [
     { month: 'Jan', views: 400 },
@@ -72,7 +101,7 @@ const AdminDashboard = () => {
               {menuMinimize == false && <span>{label}</span>}
             </button>
           ))}
-          <button title='Log out' className="flex items-center gap-3 px-4 py-3 mx-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-600 text-red-600 dark:text-red-300">
+          <button onClick={logout} title='Log out' className="flex items-center gap-3 px-4 py-3 mx-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-600 text-red-600 dark:text-red-300">
             <MdLogout size={25} />
             {menuMinimize == false && <span>Log Out</span>}
           </button>
@@ -88,9 +117,29 @@ const AdminDashboard = () => {
         {menuOption === "Dashboard" && (
           <div>
             <h1 className="text-3xl font-bold text-sky-600 dark:text-sky-400 mb-6">Dashboard</h1>
+            <div className=" mt-10 mb-5 p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg flex flex-col items-center text-center transition duration-300 ease-in-out">
+              <h1 className="text-3xl md:text-4xl font-bold text-sky-600 dark:text-sky-400 mb-4">Welcome to your dashboard, {userData.userName}. 👋</h1>
+            </div>
+
+            {/* Analytics */}
+            <section>
+              <div className="bg-gray-200 dark:bg-gray-700 rounded-lg p-6 text-center text-gray-600 dark:text-gray-300">
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                          <h2 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-200">Monthly Views</h2>
+                          <ResponsiveContainer width="100%" height={250}>
+                            <LineChart data={trafficData}>
+                              <XAxis dataKey="month" stroke="#8884d8" />
+                              <YAxis />
+                              <Tooltip />
+                              <Line type="monotone" dataKey="views" stroke="#8884d8" strokeWidth={2} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                </div>
+              </div>
+            </section>
 
             {/* Article Requests */}
-            <section className="mb-10">
+            <section className="my-5">
               <h2 className="text-2xl font-semibold mb-4">Pending Article Approvals</h2>
               <div className="space-y-4">
                 {articleRequests.map(article => (
@@ -109,7 +158,7 @@ const AdminDashboard = () => {
             </section>
 
             {/* Contributor Requests */}
-            <section className="mb-10">
+            <section className="mb-1">
               <h2 className="text-2xl font-semibold mb-4">Contributor Access Requests</h2>
               <div className="space-y-4">
                 {contributorRequests.map(user => (
@@ -127,23 +176,7 @@ const AdminDashboard = () => {
               </div>
             </section>
 
-            {/* Analytics */}
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">Site Analytics</h2>
-              <div className="bg-gray-200 dark:bg-gray-700 rounded-lg p-6 text-center text-gray-600 dark:text-gray-300">
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-                          <h2 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-200">Monthly Views</h2>
-                          <ResponsiveContainer width="100%" height={250}>
-                            <LineChart data={trafficData}>
-                              <XAxis dataKey="month" stroke="#8884d8" />
-                              <YAxis />
-                              <Tooltip />
-                              <Line type="monotone" dataKey="views" stroke="#8884d8" strokeWidth={2} />
-                            </LineChart>
-                          </ResponsiveContainer>
-                </div>
-              </div>
-            </section>
+            
           </div>
         )}
 
@@ -151,7 +184,7 @@ const AdminDashboard = () => {
         {menuOption === "Article" && <ArticleRequests />}
         {menuOption === "Contributor" && <ContriRequest />}
         {menuOption === "Analytics" && <SiteAnalytics />}
-        {menuOption === "Settings" && <AdminSettings />}
+        {menuOption === "Settings" && <ThemeProvider><AdminSettings /></ThemeProvider>}
       </main>
     </div>
   );

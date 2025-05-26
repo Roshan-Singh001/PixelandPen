@@ -289,13 +289,14 @@ app.post("/validate", async (req, res) => {
       password: hashedPassword,
       id: userId,
       username: userName,
+      role: userRole,
     } = result[0];
 
     const isPasswordCorrect = await bcrypt.compare(password, hashedPassword);
 
     if (isPasswordCorrect) {
       const token = jwt.sign(
-        { id: userId, role: role, username: userName },
+        { id: userId, role: userRole, username: userName },
         JWT_SECRET,
         { expiresIn: "1h" }
       );
@@ -305,11 +306,11 @@ app.post("/validate", async (req, res) => {
         httpOnly: true,
         secure: false, // set true if using HTTPS in production
         sameSite: "lax",
-        maxAge: 3600000, // 1 hour
+        maxAge: 3600000, 
       });
 
       // Send token in response JSON as well
-      res.status(200).json({ message: "Login successful", token });
+      res.status(200).json({ message: "Login successful", role:role ,token });
     } else {
       res.status(401).json({ message: "Incorrect password." });
     }
@@ -318,6 +319,32 @@ app.post("/validate", async (req, res) => {
     res.status(500).json({ message: "Internal server error." });
   }
 });
+
+function verifyToken(req, res, next) {
+  const token = req.cookies.token;
+  console.log("Token from cookie:", req.cookies);
+
+  if (!token) {
+    return res.status(401).json({ message: "No token, authorization denied" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; // decoded contains { id, username, role }
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid or expired token" });
+  }
+}
+
+app.get("/auth/profile", verifyToken, (req, res) => {
+  res.json({
+    username: req.user.username,
+    role: req.user.role,
+    id: req.user.id
+  });
+});
+
 
 app.post("/logout", (req, res) => {
   res.cookie("token", "", {

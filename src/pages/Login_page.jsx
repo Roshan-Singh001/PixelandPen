@@ -51,13 +51,22 @@ function Login_page() {
       // Save the JWT token in localStorage
       if (result.token) {
         localStorage.setItem("authToken", result.token);
-        // continue login success flow...
+        if (result.role == "Admin") {
+          navigate(`/dashboard/admin`);
+        }
+        else if (result.role == "Contributor") {
+          navigate("/dashboard/contributor");
+        }
+        else if(result.role== "Reader"){
+          navigate("/dashboard/reader");
+        }
       } else {
         console.error("No token received from backend");
       }
 
+      
+
       // Redirect to Dashboard
-      navigate("/blog");
     } catch (err) {
       // Handle any errors like 401, 400, network issues
       const errorMessage =

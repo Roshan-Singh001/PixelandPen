@@ -1,39 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
+
+import { useTheme } from "../contexts/ThemeContext";
 
 // Images and Icons
-import SearchIcon from "../assets/images/search-4-svgrepo-com.svg";
 import LogoLight from "../assets/images/Pixel & Pen.png";
 import LogoDark from "../assets/images/Pixel & Pen(B&W).png";
 import MoonIcon from "../assets/images/moon-svgrepo-com.svg";
 import SunIcon from "../assets/images/light-mode-svgrepo-com.svg";
 import LanguageIcon from "../assets/images/language-svgrepo-com.svg";
 import { IoIosSearch } from "react-icons/io";
-import axios from "axios";
 
 const Navbar = () => {
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem("theme");
-      const prefersDark = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      ).matches;
-      return savedTheme === "dark" || (!savedTheme && prefersDark);
-    }
-    return false;
-  });
+  const { isDarkMode, toggleDark } = useTheme();
   const [Sidebar, setSidebar] = useState(false);
   const [loggedIn, setloggedIn] = useState(false);
-
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [isDarkMode]);
 
   async function checkIfLoggedIn() {
     const token = localStorage.getItem("authToken");
@@ -43,17 +25,13 @@ const Navbar = () => {
       setloggedIn(true);
     } else {
       console.log("No token found");
-      navigate("/login"); // redirect to login if not authenticated
+      setloggedIn(false);
     }
   }
 
   useEffect(() => {
     checkIfLoggedIn();
   }, []);
-
-  const toggleDark = () => {
-    setIsDarkMode(!isDarkMode);
-  };
 
   const toggleSidebar = () => {
     setSidebar(!Sidebar);

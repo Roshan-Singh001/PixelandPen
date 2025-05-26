@@ -7,6 +7,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 import Navbar from "./components/Navbar.jsx";
+import { AuthProvider } from "./contexts/AuthContext.jsx";
 
 import App from "./App.jsx";
 import Blog from "./pages/Blog";
@@ -17,7 +18,10 @@ import Footer from "./components/Footer.jsx";
 import Login_page from "./pages/Login_page.jsx";
 import Sign_Up_Page from "./pages/Sign_Up_Page.jsx";
 import OtpVerification from "./pages/OtpVerification.jsx";
+import Error404 from "./pages/Error404.jsx";
 import Admin from "./pages/dashboard/admin_dashboard.jsx";
+import Contributor from "./pages/dashboard/contri_dashboard.jsx";
+import Reader from "./pages/dashboard/subs_dashboard.jsx";
 
 const router = createBrowserRouter([
   {
@@ -98,7 +102,35 @@ const router = createBrowserRouter([
     path: "/dashboard/admin",
     element: (
       <>
-        <Admin />
+        <AuthProvider>
+          <Admin />
+        </AuthProvider>
+      </>
+    ),
+  },
+  {
+    path: "/dashboard/contributor",
+    element: (
+      <>
+        <Contributor />
+      </>
+    ),
+  },
+  {
+    path: "/dashboard/reader",
+    element: (
+      <>
+        <Reader />
+      </>
+    ),
+  },
+  {
+    path: "/error404",
+    element: (
+      <>
+        <Navbar />
+        <Error404 />
+        <Footer />
       </>
     ),
   },
