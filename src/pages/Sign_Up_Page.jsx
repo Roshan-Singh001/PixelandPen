@@ -32,9 +32,9 @@ function Sign_Up_Page() {
   const [isUserExist, setisUserExist] = useState(null);
 
   const AxiosInstance = axios.create({
-    baseURL: 'http://localhost:3000/',
-    timeout: 3000,
-    headers: {'X-Custom-Header': 'foobar'}
+    baseURL: "http://localhost:3000/",
+    timeout: 10000,
+    headers: { "X-Custom-Header": "foobar" },
   });
 
   const showTogglePassword = () => {
@@ -116,9 +116,7 @@ function Sign_Up_Page() {
   async function checkUsernameExist(username) {
     if (username) {
       try {
-        const response = await AxiosInstance.get(
-          `/check-username/${username}`
-        );
+        const response = await AxiosInstance.get(`/check-username/${username}`);
         setisUserExist(response.data.exists);
       } catch (err) {
         console.log("Error checking email existence:", err);
@@ -138,9 +136,7 @@ function Sign_Up_Page() {
   async function checkEmailExist(email) {
     if (email) {
       try {
-        const response = await AxiosInstance.get(
-          `/check-email/${email}`
-        );
+        const response = await AxiosInstance.get(`/check-email/${email}`);
         setisEmailExist(response.data.exists);
       } catch (err) {
         console.log("Error checking email existence:", err);
@@ -189,9 +185,10 @@ function Sign_Up_Page() {
           state: { email: form.email },
         });
 
-        toast.success("You are successfully registered, now you can login");
+        toast.success("Otp sent successfully");
       } catch (err) {
         const message = err.response?.data?.message || "An error occurred";
+        console.log(err);
         toast.error(message);
       }
 
