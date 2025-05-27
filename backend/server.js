@@ -8,7 +8,7 @@ import Nodemailer from "nodemailer";
 import { MailtrapTransport } from "mailtrap";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
-import path from 'path';
+import path from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -108,7 +108,6 @@ async function connectToDatabase() {
       FOREIGN KEY (email) REFERENCES users(email) ON DELETE CASCADE
     )`;
     await db.execute(query_subscriber_table);
-
   } catch (error) {
     console.error("Database connection error:", error.message);
   }
@@ -219,7 +218,13 @@ app.post("/OtpVerification", async (req, res) => {
       return res.status(404).json({ message: "Email not found" });
     }
 
-    const { username, password, role,otp: storedOtp, otp_expiry: otpExpiry } = result[0];
+    const {
+      username,
+      password,
+      role,
+      otp: storedOtp,
+      otp_expiry: otpExpiry,
+    } = result[0];
 
     // Check if OTP matches
     if (storedOtp !== otp) {
@@ -243,15 +248,13 @@ app.post("/OtpVerification", async (req, res) => {
 
     if (role == "Admin") {
       const finalSetAdmin = `INSERT INTO admin (username, email, password) VALUES (?,?,?)`;
-      await db.execute(finalSetAdmin,[username,email,password]);
-    }
-    else if(role == "Contributor"){
+      await db.execute(finalSetAdmin, [username, email, password]);
+    } else if (role == "Contributor") {
       const finalSetContri = `INSERT INTO contributor (username, email, password) VALUES (?,?,?)`;
-      await db.execute(finalSetContri,[username,email,password]);
-    }
-    else if(role == "Reader"){
+      await db.execute(finalSetContri, [username, email, password]);
+    } else if (role == "Reader") {
       const finalSetSubs = `INSERT INTO reader (username, email, password) VALUES (?,?,?)`;
-      await db.execute(finalSetSubs,[username,email,password]);
+      await db.execute(finalSetSubs, [username, email, password]);
     }
 
     const deleteTempUserQuery = "DELETE FROM temp_users WHERE email = ?";
@@ -268,7 +271,7 @@ app.post("/OtpVerification", async (req, res) => {
 });
 
 app.post("/validate", async (req, res) => {
-  const JWT_SECRET = "MY_SECRET";
+  const JWT_SECRET = process.env.JWT_SECRET;
   const { username, password, role } = req.body;
 
   if (!username || !role || !password) {
@@ -306,11 +309,11 @@ app.post("/validate", async (req, res) => {
         httpOnly: true,
         secure: false, // set true if using HTTPS in production
         sameSite: "lax",
-        maxAge: 3600000, 
+        maxAge: 3600000,
       });
 
       // Send token in response JSON as well
-      res.status(200).json({ message: "Login successful", role:role ,token });
+      res.status(200).json({ message: "Login successful", role: role, token });
     } else {
       res.status(401).json({ message: "Incorrect password." });
     }
@@ -321,8 +324,9 @@ app.post("/validate", async (req, res) => {
 });
 
 function verifyToken(req, res, next) {
-  const token = req.cookies.token;
-  console.log("Token from cookie:", req.cookies);
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  console.log("token is :", token);
 
   if (!token) {
     return res.status(401).json({ message: "No token, authorization denied" });
@@ -331,8 +335,10 @@ function verifyToken(req, res, next) {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded; // decoded contains { id, username, role }
+    console.log("role:", req.user.role);
     next();
   } catch (err) {
+    console.log("Hello");
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 }
@@ -341,10 +347,9 @@ app.get("/auth/profile", verifyToken, (req, res) => {
   res.json({
     username: req.user.username,
     role: req.user.role,
-    id: req.user.id
+    id: req.user.id,
   });
 });
-
 
 app.post("/logout", (req, res) => {
   res.cookie("token", "", {
