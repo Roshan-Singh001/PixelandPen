@@ -125,7 +125,7 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/error404",
+    path: "/:slug",
     element: (
       <>
         <Navbar />

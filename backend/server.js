@@ -4,11 +4,11 @@ import cors from "cors";
 import mysql from "mysql2/promise";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
-import Nodemailer from "nodemailer";
+import nodemailer from "nodemailer";
 import { MailtrapTransport } from "mailtrap";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
-import path from 'path';
+import path from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -108,7 +108,6 @@ async function connectToDatabase() {
       FOREIGN KEY (email) REFERENCES users(email) ON DELETE CASCADE
     )`;
     await db.execute(query_subscriber_table);
-
   } catch (error) {
     console.error("Database connection error:", error.message);
   }
@@ -153,29 +152,58 @@ app.get("/check-username/:username", async (req, res) => {
 });
 
 async function sendOtpEmail(email, otp) {
-  const TOKEN = "b2e4768a5485a5d6482f143fcd5e9614";
+  const transport = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
 
-  const transport = Nodemailer.createTransport(
-    MailtrapTransport({
-      token: TOKEN,
-    })
-  );
+  const mailOptions = {
+    from: `"Pixel & Pen" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: "Pixel & Pen OTP Code",
+    html: `<div style="max-width: 500px; margin: auto; background: #ffffff; border-radius: 12px; padding: 30px; font-family: 'Segoe UI', sans-serif; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #e0e0e0;">
+  <div style="text-align: center; padding-bottom: 20px;">
+    <h2 style="margin: 0; color: #1E90FF;">🔒 Pixel & Pen OTP Verification</h2>
+  </div>
 
-  const sender = {
-    address: "hello@demomailtrap.com",
-    name: "Mailtrap Test",
+  <p style="font-size: 16px; color: #333;">Hello,</p>
+
+  <p style="font-size: 16px; color: #333;">
+    Use the following OTP to complete your verification process:
+  </p>
+
+  <div style="text-align: center; margin: 30px 0;">
+    <span style="display: inline-block; background: linear-gradient(135deg, #1E90FF, #00BFFF); color: white; padding: 15px 30px; font-size: 28px; letter-spacing: 6px; font-weight: bold; border-radius: 8px;">
+      ${otp}
+    </span>
+  </div>
+
+  <p style="font-size: 14px; color: #555;">
+    This OTP is valid for <strong>10 minutes</strong>. Please do not share it with anyone.
+  </p>
+
+  <p style="font-size: 14px; color: #555;">
+    If you did not request this OTP, please ignore this email.
+  </p>
+
+  <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+
+  <p style="font-size: 12px; color: #999; text-align: center;">
+    This is an automated message from Pixel & Pen. Do not reply to this email.
+  </p>
+</div>
+`,
   };
-  const recipients = [email];
 
-  transport
-    .sendMail({
-      from: sender,
-      to: recipients,
-      subject: "Pixel & Pen OTP Code",
-      text: `your OTP is ${otp} It is valid till 10 minutes`,
-      category: "Integration Test",
-    })
-    .then(console.log, console.error);
+  try {
+    const info = await transport.sendMail(mailOptions);
+    console.log("Email sent: ", info.response);
+  } catch (error) {
+    console.error("Failed to send email:", error);
+  }
 }
 
 app.post("/submit", async (req, res) => {
@@ -195,11 +223,20 @@ app.post("/submit", async (req, res) => {
       otpExpiry,
     ]);
     console.log(otp);
-    await sendOtpEmail(email, otp);
-    res.status(201).json({
-      message: "User registered successfully",
-      userId: result.insertId,
-    });
+    try {
+      await sendOtpEmail(email, otp);
+
+      res.status(201).json({
+        message: "OTP sent successfully",
+        userId: result.insertId,
+      });
+    } catch (error) {
+      console.error("Failed to send OTP:", error);
+      res.status(500).json({
+        message: "Failed to send OTP",
+        error: error.message,
+      });
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to register user" });
@@ -219,7 +256,13 @@ app.post("/OtpVerification", async (req, res) => {
       return res.status(404).json({ message: "Email not found" });
     }
 
-    const { username, password, role,otp: storedOtp, otp_expiry: otpExpiry } = result[0];
+    const {
+      username,
+      password,
+      role,
+      otp: storedOtp,
+      otp_expiry: otpExpiry,
+    } = result[0];
 
     // Check if OTP matches
     if (storedOtp !== otp) {
@@ -243,15 +286,13 @@ app.post("/OtpVerification", async (req, res) => {
 
     if (role == "Admin") {
       const finalSetAdmin = `INSERT INTO admin (username, email, password) VALUES (?,?,?)`;
-      await db.execute(finalSetAdmin,[username,email,password]);
-    }
-    else if(role == "Contributor"){
+      await db.execute(finalSetAdmin, [username, email, password]);
+    } else if (role == "Contributor") {
       const finalSetContri = `INSERT INTO contributor (username, email, password) VALUES (?,?,?)`;
-      await db.execute(finalSetContri,[username,email,password]);
-    }
-    else if(role == "Reader"){
+      await db.execute(finalSetContri, [username, email, password]);
+    } else if (role == "Reader") {
       const finalSetSubs = `INSERT INTO reader (username, email, password) VALUES (?,?,?)`;
-      await db.execute(finalSetSubs,[username,email,password]);
+      await db.execute(finalSetSubs, [username, email, password]);
     }
 
     const deleteTempUserQuery = "DELETE FROM temp_users WHERE email = ?";
@@ -268,7 +309,7 @@ app.post("/OtpVerification", async (req, res) => {
 });
 
 app.post("/validate", async (req, res) => {
-  const JWT_SECRET = "MY_SECRET";
+  const JWT_SECRET = process.env.JWT_SECRET;
   const { username, password, role } = req.body;
 
   if (!username || !role || !password) {
@@ -306,11 +347,11 @@ app.post("/validate", async (req, res) => {
         httpOnly: true,
         secure: false, // set true if using HTTPS in production
         sameSite: "lax",
-        maxAge: 3600000, 
+        maxAge: 3600000,
       });
 
       // Send token in response JSON as well
-      res.status(200).json({ message: "Login successful", role:role ,token });
+      res.status(200).json({ message: "Login successful", role: role, token });
     } else {
       res.status(401).json({ message: "Incorrect password." });
     }
@@ -321,8 +362,9 @@ app.post("/validate", async (req, res) => {
 });
 
 function verifyToken(req, res, next) {
-  const token = req.cookies.token;
-  console.log("Token from cookie:", req.cookies);
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  console.log("token is :", token);
 
   if (!token) {
     return res.status(401).json({ message: "No token, authorization denied" });
@@ -331,8 +373,10 @@ function verifyToken(req, res, next) {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded; // decoded contains { id, username, role }
+    console.log("role:", req.user.role);
     next();
   } catch (err) {
+    console.log("Hello");
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 }
@@ -341,10 +385,9 @@ app.get("/auth/profile", verifyToken, (req, res) => {
   res.json({
     username: req.user.username,
     role: req.user.role,
-    id: req.user.id
+    id: req.user.id,
   });
 });
-
 
 app.post("/logout", (req, res) => {
   res.cookie("token", "", {
