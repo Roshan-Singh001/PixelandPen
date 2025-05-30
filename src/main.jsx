@@ -22,6 +22,7 @@ import Error404 from "./pages/Error404.jsx";
 import Admin from "./pages/dashboard/admin_dashboard.jsx";
 import Contributor from "./pages/dashboard/contri_dashboard.jsx";
 import Reader from "./pages/dashboard/subs_dashboard.jsx";
+import Profile from "./pages/profilePage.jsx";
 
 const router = createBrowserRouter([
   {
@@ -134,6 +135,16 @@ const router = createBrowserRouter([
       <>
         <Navbar />
         <Error404 />
+        <Footer />
+      </>
+    ),
+  },
+  {
+    path: "/profile",
+    element: (
+      <>
+        <Navbar />
+        <Profile />
         <Footer />
       </>
     ),
