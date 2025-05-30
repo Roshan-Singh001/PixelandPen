@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import axios from "axios";
 
 import { useTheme } from "../contexts/ThemeContext";
@@ -11,14 +11,32 @@ import MoonIcon from "../assets/images/moon-svgrepo-com.svg";
 import SunIcon from "../assets/images/light-mode-svgrepo-com.svg";
 import LanguageIcon from "../assets/images/language-svgrepo-com.svg";
 import { IoIosSearch } from "react-icons/io";
+import { FaChevronDown } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
+  const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
   const { isDarkMode, toggleDark } = useTheme();
   const [Sidebar, setSidebar] = useState(false);
   const [loggedIn, setloggedIn] = useState(false);
 
   async function checkIfLoggedIn() {
     const token = localStorage.getItem("authToken");
+    function toDashboard(params) {
+      if (result.token) {
+        localStorage.setItem("authToken", result.token);
+        if (result.role == "Admin") {
+          navigate(`/dashboard/admin`);
+        } else if (result.role == "Contributor") {
+          navigate("/dashboard/contributor");
+        } else if (result.role == "Reader") {
+          navigate("/dashboard/reader");
+        }
+      } else {
+        console.error("No token received from backend");
+      }
+    }
 
     if (token) {
       console.log("Token found:", token);
@@ -45,6 +63,7 @@ const Navbar = () => {
         { withCredentials: true }
       );
       localStorage.removeItem("authToken");
+      navigate("/login");
       console.log(response.data.message); // "Logged out successfully"
     } catch (error) {
       console.error("Logout failed:", error);
@@ -162,14 +181,43 @@ const Navbar = () => {
                 ></input>
               </div>
               {loggedIn ? (
-                <Link to="/login">
+                <div className="relative inline-block text-left">
+                  {/* Dropdown Button */}
                   <button
-                    onClick={handleLogout}
-                    className="p-2 bg-red-500 rounded-md text-white hover:bg-red-600 transition-colors duration-200"
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white font-medium rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition"
                   >
-                    Logout
+                    Menu
+                    <FaChevronDown
+                      className={`transition-transform duration-200 ${
+                        isOpen ? "rotate-180" : ""
+                      }`}
+                    />
                   </button>
-                </Link>
+
+                  {isOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-20">
+                      <Link
+                        to="/dashboard/admin"
+                        className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
+                      >
+                        Dashboard
+                      </Link>
+                      <Link
+                        to="/profile"
+                        className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
+                      >
+                        Profile
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-600 dark:text-red-400"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <Link to="/login">
                   <button className="p-2 bg-blue-500 rounded-md text-white hover:bg-blue-600 transition-colors duration-200">
@@ -259,11 +307,51 @@ const Navbar = () => {
                 <img className="w-6 h-6" src={LanguageIcon} alt="language" />
               </button>
 
-              <Link to="/login">
-                <button className="p-2 bg-blue-500 rounded-md text-white hover:bg-blue-600 transition-colors duration-200">
-                  Login
-                </button>
-              </Link>
+              {loggedIn ? (
+                <div className="relative inline-block text-left">
+                  {/* Dropdown Button */}
+                  <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white font-medium rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                  >
+                    Menu
+                    <FaChevronDown
+                      className={`transition-transform duration-200 ${
+                        isOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {isOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-20">
+                      <Link
+                        to="/dashboard"
+                        className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
+                      >
+                        Dashboard
+                      </Link>
+                      <Link
+                        to="/profile"
+                        className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
+                      >
+                        Profile
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-700 dark:text-red-400"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link to="/login">
+                  <button className="p-2 bg-blue-500 rounded-md text-white hover:bg-blue-600 transition-colors duration-200">
+                    Login
+                  </button>
+                </Link>
+              )}
             </div>
           </ul>
         </div>
