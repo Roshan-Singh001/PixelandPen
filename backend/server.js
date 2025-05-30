@@ -10,6 +10,7 @@ import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
+import adminRouter from './admin.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,6 +22,7 @@ const app = express();
 const PORT = 3000;
 app.use(cookieParser());
 app.use(express.json());
+app.use('dashboard/admin', adminRouter);
 
 const databasePass = process.env.DATABASE_PASS;
 const db_host = process.env.DB_HOST;
@@ -106,6 +108,22 @@ async function connectToDatabase() {
       password VARCHAR(255) NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (email) REFERENCES users(email) ON DELETE CASCADE
+    )`;
+
+    await db.execute(query_subscriber_table);
+    const query_articles_table = `CREATE TABLE IF NOT EXISTS articles (
+      slug VARCHAR(255) PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      category VARCHAR(100) NOT NULL,
+      description VARCHAR(200),
+      content TEXT NOT NULL UNIQUE,
+      thumbnail BLOB,
+      author VARCHAR(255) NOT NULL,
+      views INT DEFAULT 0,
+      is_featured BOOLEAN DEFAULT FALSE,
+      status ENUM('Approved', 'Rejected', 'Pending') DEFAULT 'Pending',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     )`;
     await db.execute(query_subscriber_table);
   } catch (error) {

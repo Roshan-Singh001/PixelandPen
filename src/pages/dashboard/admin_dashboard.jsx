@@ -44,7 +44,7 @@ const AdminDashboard = () => {
   const { loggedIn, logout } = useAuth();
   const AxiosInstance = axios.create({
     baseURL: "http://localhost:3000/",
-    timeout: 3000,
+    timeout: 30000,
     headers: { "X-Custom-Header": "foobar" },
     withCredentials: true,
   });
@@ -68,7 +68,6 @@ const AdminDashboard = () => {
 
       const { username, role } = response.data;
       setUserData({ userName: username, userRole: role });
-      console.log("User data fetched:", username);
       if (role != "Admin") {
         navigate("/");
       }

@@ -112,7 +112,9 @@ const router = createBrowserRouter([
     path: "/dashboard/contributor",
     element: (
       <>
+        <AuthProvider>
         <Contributor />
+        </AuthProvider>
       </>
     ),
   },
@@ -120,7 +122,9 @@ const router = createBrowserRouter([
     path: "/dashboard/reader",
     element: (
       <>
+      <AuthProvider>
         <Reader />
+        </AuthProvider>
       </>
     ),
   },
