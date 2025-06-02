@@ -394,7 +394,7 @@ function verifyToken(req, res, next) {
     console.log("role:", req.user.role);
     next();
   } catch (err) {
-    console.log("Hello");
+    console.log(err);
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 }

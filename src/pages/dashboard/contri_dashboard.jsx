@@ -22,17 +22,21 @@ import {
   FaUserPlus,
   FaBars,
   FaComments,
+  FaUserCog,
 } from "react-icons/fa";
 import { BiSolidDashboard } from "react-icons/bi";
 import { MdArticle, MdAnalytics, MdLogout } from "react-icons/md";
 import { IoPersonAdd, IoSettingsSharp } from "react-icons/io5";
 import { FaAnglesRight } from "react-icons/fa6";
 import { FaAnglesLeft } from "react-icons/fa6";
+import { IoIosAddCircle } from "react-icons/io";
 
 import MyArticles from "./contri_components/MyArticles";
 import MyComments from "./contri_components/MyComments";
 import MyAnalytics from "./contri_components/MyAnalytics";
 import ContriSettings from "./contri_components/ContriSettings";
+import ContriProfile from "./contri_components/ContriProfile";
+import ArticleEditor from "./ArticleEditor";
 import { useAuth } from "../../contexts/AuthContext";
 import { ThemeProvider } from "../../contexts/ThemeContext";
 
@@ -75,6 +79,7 @@ const ContributorDashboard = () => {
         navigate("/");
       }
     } catch (error) {
+      logout();
       console.error("Failed to fetch user data:", error);
     }
   };
@@ -83,22 +88,9 @@ const ContributorDashboard = () => {
     fetchUserData();
   }, []);
 
-  const trafficData = [
-    { month: "Jan", views: 400 },
-    { month: "Feb", views: 800 },
-    { month: "Mar", views: 650 },
-    { month: "Apr", views: 900 },
-    { month: "May", views: 1100 },
-  ];
-
   const articleRequests = [
     { id: 1, title: "AI/ML", author: "Suraj Singh Bhoj" },
     { id: 2, title: "Cloud Computing", author: "Md Javed" },
-  ];
-
-  const contributorRequests = [
-    { id: 1, name: "ABC", email: "abc@example.com" },
-    { id: 2, name: "DEF", email: "def@example.com" },
   ];
 
   return (
@@ -139,7 +131,9 @@ const ContributorDashboard = () => {
             { label: "My Articles", icon: <MdArticle size={25} /> },
             { label: "Comments", icon: <FaComments size={25} /> },
             { label: "My Stats", icon: <MdAnalytics size={25} /> },
+            { label: "Profile", icon: <FaUserCog  size={25} /> },
             { label: "Settings", icon: <IoSettingsSharp size={25} /> },
+            { label: "Add Article", icon: <IoIosAddCircle  size={25} /> },
           ].map(({ label, icon }) => (
             <button
               title={label}
@@ -188,32 +182,30 @@ const ContributorDashboard = () => {
 
             {/* Analytics */}
             <section>
-              <div className="bg-gray-200 dark:bg-gray-700 rounded-lg p-6 text-center text-gray-600 dark:text-gray-300">
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-                  <h2 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-200">
-                    Monthly Views
-                  </h2>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <LineChart data={trafficData}>
-                      <XAxis dataKey="month" stroke="#8884d8" />
-                      <YAxis />
-                      <Tooltip />
-                      <Line
-                        type="monotone"
-                        dataKey="views"
-                        stroke="#8884d8"
-                        strokeWidth={2}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center">
+          <p className="text-gray-500 dark:text-gray-300">Total Posts</p>
+          <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">120</p>
+        </div>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center">
+          <p className="text-gray-500 dark:text-gray-300">Total Views</p>
+          <p className="text-2xl font-bold text-green-600 dark:text-green-400">85,000</p>
+        </div>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center">
+          <p className="text-gray-500 dark:text-gray-300">Total Likes</p>
+          <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">18</p>
+        </div>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center">
+          <p className="text-gray-500 dark:text-gray-300">Total Followers</p>
+          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">708</p>
+        </div>
+      </div>
             </section>
 
             {/* Article Requests */}
             <section className="my-5">
               <h2 className="text-2xl font-semibold mb-4">
-                Pending Article Approvals
+                All Articles
               </h2>
               <div className="space-y-4">
                 {articleRequests.map((article) => (
@@ -229,10 +221,10 @@ const ContributorDashboard = () => {
                     </div>
                     <div className="flex space-x-4">
                       <button className="text-green-500 hover:text-green-600">
-                        <FaCheckCircle size={20} />
+                        <div>Accepted</div>
                       </button>
                       <button className="text-red-500 hover:text-red-600">
-                        <FaTimesCircle size={20} />
+                        <div>Rejected</div>
                       </button>
                     </div>
                   </div>
@@ -240,46 +232,52 @@ const ContributorDashboard = () => {
               </div>
             </section>
 
-            {/* Contributor Requests */}
-            <section className="mb-1">
-              <h2 className="text-2xl font-semibold mb-4">
-                Contributor Access Requests
-              </h2>
-              <div className="space-y-4">
-                {contributorRequests.map((user) => (
-                  <div
-                    key={user.id}
-                    className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow flex justify-between items-center"
-                  >
-                    <div>
-                      <h3 className="font-bold text-lg">{user.name}</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {user.email}
-                      </p>
-                    </div>
-                    <div className="flex space-x-4">
-                      <button className="text-green-500 hover:text-green-600">
-                        <FaUserPlus size={20} />
-                      </button>
-                      <button className="text-red-500 hover:text-red-600">
-                        <FaTimesCircle size={20} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
+            {/* Announcements */}
+<section className="mb-6">
+  <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
+    Announcements
+  </h2>
+  <div className="space-y-4">
+    {/* Announcement Card */}
+    <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-5 transition-all duration-300 hover:shadow-lg">
+      <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+        ✨ New Feature: Stats Dashboard!
+      </h3>
+      <p className="text-gray-700 dark:text-gray-300 mt-1">
+        Track your post views, likes, and more in the new contributor stats dashboard. Go check it out now!
+      </p>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+        Posted on May 28, 2025
+      </p>
+    </div>
+
+    <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-5 transition-all duration-300 hover:shadow-lg">
+      <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+        📢 Maintenance Notice
+      </h3>
+      <p className="text-gray-700 dark:text-gray-300 mt-1">
+        The site will undergo maintenance on June 2nd, from 12:00 AM to 4:00 AM UTC. Expect temporary downtime.
+      </p>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+        Posted on May 25, 2025
+      </p>
+    </div>
+  </div>
+</section>
+
           </div>
         )}
 
         {menuOption === "My Articles" && <MyArticles />}
         {menuOption === "Comments" && <MyComments />}
         {menuOption === "My Stats" && <MyAnalytics />}
+        {menuOption === "Profile" && <ContriProfile />}
         {menuOption === "Settings" && (
           <ThemeProvider>
             <ContriSettings />
           </ThemeProvider>
         )}
+        {menuOption === "Add Article" && <ArticleEditor />}
       </main>
     </div>
   );

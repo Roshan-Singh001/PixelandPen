@@ -20,7 +20,7 @@ const MyArticles = () => {
 
   return (
     <>
-      <h1 className="text-3xl font-bold text-sky-500 dark:text-sky-400 mb-6">Your Articles</h1>
+      <h1 className="text-3xl font-bold text-sky-500 dark:text-sky-400 mb-6">Articles</h1>
 
       {/* Pending Articles */}
       <section className="mb-8">

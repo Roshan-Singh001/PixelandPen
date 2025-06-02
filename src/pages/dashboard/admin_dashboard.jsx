@@ -65,13 +65,14 @@ const AdminDashboard = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-
+      
       const { username, role } = response.data;
       setUserData({ userName: username, userRole: role });
       if (role != "Admin") {
         navigate("/");
       }
     } catch (error) {
+      logout();
       console.error("Failed to fetch user data:", error);
     }
   };
