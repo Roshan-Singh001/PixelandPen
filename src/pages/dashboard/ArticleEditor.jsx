@@ -1,6 +1,6 @@
 import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { Slate, Editable, withReact, useSlate } from 'slate-react';
-import { createEditor, Editor, Transforms, Element as SlateElement } from 'slate';
+import { createEditor, Editor, Range, Transforms, Element as SlateElement } from 'slate';
 import { withHistory } from 'slate-history';
 import isHotkey from 'is-hotkey';
 import {
@@ -9,7 +9,12 @@ import {
   MdFormatUnderlined,
   MdCode,
 } from 'react-icons/md';
-import { LuHeading1 } from "react-icons/lu";
+import { IoMdLink } from "react-icons/io";
+import { HiNumberedList } from "react-icons/hi2";
+import { MdFormatListBulleted } from "react-icons/md";
+import { FaQuoteLeft } from "react-icons/fa6";
+import { FaCaretDown } from "react-icons/fa";
+import { LuHeading, LuHeading1, LuHeading2, LuHeading3, LuHeading4, LuHeading5, LuHeading6 } from "react-icons/lu";
 
 const INITIAL_VALUE = [
   {
@@ -51,10 +56,24 @@ const ArticleEditor = () => {
         return <CodeElement {...props} />;
       case 'heading-one':
         return <HeadingOneElement {...props}/>
+      case 'heading-two':
+        return <HeadingTwoElement {...props}/>
+      case 'heading-three':
+        return <HeadingThreeElement {...props}/>
+      case 'heading-four':
+        return <HeadingFourElement {...props}/>
+      case 'heading-five':
+        return <HeadingFiveElement {...props}/>
+      case 'heading-six':
+        return <HeadingSixElement {...props}/>
       case 'block-quote':
         return <BlockQuoteElement {...props}/>
       case 'bulleted-list':
         return <BulletListElement {...props}/>
+      case 'numbered-list':
+        return <NumberListElement {...props}/>
+      case 'link':
+        return <LinkElement {...props}/>
       case 'list-item':
         return <ListItemElement {...props}/>
       case 'paragraph':
@@ -115,6 +134,47 @@ const ArticleEditor = () => {
     }
   };
 
+  const insertLink = (editor, url) => {
+    if (!url) return;
+    const { selection } = editor;
+    const isCollapsed = selection && Range.isCollapsed(selection);
+  
+    const link = {
+      type: 'link',
+      url,
+      children: isCollapsed ? [{ text: url }] : [],
+    };
+  
+    if (isCollapsed) {
+      Transforms.insertNodes(editor, link);
+    } else {
+      Transforms.wrapNodes(editor, link, { split: true });
+      Transforms.collapse(editor, { edge: 'end' });
+    }
+  };
+  
+  const isLinkActive = (editor) => {
+    const [link] = Editor.nodes(editor, {
+      match: n => !Editor.isEditor(n) && SlateElement.isElement(n) && n.type === 'link',
+    });
+    console.log(link);
+    return !!link;
+  };
+  
+  const unwrapLink = (editor) => {
+    Transforms.unwrapNodes(editor, {
+      match: n => !Editor.isEditor(n) && SlateElement.isElement(n) && n.type === 'link',
+    });
+  };
+  
+  const toggleLink = (editor, url) => {
+    if (isLinkActive(editor)) {
+      unwrapLink(editor);
+    } else {
+      insertLink(editor, url);
+    }
+  };
+
 
   const handleChange = useCallback((newValue) => {
     setValue(newValue);
@@ -130,7 +190,7 @@ const ArticleEditor = () => {
       </div>
 
       <Slate editor={editor} initialValue={INITIAL_VALUE} onChange={handleChange}>
-        <Toolbar toggleMark={toggleMark} toggleBlock={toggleBlock} isBlockActive={isBlockActive} />
+        <Toolbar toggleMark={toggleMark} toggleBlock={toggleBlock} isBlockActive={isBlockActive} toggleLink={toggleLink} isLinkActive={isLinkActive} unwrapLink={unwrapLink}/>
         <div className="mt-4 border border-gray-300 dark:border-gray-700 rounded-lg p-3 min-h-[300px]">
           <Editable
             renderElement={renderElement}
@@ -166,11 +226,13 @@ const ArticleEditor = () => {
   );
 };
 
-const Toolbar = ({ toggleMark, toggleBlock, isBlockActive }) => {
+const Toolbar = ({ toggleMark, toggleBlock, isBlockActive, toggleLink, isLinkActive ,unwrapLink }) => {
   const editor = useSlate();
+  const [open, setOpen] = useState(false);
   
   return (
     <div className="flex gap-2 items-center border-b pb-2 dark:border-gray-700">
+      
       <ToolbarButton 
         icon={<MdFormatBold />} 
         format="bold" 
@@ -200,12 +262,113 @@ const Toolbar = ({ toggleMark, toggleBlock, isBlockActive }) => {
         title="Code (Ctrl+`)"
       />
 
-      < BlockButton icon={<LuHeading1 />} 
-        format="heading-one" 
-        editor={editor} 
-        toggleBlock={toggleBlock} 
-        isBlockActive={isBlockActive}
-        title="H1" />
+    <div className="relative bg-transparent inline-block text-left">
+      <button title='Heading' onClick={() => setOpen(!open)} className="inline-flex justify-center items-center px-2 py-2  rounded-md shadow-sm bg-transparent text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700">
+        <LuHeading /> 
+        <FaCaretDown className="ml-2 h-4 w-4" />
+      </button>
+
+      {open && (
+        <div
+          className="absolute px-2 py-2 z-10 mt-2 rounded-md shadow-lg bg-slate-800"
+          onMouseLeave={() => setOpen(false)}
+        >
+          <div className="py-1 flex flex-col">
+            <BlockButton
+              icon={<LuHeading1 />}
+              format="heading-one"
+              editor={editor}
+              toggleBlock={toggleBlock}
+              isBlockActive={isBlockActive}
+              title="Heading 1"
+            />
+            <BlockButton
+              icon={<LuHeading2 />}
+              format="heading-two"
+              editor={editor}
+              toggleBlock={toggleBlock}
+              isBlockActive={isBlockActive}
+              title="Heading 2"
+            />
+            <BlockButton
+              icon={<LuHeading3 />}
+              format="heading-three"
+              editor={editor}
+              toggleBlock={toggleBlock}
+              isBlockActive={isBlockActive}
+              title="Heading 3"
+            />
+            <BlockButton
+              icon={<LuHeading4 />}
+              format="heading-four"
+              editor={editor}
+              toggleBlock={toggleBlock}
+              isBlockActive={isBlockActive}
+              title="Heading 4"
+            />
+            <BlockButton
+              icon={<LuHeading5 />}
+              format="heading-five"
+              editor={editor}
+              toggleBlock={toggleBlock}
+              isBlockActive={isBlockActive}
+              title="Heading 5"
+            />
+            <BlockButton
+              icon={<LuHeading6 />}
+              format="heading-six"
+              editor={editor}
+              toggleBlock={toggleBlock}
+              isBlockActive={isBlockActive}
+              title="Heading 6"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+
+    <BlockButton
+      icon={<FaQuoteLeft />}
+      format="block-quote"
+      editor={editor}
+      toggleBlock={toggleBlock}
+      isBlockActive={isBlockActive}
+      title="Block Quote"
+    />
+
+    <BlockButton
+      icon={<MdFormatListBulleted />}
+      format="bulleted-list"
+      editor={editor}
+      toggleBlock={toggleBlock}
+      isBlockActive={isBlockActive}
+      title="Bullet List"
+    />
+
+    <BlockButton
+      icon={<HiNumberedList />}
+      format="numbered-list"
+      editor={editor}
+      toggleBlock={toggleBlock}
+      isBlockActive={isBlockActive}
+      title="Numbered List"
+    />
+
+    <button
+      onMouseDown={event => {
+        if (isLinkActive(editor)) {
+          unwrapLink(editor);
+          return;
+        }
+        event.preventDefault();
+        const url = window.prompt('Enter URL:');
+        if (!url) return;
+        toggleLink(editor, url);
+      }} className={`p-2 rounded-md transition-colors text-lg ${ isLinkActive(editor) ? 'bg-blue-600 text-white ' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 ' }`} >
+        <IoMdLink />
+    </button>
+
+
     </div>
   );
 };
@@ -265,10 +428,42 @@ const DefaultElement = ({ attributes, children }) => (
   </p>
 );
 
+const LinkElement = (props) => (
+  <a {...props.attributes} href={props.element.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+    {props.children}
+  </a>
+);
+
 const HeadingOneElement = ({ attributes, children }) => (
-  <h1 {...attributes} className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+  <h1 {...attributes} className="text-[2.3rem] font-bold text-gray-800 dark:text-gray-100 mb-2">
     {children}
   </h1>
+);
+
+const HeadingTwoElement = ({ attributes, children }) => (
+  <h2 {...attributes} className="text-[2rem] font-bold text-gray-800 dark:text-gray-100 mb-2">
+    {children}
+  </h2>
+);
+const HeadingThreeElement = ({ attributes, children }) => (
+  <h3 {...attributes} className="text-[1.7rem] font-bold text-gray-800 dark:text-gray-100 mb-2">
+    {children}
+  </h3>
+);
+const HeadingFourElement = ({ attributes, children }) => (
+  <h4 {...attributes} className="text-[1.4rem] font-bold text-gray-800 dark:text-gray-100 mb-2">
+    {children}
+  </h4>
+);
+const HeadingFiveElement = ({ attributes, children }) => (
+  <h5 {...attributes} className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+    {children}
+  </h5>
+);
+const HeadingSixElement = ({ attributes, children }) => (
+  <h6 {...attributes} className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">
+    {children}
+  </h6>
 );
 
 const BlockQuoteElement = ({ attributes, children }) => (
@@ -281,6 +476,12 @@ const BulletListElement = ({ attributes, children }) => (
   <ul {...attributes} className="list-disc pl-6 text-gray-800 dark:text-gray-100 mb-2">
     {children}
   </ul>
+);
+
+const NumberListElement = ({ attributes, children }) => (
+  <ol {...attributes} className="list-decimal pl-6 text-gray-800 dark:text-gray-100 mb-2">
+    {children}
+  </ol>
 );
 
 const ListItemElement = ({ attributes, children }) => (
