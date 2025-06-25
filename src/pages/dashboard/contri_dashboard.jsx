@@ -73,8 +73,8 @@ const ContributorDashboard = () => {
         },
       });
 
-      const { username, role } = response.data;
-      setUserData({ userName: username, userRole: role });
+      const { username, role, id } = response.data;
+      setUserData({ userName: username, userRole: role, user_id: id });
       if (role != "Contributor") {
         navigate("/");
       }
@@ -161,7 +161,7 @@ const ContributorDashboard = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6">
+      <main className="flex-1 px-5 py-2">
         <button
           className="sm:hidden text-2xl mb-4 text-indigo-600 dark:text-indigo-400"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -277,7 +277,7 @@ const ContributorDashboard = () => {
             <ContriSettings />
           </ThemeProvider>
         )}
-        {menuOption === "Add Article" && <ArticleEditor />}
+        {menuOption === "Add Article" && <ArticleEditor userdata={userData} />}
       </main>
     </div>
   );

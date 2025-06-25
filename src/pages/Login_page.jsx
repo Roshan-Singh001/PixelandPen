@@ -114,7 +114,7 @@ function Login_page() {
                     handleChange(e);
                     setRole(e.target.value);
                   }}
-                  className={`w-full p-2 border bg-white rounded-sm focus:outline-none focus:ring-2 focus:bg-white ${
+                  className={`border-none focus:shadow-none w-full p-2 border bg-white rounded-sm focus:outline-none focus:ring-2 focus:bg-white ${
                     form.loginAs === "" ? "text-gray-400" : "text-gray-600"
                   }`}
                 >
@@ -132,7 +132,7 @@ function Login_page() {
                   type="text"
                   required
                   minLength={4}
-                  className="border-b-2 border-gray-300 w-full xs:w-full focus:outline-none focus:border-blue-500 text-gray-600 py-2 px-4"
+                  className="border-b-2 border-gray-300 w-full xs:w-full ring-0 focus:ring-0 focus:shadow-none focus:outline-none focus:border-blue-500 text-gray-600 py-2 px-4"
                   onChange={handleChange}
                   name="username"
                   value={form.username}

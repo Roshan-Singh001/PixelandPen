@@ -1,19 +1,27 @@
 import React, { useMemo, useCallback, useState, useEffect } from 'react';
+import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 import { Slate, Editable, withReact, useSlate } from 'slate-react';
-import { createEditor, Editor, Range, Transforms, Element as SlateElement } from 'slate';
-import { withHistory } from 'slate-history';
+import { Node, Text, createEditor, Editor, Range, Transforms, Element as SlateElement } from 'slate';
+import { withHistory, HistoryEditor } from 'slate-history';
 import isHotkey from 'is-hotkey';
+
+//Icons
 import {
   MdFormatBold,
   MdFormatItalic,
   MdFormatUnderlined,
   MdCode,
 } from 'react-icons/md';
-import { IoMdLink } from "react-icons/io";
+
+import { GoSidebarExpand, GoSidebarCollapse } from "react-icons/go";
+import { CiSaveDown2 } from "react-icons/ci";
+import { VscOpenPreview } from "react-icons/vsc";
+import { IoMdLink, IoMdUndo, IoMdRedo, IoMdSend  } from "react-icons/io";
 import { HiNumberedList } from "react-icons/hi2";
 import { MdFormatListBulleted } from "react-icons/md";
-import { FaQuoteLeft } from "react-icons/fa6";
-import { FaCaretDown } from "react-icons/fa";
+import { FaQuoteLeft, FaRegImage } from "react-icons/fa6";
+import { FaCaretDown, FaYoutube, FaAlignLeft, FaAlignCenter, FaAlignRight, FaAlignJustify } from "react-icons/fa";
 import { LuHeading, LuHeading1, LuHeading2, LuHeading3, LuHeading4, LuHeading5, LuHeading6 } from "react-icons/lu";
 
 const INITIAL_VALUE = [
@@ -30,13 +38,135 @@ const HOTKEYS = {
   'mod+`': 'code',
 };
 
-const ArticleEditor = () => {
+const ArticleEditor = (props) => {
   const editor = useMemo(() => withHistory(withReact(createEditor())), []);
   
   const [value, setValue] = useState(INITIAL_VALUE);
   const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState('');
   const [isDirty, setIsDirty] = useState(false);
+  const [isRightSideBar, setIsRightSideBar] = useState(true);
   const LIST_TYPES = ['numbered-list', 'bulleted-list'];
+  const AxiosInstance = axios.create({
+      baseURL: 'http://localhost:3000/',
+      withCredentials: true,
+      timeout: 3000,
+      headers: {'X-Custom-Header': 'foobar'}
+    });
+
+  //Side Bar (Right)
+  const [featuredImage, setFeaturedImage] = useState(null);
+  const [description, setDescription] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [inputTag, setInputTag] = useState('');
+  const [error, setError] = useState('');
+
+  const allCategories = ['News', 'Health', 'Technology', 'Education', 'Politics'];
+
+  const generateSlug = (title)=>{
+      return title
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, '')   
+        .replace(/\s+/g, '-')           
+        .replace(/-+/g, '-');           
+  }
+
+  // SAVE DRAFT
+  const handleSave = async ()=>{
+    let currentSlug = slug; 
+    if (slug === '') {
+      const generated = generateSlug(title);
+      setSlug(generated);
+      currentSlug = generated;
+    }
+    const article = {
+      currentSlug,
+      title,
+      description,
+      currentSlug,
+      categories,
+      tags, 
+      featuredImage, 
+      content: value,
+    };
+    console.log(props.userdata)
+
+    try {
+      const response = await AxiosInstance.post("/article/save", {
+        user_id: props.userdata.user_id,
+        article: JSON.stringify(article),
+      });
+      console.log(response)
+  
+      setIsDirty(false);
+      
+    } catch (error) {
+      console.log(error);
+      
+    }
+  }
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFeaturedImage(URL.createObjectURL(file));
+    }
+  };
+
+  function getTextLength(nodes) {
+    let length = 0;
+  
+    for (const node of nodes) {
+      if (Text.isText(node)) {
+        length += node.text.length;
+      } else if (node.children) {
+        length += getTextLength(node.children);
+      }
+    }
+  
+    return length;
+  }
+
+  const toggleCategory = (cat) => {
+    setCategories((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+    );
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const trimmed = inputTag.trim().toLowerCase();
+
+      if (!trimmed) return;
+
+      if (tags.includes(trimmed)) {
+        setError('Duplicate tag not allowed.');
+      } else if (tags.length >= 10) {
+        setError(`Maximum 10 tags allowed.`);
+      } else {
+        setTags([...tags, trimmed]);
+        setError('');
+      }
+
+      setInputTag('');
+    }
+  };
+
+  const removeTag = (indexToRemove) => {
+    setTags(tags.filter((_, i) => i !== indexToRemove));
+    setError('');
+  };
+
+  const canUndo = (editor) => {
+    return editor.history.undos.length > 0;
+  };
+  
+  const canRedo = (editor) => {
+    return editor.history.redos.length > 0;
+  };
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -51,36 +181,48 @@ const ArticleEditor = () => {
 
   // Render elements
   const renderElement = useCallback((props) => {
+    const alignment = {
+      left: 'text-left',
+      center: 'text-center',
+      right: 'text-right',
+      justify: 'text-justify',
+    }[props.element.children[0].align || 'left'];
+    // console.log("ALignment: ",props.element.children[0].align, alignment);
+
     switch (props.element.type) {
       case 'code':
-        return <CodeElement {...props} />;
+        return <CodeElement {...props} alignment={alignment} />
       case 'heading-one':
-        return <HeadingOneElement {...props}/>
+        return <HeadingOneElement {...props} alignment={alignment}/>
       case 'heading-two':
-        return <HeadingTwoElement {...props}/>
+        return <HeadingTwoElement {...props} alignment={alignment}/>
       case 'heading-three':
-        return <HeadingThreeElement {...props}/>
+        return <HeadingThreeElement {...props} alignment={alignment}/>
       case 'heading-four':
-        return <HeadingFourElement {...props}/>
+        return <HeadingFourElement {...props} alignment={alignment}/>
       case 'heading-five':
-        return <HeadingFiveElement {...props}/>
+        return <HeadingFiveElement {...props} alignment={alignment}/>
       case 'heading-six':
-        return <HeadingSixElement {...props}/>
+        return <HeadingSixElement {...props} alignment={alignment}/>
       case 'block-quote':
-        return <BlockQuoteElement {...props}/>
+        return <BlockQuoteElement {...props} alignment={alignment}/>
       case 'bulleted-list':
         return <BulletListElement {...props}/>
       case 'numbered-list':
         return <NumberListElement {...props}/>
       case 'link':
-        return <LinkElement {...props}/>
+        return <LinkElement {...props} alignment={alignment}/>
       case 'list-item':
         return <ListItemElement {...props}/>
+      case 'image':
+        return <ImageElement {...props} alignment={alignment}/>
+      case 'youtube':
+        return <YoutubeElement {...props} alignment={alignment}/>
       case 'paragraph':
       default:
-        return <DefaultElement {...props} />;
+        return <DefaultElement {...props} alignment={alignment} />;
     }
-  }, []);
+  }, [editor]);
 
   // Render text formatting (marks)
   const renderLeaf = useCallback((props) => <Leaf {...props} />, []);
@@ -103,7 +245,7 @@ const ArticleEditor = () => {
   // Toggle Blocks
   const isBlockActive = (editor, format) => {
     const [match] = Editor.nodes(editor, {
-      match: n => !Editor.isEditor(n) && SlateElement.isElement(n) && n.type === format,
+      match: n => !Editor.isEditor(n) && SlateElement.isElement(n) && n.type === format, mode: 'lowest',
     });
     return !!match;
   };
@@ -123,6 +265,7 @@ const ArticleEditor = () => {
     Transforms.setNodes(
       editor,
       { type: isActive ? 'paragraph' : isList ? 'list-item' : format },
+      {align: 'left'},
       { match: n => SlateElement.isElement(n), split: true }
     );
   
@@ -134,6 +277,27 @@ const ArticleEditor = () => {
     }
   };
 
+  const isAlignActive = (editor, format) => {
+    const [match] = Editor.nodes(editor, {
+      match: n =>{ 
+        return !Editor.isEditor(n) && SlateElement.isElement(n) && n.align === format
+      },
+      mode: 'lowest',
+    });
+    return !!match;
+  };
+
+  const toggleAlignment = (editor, format) => {
+    const isActive = isAlignActive(editor, format);
+    Transforms.setNodes(
+      editor,
+      { align: format },
+      { match: n => Editor.isBlock(editor, n), mode: 'lowest'}
+    );
+
+  };
+
+  // Insert Links
   const insertLink = (editor, url) => {
     if (!url) return;
     const { selection } = editor;
@@ -175,23 +339,119 @@ const ArticleEditor = () => {
     }
   };
 
+  //Insert Image via URL
+  const insertImage = (editor, url) => {
+    const text = { text: '' };
+    const image = {
+      type: 'image',
+      url,
+      children: [text],
+    };
+    Transforms.insertNodes(editor, image);
+  };
+
+  //Embed Youtube
+  
+  const convertYouTubeUrl = (url)=>{
+    try {
+      const parsed = new URL(url);
+  
+      // Case 1: youtu.be short URL
+      if (parsed.hostname === 'youtu.be') {
+        const videoId = parsed.pathname.replace('/', '');
+        return `https://www.youtube.com/embed/${videoId}`;
+      }
+  
+      // Case 2: www.youtube.com/watch?v=...
+      if (parsed.hostname.includes('youtube.com')) {
+        const videoId = parsed.searchParams.get('v');
+        if (videoId) {
+          return `https://www.youtube.com/embed/${videoId}`;
+        }
+      }
+  
+      return null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  const embedYoutube = (editor, url) => {
+    const embedUrl = convertYouTubeUrl(url);
+
+    if (!embedUrl) {
+      alert('Invalid YouTube URL');
+      return;
+    }
+    const text = { text: '' };
+    const youtube = {
+      type: 'youtube',
+      url: embedUrl,
+      children: [text],
+    };
+    Transforms.insertNodes(editor, youtube);
+  };
+
 
   const handleChange = useCallback((newValue) => {
     setValue(newValue);
     setIsDirty(true);
     
-    console.log('Content:', newValue);
+    // console.log('Content:', newValue);
   }, []);
 
-  return (
-    <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-md dark:shadow-lg transition-colors">
-      <div className="mb-4">
-        <input className='text-3xl bg-transparent w-full outline-none font-bold text-gray-800 dark:text-gray-100 mb-2' type="text" placeholder='Add title' />
-      </div>
+  return (<>
+    <nav className='flex justify-between items-center gap-2 p-2 rounded-lg bg-white dark:bg-gray-800'>
+      <div className='flex gap-2'>
+      <button
+        onMouseDown={event => {
+          event.preventDefault();
+          HistoryEditor.undo(editor);
+        }}
+        disabled={!canUndo(editor)}
+        className="py-2 px-[0.7rem] rounded disabled:opacity-60 bg-gray-300 dark:bg-gray-700 dark:hover:bg-blue-600 hover:bg-blue-600 hover:text-white"
+        title='Undo'
+      >
+        <IoMdUndo />
+      </button>
 
-      <Slate editor={editor} initialValue={INITIAL_VALUE} onChange={handleChange}>
-        <Toolbar toggleMark={toggleMark} toggleBlock={toggleBlock} isBlockActive={isBlockActive} toggleLink={toggleLink} isLinkActive={isLinkActive} unwrapLink={unwrapLink}/>
-        <div className="mt-4 border border-gray-300 dark:border-gray-700 rounded-lg p-3 min-h-[300px]">
+      <button
+        onMouseDown={event => {
+          event.preventDefault();
+          HistoryEditor.redo(editor);
+        }}
+        disabled={!canRedo(editor)}
+        className="py-2 px-[0.7rem] rounded disabled:opacity-60 bg-gray-300 dark:bg-gray-700 dark:hover:bg-blue-600 hover:bg-blue-600 hover:text-white"
+        title='Redo'
+      >
+        <IoMdRedo />
+      </button>
+      </div>
+      <div className='flex gap-2'>
+      <button title='Preview' disabled={!getTextLength(value)>0} className='py-1 px-[0.7rem] rounded disabled:opacity-60  text-[1.2rem] dark:hover:bg-blue-600 hover:bg-blue-600 hover:text-white'><VscOpenPreview /></button>
+      <button onClick={e=>{setIsRightSideBar(!isRightSideBar)}} title={isRightSideBar?'Sidebar Collapse': 'Sidebar Expand'} className={`py-1 px-[0.7rem] rounded disabled:opacity-60  text-[1.2rem] ${isRightSideBar?'dark:bg-blue-600 bg-blue-600 text-white':'dark:hover:bg-blue-600 hover:bg-blue-600 hover:text-white'}`}>
+        {isRightSideBar? <GoSidebarCollapse />: <GoSidebarExpand/>}
+      </button>
+      <button title='Save Draft' onClick={handleSave} disabled={!(getTextLength(value)>0)} className='flex justify-center items-center gap-2 py-2 px-[0.7rem] rounded disabled:opacity-60  text-[1rem] bg-teal-600 dark:hover:bg-teal-800 hover:bg-teal-800 text-white'>
+        <span>Save</span>
+        <CiSaveDown2  /> 
+      </button>
+      <button title='Send for Review' disabled={!(getTextLength(value)>0 && isDirty)} className='flex justify-center items-center gap-2 py-2 px-[0.7rem] rounded disabled:opacity-60  text-[1rem] bg-rose-600 dark:hover:bg-rose-800 hover:bg-rose-800 text-white'>
+        <span>Send</span> 
+        <IoMdSend/> 
+      </button>
+      </div>
+    </nav>
+
+    <div className='mt-2 flex flex-auto max-[1000px]:flex-wrap gap-2'>
+    <div className="w-full p-4  bg-white dark:bg-gray-800 rounded-2xl shadow-md dark:shadow-lg transition-colors">
+      <div className="mb-4">
+        <input onChange={e=>{setTitle(e.target.value)}} className='text-3xl border-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none bg-transparent w-full font-bold text-gray-800 dark:text-gray-100 mb-2' type="text" placeholder='Add title' />
+      </div>
+      <div>
+      <Slate  editor={editor} initialValue={INITIAL_VALUE} onChange={handleChange}>
+        <Toolbar toggleMark={toggleMark} toggleBlock={toggleBlock} isBlockActive={isBlockActive} toggleAlignment={toggleAlignment} toggleLink={toggleLink} isLinkActive={isLinkActive} unwrapLink={unwrapLink} insertImage={insertImage} embedYoutube={embedYoutube} isAlignActive={isAlignActive}/>
+        <div className="h-[50vh] overflow-auto mt-4 border border-gray-300 dark:border-gray-700 rounded-lg p-3 min-h-[300px]">
           <Editable
             renderElement={renderElement}
             renderLeaf={renderLeaf}
@@ -209,9 +469,11 @@ const ArticleEditor = () => {
         </div>
         
         
+      </Slate>
+      </div>
         <div className="mt-4 flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
           <div>
-            Characters: {(JSON.stringify(value).length) - 47}
+            Characters: {getTextLength(value)}
           </div>
           <div>
             {isDirty && (
@@ -221,12 +483,107 @@ const ArticleEditor = () => {
             )}
           </div>
         </div>
-      </Slate>
     </div>
+    
+    {isRightSideBar && <aside className="w-full h-[86vh] shadow md:w-[25rem] p-4 bg-white dark:bg-gray-800 rounded-2xl border-gray-300 dark:border-gray-700 space-y-6 overflow-y-auto">
+      <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Post Settings</h2>
+
+      {/* Featured Image */}
+      <div>
+        <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Set Featured Image</label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
+          className="block w-full text-sm text-gray-900 dark:text-gray-100 file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:bg-blue-50 dark:file:bg-gray-700 file:text-blue-700 dark:file:text-gray-200 hover:file:bg-blue-100 dark:hover:file:bg-gray-600"
+        />
+        {featuredImage && (
+          <img src={featuredImage} alt="Featured" className="mt-3 w-full rounded shadow-md" />
+        )}
+      </div>
+
+      {/* Description */}
+      <div>
+        <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+          Description (160 characters)
+        </label>
+        <textarea
+          maxLength={160}
+          rows={3}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="w-full focus:outline-none focus:ring-0 focus:shadow-none p-2 rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-600"
+          placeholder="Short description of the post..."
+        />
+        <p className="text-sm text-right text-gray-500 dark:text-gray-400">{description.length}/160</p>
+      </div>
+
+      {/* Categories */}
+      <div>
+        <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Select Categories</label>
+        <div className="space-y-2">
+          {allCategories.map((cat) => (
+            <label key={cat} className="flex items-center space-x-2 text-gray-700 dark:text-gray-200">
+              <input
+                type="checkbox"
+                checked={categories.includes(cat)}
+                onChange={() => toggleCategory(cat)}
+                className="rounded-2xl focus:outline-none focus:ring-0 focus:shadow-none bg-gray-300 dark:bg-slate-500 text-blue-600 dark:text-blue-400"
+              />
+              <span>{cat}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Tags */}
+      <div>
+      <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+        Tags (max 10)
+      </label>
+
+      <div className="flex flex-wrap items-center gap-2 p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
+        {tags.map((tag, index) => (
+          <div
+            key={index}
+            className="flex items-center bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100 px-2 py-1 rounded-full text-sm"
+          >
+            <span className="mr-2">{tag}</span>
+            <button
+              type="button"
+              onClick={() => removeTag(index)}
+              className="focus:outline-none text-xs hover:text-red-500 dark:hover:text-red-400"
+            >
+              &times;
+            </button>
+          </div>
+        ))}
+
+        {tags.length < 10 && (
+          <input
+            type="text"
+            value={inputTag}
+            onChange={(e) => setInputTag(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Type and press Enter"
+            className="flex-1 border-none focus:border-none ring-0 focus:ring-0 focus:shadow-none min-w-[150px] p-1 focus:outline-none bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+          />
+        )}
+      </div>
+
+      {error && (
+        <p className="text-red-500 text-sm mt-1">{error}</p>
+      )}
+
+      </div>
+    </aside>}
+    </div>
+
+    </>
   );
 };
 
-const Toolbar = ({ toggleMark, toggleBlock, isBlockActive, toggleLink, isLinkActive ,unwrapLink }) => {
+const Toolbar = ({ toggleMark, toggleBlock, isBlockActive, toggleAlignment, isAlignActive,toggleLink, isLinkActive ,unwrapLink, insertImage, embedYoutube }) => {
   const editor = useSlate();
   const [open, setOpen] = useState(false);
   
@@ -262,6 +619,36 @@ const Toolbar = ({ toggleMark, toggleBlock, isBlockActive, toggleLink, isLinkAct
         title="Code (Ctrl+`)"
       />
 
+      <button
+        title='Align Left'
+        className={`p-2 rounded-md transition-colors text-lg ${
+          isAlignActive(editor,'left')
+          ? 'bg-blue-600 text-white'
+          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+          }`}
+          onMouseDown={e => {
+            e.preventDefault();
+            toggleAlignment(editor, 'left');
+          }}
+        >
+          <FaAlignLeft />
+      </button>
+
+      <button
+        title='Align Center'
+        className={`p-2 rounded-md transition-colors text-lg ${
+          isAlignActive(editor,'center')
+          ? 'bg-blue-600 text-white'
+          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+          }`}
+          onMouseDown={e => {
+            e.preventDefault();
+            toggleAlignment(editor, 'center');
+          }}
+        >
+          <FaAlignCenter/>
+      </button>
+      
     <div className="relative bg-transparent inline-block text-left">
       <button title='Heading' onClick={() => setOpen(!open)} className="inline-flex justify-center items-center px-2 py-2  rounded-md shadow-sm bg-transparent text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700">
         <LuHeading /> 
@@ -270,7 +657,7 @@ const Toolbar = ({ toggleMark, toggleBlock, isBlockActive, toggleLink, isLinkAct
 
       {open && (
         <div
-          className="absolute px-2 py-2 z-10 mt-2 rounded-md shadow-lg bg-slate-800"
+          className="absolute px-2 py-2 z-10 mt-2 rounded-md shadow-xl dark:bg-slate-800 bg-white"
           onMouseLeave={() => setOpen(false)}
         >
           <div className="py-1 flex flex-col">
@@ -368,7 +755,29 @@ const Toolbar = ({ toggleMark, toggleBlock, isBlockActive, toggleLink, isLinkAct
         <IoMdLink />
     </button>
 
+    <button
+      onMouseDown={event => {
+        event.preventDefault();
+        const url = window.prompt('Enter image URL:');
+        if (!url) return;
+        insertImage(editor, url);
+      }}
+      className="p-2 rounded-md transition-colors text-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 "
+    >
+      <FaRegImage />
+    </button>
 
+    <button
+      onMouseDown={event => {
+        event.preventDefault();
+        const url = window.prompt('Enter youtube URL:');
+        if (!url) return;
+        embedYoutube(editor, url);
+      }}
+      className="p-2 rounded-md transition-colors text-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 "
+    >
+      <FaYoutube />
+    </button>
     </div>
   );
 };
@@ -413,55 +822,66 @@ const BlockButton = ({ icon, format, editor, toggleBlock, isBlockActive,title })
   );
 };
 
-const CodeElement = ({ attributes, children }) => (
+const CodeElement = ({ attributes, children, alignment }) => (
   <pre 
     {...attributes} 
-    className="bg-gray-100 dark:bg-gray-800 p-2 rounded overflow-x-auto font-mono text-sm"
+    className={`${alignment} bg-gray-100 dark:bg-gray-800 p-2 rounded overflow-x-auto font-mono text-sm`}
   >
     <code>{children}</code>
   </pre>
 );
 
-const DefaultElement = ({ attributes, children }) => (
-  <p {...attributes} className="text-gray-800 dark:text-gray-100 mb-2">
+const DefaultElement = ({ attributes, children, alignment}) => (
+  <p {...attributes} className={`${alignment} text-gray-800 dark:text-gray-100 mb-2`}>
     {children}
   </p>
 );
 
 const LinkElement = (props) => (
-  <a {...props.attributes} href={props.element.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+  <a {...props.attributes}  href={props.element.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
     {props.children}
   </a>
 );
 
-const HeadingOneElement = ({ attributes, children }) => (
-  <h1 {...attributes} className="text-[2.3rem] font-bold text-gray-800 dark:text-gray-100 mb-2">
+const ImageElement = (props) => (
+  <div {...props.attributes} contentEditable={false}>
+    <img src={props.element.url} alt='Image' className="max-w-full min-w-[60%] h-auto my-4 rounded" />
+  </div>
+);
+const YoutubeElement = (props) => (
+  <div className='my-2' {...props.attributes} contentEditable={false}>
+    <iframe className='rounded m-auto' width="560" height="315" src={props.element.url} title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+  </div>
+);
+
+const HeadingOneElement = ({ attributes, children, alignment}) => (
+  <h1 {...attributes} className={`${alignment} text-[2.3rem] font-bold text-gray-800 dark:text-gray-100 mb-2`}>
     {children}
   </h1>
 );
 
-const HeadingTwoElement = ({ attributes, children }) => (
-  <h2 {...attributes} className="text-[2rem] font-bold text-gray-800 dark:text-gray-100 mb-2">
+const HeadingTwoElement = ({ attributes, children, style }) => (
+  <h2 {...attributes} style={style} className="text-[2rem] font-bold text-gray-800 dark:text-gray-100 mb-2">
     {children}
   </h2>
 );
-const HeadingThreeElement = ({ attributes, children }) => (
-  <h3 {...attributes} className="text-[1.7rem] font-bold text-gray-800 dark:text-gray-100 mb-2">
+const HeadingThreeElement = ({ attributes, children, style }) => (
+  <h3 {...attributes} style={style} className="text-[1.7rem] font-bold text-gray-800 dark:text-gray-100 mb-2">
     {children}
   </h3>
 );
-const HeadingFourElement = ({ attributes, children }) => (
-  <h4 {...attributes} className="text-[1.4rem] font-bold text-gray-800 dark:text-gray-100 mb-2">
+const HeadingFourElement = ({ attributes, children, style }) => (
+  <h4 {...attributes} style={style} className="text-[1.4rem] font-bold text-gray-800 dark:text-gray-100 mb-2">
     {children}
   </h4>
 );
-const HeadingFiveElement = ({ attributes, children }) => (
-  <h5 {...attributes} className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+const HeadingFiveElement = ({ attributes, children, style }) => (
+  <h5 {...attributes} style={style} className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">
     {children}
   </h5>
 );
-const HeadingSixElement = ({ attributes, children }) => (
-  <h6 {...attributes} className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">
+const HeadingSixElement = ({ attributes, children, style }) => (
+  <h6 {...attributes} style={style} className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">
     {children}
   </h6>
 );

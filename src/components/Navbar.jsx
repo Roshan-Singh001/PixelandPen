@@ -177,7 +177,7 @@ const Navbar = () => {
                 <input
                   type="search"
                   placeholder="Enter text to search"
-                  className="text-base w-full bg-transparent outline-none"
+                  className="border-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none text-base w-full bg-transparent outline-none"
                 ></input>
               </div>
               {loggedIn ? (

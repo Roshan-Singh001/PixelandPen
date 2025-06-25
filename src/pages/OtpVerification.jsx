@@ -79,6 +79,7 @@ function OtpVerification() {
       setError("");
       navigate("/login");
     } catch (err) {
+      console.log(err);
       const msg = err.response?.data?.message || "OTP verification failed";
       toast.error(msg);
       setError(msg);

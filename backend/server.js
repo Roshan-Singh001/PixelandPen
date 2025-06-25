@@ -1,6 +1,7 @@
 import express from "express";
-import bodyParser from "body-parser";
 import cors from "cors";
+import bodyParser from "body-parser";
+import { v4 as uuidv4 } from 'uuid';
 import mysql from "mysql2/promise";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
@@ -11,6 +12,7 @@ import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
 import adminRouter from './admin.js';
+import articleRouter from './article.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,20 +22,24 @@ dotenv.config({
 
 const app = express();
 const PORT = 3000;
-app.use(cookieParser());
-app.use(express.json());
-app.use('dashboard/admin', adminRouter);
-
-const databasePass = process.env.DATABASE_PASS;
-const db_host = process.env.DB_HOST;
-const db_user = process.env.DB_USER;
-
 app.use(
   cors({
     origin: "http://localhost:5173",
     credentials: true,
   })
 );
+
+app.use(cookieParser());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use('/dashboard/admin', adminRouter);
+app.use('/article', articleRouter);
+
+const databasePass = process.env.DATABASE_PASS;
+const db_host = process.env.DB_HOST;
+const db_user = process.env.DB_USER;
+
+
 
 let db;
 const MyDbName = "Pixel&Pen";
@@ -59,6 +65,7 @@ async function connectToDatabase() {
       password: databasePass,
       database: MyDbName,
     });
+    // FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE
 
     const query_temp_user_table = `CREATE TABLE IF NOT EXISTS temp_users (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -72,60 +79,60 @@ async function connectToDatabase() {
     await db.execute(query_temp_user_table);
 
     const query_user_table = `CREATE TABLE IF NOT EXISTS users (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      username VARCHAR(100) NOT NULL,
-      email VARCHAR(100) NOT NULL UNIQUE,
-      password VARCHAR(255) NOT NULL,
-      role ENUM('Admin', 'Reader', 'Contributor') NOT NULL,
+      id VARCHAR(255) PRIMARY KEY,
+      username VARCHAR(100),
+      email VARCHAR(100) ,
+      password VARCHAR(255) ,
+      role ENUM('Admin', 'Reader', 'Contributor'),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`;
     await db.execute(query_user_table);
 
     const query_admin_table = `CREATE TABLE IF NOT EXISTS admin (
-      id INT AUTO_INCREMENT PRIMARY KEY,
+      admin_id VARCHAR(255) PRIMARY KEY,
       username VARCHAR(100) NOT NULL,
       email VARCHAR(100) NOT NULL UNIQUE,
       password VARCHAR(255) NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (email) REFERENCES users(email) ON DELETE CASCADE
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`;
     await db.execute(query_admin_table);
 
     const query_contributor_table = `CREATE TABLE IF NOT EXISTS contributor (
-      id INT AUTO_INCREMENT PRIMARY KEY,
+      cont_id VARCHAR(255) PRIMARY KEY,
       username VARCHAR(100) NOT NULL,
       email VARCHAR(100) NOT NULL UNIQUE,
       password VARCHAR(255) NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (email) REFERENCES users(email) ON DELETE CASCADE
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`;
     await db.execute(query_contributor_table);
 
     const query_subscriber_table = `CREATE TABLE IF NOT EXISTS reader (
-      id INT AUTO_INCREMENT PRIMARY KEY,
+      sub_id VARCHAR(255) PRIMARY KEY,
       username VARCHAR(100) NOT NULL,
       email VARCHAR(100) NOT NULL UNIQUE,
       password VARCHAR(255) NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (email) REFERENCES users(email) ON DELETE CASCADE
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`;
 
     await db.execute(query_subscriber_table);
     const query_articles_table = `CREATE TABLE IF NOT EXISTS articles (
-      slug VARCHAR(255) PRIMARY KEY,
+      article_id VARCHAR(255) PRIMARY KEY,
+      slug VARCHAR(255) UNIQUE,
       title VARCHAR(255) NOT NULL,
-      category VARCHAR(100) NOT NULL,
+      category JSON NOT NULL,
       description VARCHAR(200),
-      content TEXT NOT NULL UNIQUE,
-      thumbnail BLOB,
+      content JSON NOT NULL,
+      tags JSON,
+      thumbnail_url VARCHAR(255),
       author VARCHAR(255) NOT NULL,
       views INT DEFAULT 0,
       is_featured BOOLEAN DEFAULT FALSE,
       status ENUM('Approved', 'Rejected', 'Pending') DEFAULT 'Pending',
+      reject_reason VARCHAR(255) DEFAULT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )`;
-    await db.execute(query_subscriber_table);
+    await db.execute(query_articles_table);
   } catch (error) {
     console.error("Database connection error:", error.message);
   }
@@ -296,21 +303,73 @@ app.post("/OtpVerification", async (req, res) => {
     // Starts a new SQL transaction so that either both the insert and delete happen, or none do. Ensures atomicity (no partial operations).
     await db.beginTransaction();
 
-    const moveUserQuery = `
-      INSERT INTO users (username, email, password, role)
-      SELECT username, email, password, role FROM temp_users WHERE email = ? AND otp = ?
-    `;
-    await db.execute(moveUserQuery, [email, otp]);
+    // const moveUserQuery = `
+    //   INSERT INTO users (username, email, password, role)
+    //   SELECT username, email, password, role FROM temp_users WHERE email = ? AND otp = ?
+    // `;
+    // await db.execute(moveUserQuery, [email, otp]);
 
+    let a_id = uuidv4();
+    const user_id = a_id.replaceAll("-","_");
     if (role == "Admin") {
-      const finalSetAdmin = `INSERT INTO admin (username, email, password) VALUES (?,?,?)`;
-      await db.execute(finalSetAdmin, [username, email, password]);
-    } else if (role == "Contributor") {
-      const finalSetContri = `INSERT INTO contributor (username, email, password) VALUES (?,?,?)`;
-      await db.execute(finalSetContri, [username, email, password]);
-    } else if (role == "Reader") {
-      const finalSetSubs = `INSERT INTO reader (username, email, password) VALUES (?,?,?)`;
-      await db.execute(finalSetSubs, [username, email, password]);
+      const moveUserQuery = `
+        INSERT INTO users (id) VALUES (?)
+      `;
+      await db.execute(moveUserQuery, [`${'admin_'+user_id}`]);
+      
+      const updatequery = `UPDATE users
+                           SET username = ?, email = ?, password = ?, role = ?
+                           WHERE id = ?`;
+      await db.execute(updatequery, [username,email,password,role,`${'admin_'+user_id}`]);
+
+      const finalSetAdmin = `INSERT INTO admin (admin_id,username, email, password) VALUES (?,?,?,?)`;
+      await db.execute(finalSetAdmin, [`${'admin_'+user_id}`,username, email, password]);
+    } 
+    else if (role == "Contributor") {
+      const moveUserQuery = `
+        INSERT INTO users (id) VALUES (?)
+      `;
+      await db.execute(moveUserQuery, [`${'cont_'+user_id}`]);
+      
+      const updatequery = `UPDATE users
+                           SET username = ?, email = ?, password = ?, role = ?
+                           WHERE id = ?`;
+      await db.execute(updatequery, [username,email,password,role,`${'cont_'+user_id}`]);
+
+
+      const finalSetContri = `INSERT INTO contributor (cont_id,username, email, password) VALUES (?,?,?,?)`;
+      await db.execute(finalSetContri, [`${'cont_'+user_id}`,username, email, password]);
+
+      const tableName = `${'cont_'+user_id}` + '_draft_articles';
+
+      const query_draft_articles_table = `CREATE TABLE IF NOT EXISTS ${tableName} (
+        slug VARCHAR(255) PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        category JSON,
+        description VARCHAR(200),
+        content JSON NOT NULL,
+        tags JSON,
+        thumbnail_url VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )`;
+      await db.execute(query_draft_articles_table);
+
+    } 
+    else if (role == "Reader") {
+      const moveUserQuery = `
+        INSERT INTO users (id) VALUES (?)
+      `;
+      await db.execute(moveUserQuery, [`${'sub_'+user_id}`]);
+      
+      const updatequery = `UPDATE users
+                           SET username = ?, email = ?, password = ?, role = ?
+                           WHERE id = ?`;
+      await db.execute(updatequery, [username,email,password,role,`${'sub_'+user_id}`]);
+
+
+      const finalSetSubs = `INSERT INTO reader (sub_id,username, email, password) VALUES (?,?,?,?)`;
+      await db.execute(finalSetSubs, [`${'sub_'+user_id}`,username, email, password]);
     }
 
     const deleteTempUserQuery = "DELETE FROM temp_users WHERE email = ?";
@@ -337,25 +396,42 @@ app.post("/validate", async (req, res) => {
   }
 
   try {
-    const query = "SELECT * FROM users WHERE username = ? AND role = ?";
-    const [result] = await db.execute(query, [username, role]);
+    var result = '';
+    var user_id = '';
 
+    if (role == 'Admin') {
+      const query = "SELECT * FROM admin WHERE username = ?";
+      const [result1] = await db.execute(query, [username]);
+      result = result1;
+      user_id = result[0].admin_id;
+    }
+    else if (role == 'Contributor') {
+      const query = "SELECT * FROM contributor WHERE username = ?";
+      const [result1] = await db.execute(query, [username]);
+      result = result1;
+      user_id = result[0].cont_id;
+    }
+    else if (role == 'Reader') {
+      const query = "SELECT * FROM reader WHERE username = ?";
+      const [result1] = await db.execute(query, [username]);
+      result = result1;
+      user_id = result[0].sub_id;
+    }
+    
     if (result.length === 0) {
       return res.status(401).json({ message: "Invalid username or role." });
     }
 
     const {
       password: hashedPassword,
-      id: userId,
       username: userName,
-      role: userRole,
     } = result[0];
 
     const isPasswordCorrect = await bcrypt.compare(password, hashedPassword);
 
     if (isPasswordCorrect) {
       const token = jwt.sign(
-        { id: userId, role: userRole, username: userName },
+        { id: user_id, role: role, username: userName },
         JWT_SECRET,
         { expiresIn: "1h" }
       );
@@ -369,7 +445,7 @@ app.post("/validate", async (req, res) => {
       });
 
       // Send token in response JSON as well
-      res.status(200).json({ message: "Login successful", role: role, token });
+      res.status(200).json({ message: "Login successful",user_id: user_id, role: role, token });
     } else {
       res.status(401).json({ message: "Incorrect password." });
     }
@@ -391,6 +467,7 @@ function verifyToken(req, res, next) {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded; // decoded contains { id, username, role }
+    console.log(req.user);
     console.log("role:", req.user.role);
     next();
   } catch (err) {
