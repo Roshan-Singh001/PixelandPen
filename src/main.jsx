@@ -23,6 +23,7 @@ import Admin from "./pages/dashboard/admin_dashboard.jsx";
 import Contributor from "./pages/dashboard/contri_dashboard.jsx";
 import Reader from "./pages/dashboard/subs_dashboard.jsx";
 import Profile from "./pages/profilePage.jsx";
+import ArticlePage from "./pages/article-page.jsx";
 
 const router = createBrowserRouter([
   {
@@ -145,6 +146,16 @@ const router = createBrowserRouter([
       <>
         <Navbar />
         <Profile />
+        <Footer />
+      </>
+    ),
+  },
+  {
+    path: "/articlepage",
+    element: (
+      <>
+        <Navbar />
+        <ArticlePage />
         <Footer />
       </>
     ),

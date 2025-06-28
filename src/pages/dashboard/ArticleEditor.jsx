@@ -41,10 +41,10 @@ const HOTKEYS = {
 const ArticleEditor = (props) => {
   const editor = useMemo(() => withHistory(withReact(createEditor())), []);
   
+  const [isArticleNew, setIsArticleNew] = useState(true);
   const [value, setValue] = useState(INITIAL_VALUE);
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState('');
-  const [isDirty, setIsDirty] = useState(false);
   const [isRightSideBar, setIsRightSideBar] = useState(true);
   const LIST_TYPES = ['numbered-list', 'bulleted-list'];
   const AxiosInstance = axios.create({
@@ -53,14 +53,21 @@ const ArticleEditor = (props) => {
       timeout: 3000,
       headers: {'X-Custom-Header': 'foobar'}
     });
-
-  //Side Bar (Right)
+    
+    //Side Bar (Right)
   const [featuredImage, setFeaturedImage] = useState(null);
   const [description, setDescription] = useState('');
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
   const [inputTag, setInputTag] = useState('');
   const [error, setError] = useState('');
+
+  const [isContentDirty, setIsContentDirty] = useState(false);
+  const [isDescriptionDirty, setIsDescriptionDirty] = useState(false);
+  const [isTitleDirty, setIsTitleDirty] = useState(false);
+  const [isTagDirty, setIsTagDirty] = useState(false);
+  const [isCategoryDirty, setIsCategoryDirty] = useState(false);
+  const [isThumbImageDirty, setIsThumbImageDirty] = useState(false);
 
   const allCategories = ['News', 'Health', 'Technology', 'Education', 'Politics'];
 
@@ -75,32 +82,44 @@ const ArticleEditor = (props) => {
 
   // SAVE DRAFT
   const handleSave = async ()=>{
-    let currentSlug = slug; 
-    if (slug === '') {
-      const generated = generateSlug(title);
-      setSlug(generated);
-      currentSlug = generated;
-    }
-    const article = {
-      currentSlug,
-      title,
-      description,
-      currentSlug,
-      categories,
-      tags, 
-      featuredImage, 
-      content: value,
-    };
-    console.log(props.userdata)
+    let prevSlug = slug;
+    let currentSlug = slug;
+    const generated = generateSlug(title);
+    setSlug(generated);
+    currentSlug = generated;
+
+    console.log(props.userdata);
 
     try {
-      const response = await AxiosInstance.post("/article/save", {
-        user_id: props.userdata.user_id,
-        article: JSON.stringify(article),
-      });
-      console.log(response)
-  
-      setIsDirty(false);
+      if (isArticleNew) {
+        const article = {
+          currentSlug,
+          title,
+          description,
+          currentSlug,
+          categories,
+          tags, 
+          featuredImage, 
+          content: value,
+        };
+        
+        const response = await AxiosInstance.post("/article/save/new", {
+          user_id: props.userdata.user_id,
+          article: JSON.stringify(article),
+        });
+        console.log(response);
+
+        setIsArticleNew(false);
+        setIsContentDirty(false);
+      }
+      else{
+        const response = await AxiosInstance.post("/article/save/edit", {
+          prevSlug: prevSlug,
+          user_id: props.userdata.user_id,
+          article: JSON.stringify(article),
+        });
+        console.log(response);
+      }
       
     } catch (error) {
       console.log(error);
@@ -113,6 +132,7 @@ const ArticleEditor = (props) => {
     if (file) {
       setFeaturedImage(URL.createObjectURL(file));
     }
+    setIsThumbImageDirty(true);
   };
 
   function getTextLength(nodes) {
@@ -133,6 +153,7 @@ const ArticleEditor = (props) => {
     setCategories((prev) =>
       prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
     );
+    setIsCategoryDirty(true);
   };
 
   const handleKeyDown = (e) => {
@@ -149,6 +170,7 @@ const ArticleEditor = (props) => {
       } else {
         setTags([...tags, trimmed]);
         setError('');
+        setIsTagDirty(true);
       }
 
       setInputTag('');
@@ -158,6 +180,8 @@ const ArticleEditor = (props) => {
   const removeTag = (indexToRemove) => {
     setTags(tags.filter((_, i) => i !== indexToRemove));
     setError('');
+
+    setIsTagDirty(true);
   };
 
   const canUndo = (editor) => {
@@ -170,14 +194,14 @@ const ArticleEditor = (props) => {
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
-      if (isDirty) {
+      if (isContentDirty) {
         e.preventDefault();
         e.returnValue = 'You have unsaved changes.';
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isDirty]);
+  }, [isContentDirty]);
 
   // Render elements
   const renderElement = useCallback((props) => {
@@ -395,7 +419,7 @@ const ArticleEditor = (props) => {
 
   const handleChange = useCallback((newValue) => {
     setValue(newValue);
-    setIsDirty(true);
+    setIsContentDirty(true);
     
     // console.log('Content:', newValue);
   }, []);
@@ -436,7 +460,7 @@ const ArticleEditor = (props) => {
         <span>Save</span>
         <CiSaveDown2  /> 
       </button>
-      <button title='Send for Review' disabled={!(getTextLength(value)>0 && isDirty)} className='flex justify-center items-center gap-2 py-2 px-[0.7rem] rounded disabled:opacity-60  text-[1rem] bg-rose-600 dark:hover:bg-rose-800 hover:bg-rose-800 text-white'>
+      <button title='Send for Review' disabled={!(getTextLength(value)>0 && isContentDirty)} className='flex justify-center items-center gap-2 py-2 px-[0.7rem] rounded disabled:opacity-60  text-[1rem] bg-rose-600 dark:hover:bg-rose-800 hover:bg-rose-800 text-white'>
         <span>Send</span> 
         <IoMdSend/> 
       </button>
@@ -446,7 +470,7 @@ const ArticleEditor = (props) => {
     <div className='mt-2 flex flex-auto max-[1000px]:flex-wrap gap-2'>
     <div className="w-full p-4  bg-white dark:bg-gray-800 rounded-2xl shadow-md dark:shadow-lg transition-colors">
       <div className="mb-4">
-        <input onChange={e=>{setTitle(e.target.value)}} className='text-3xl border-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none bg-transparent w-full font-bold text-gray-800 dark:text-gray-100 mb-2' type="text" placeholder='Add title' />
+        <input onChange={e=>{setTitle(e.target.value); setIsTitleDirty(true);}} className='text-3xl border-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none bg-transparent w-full font-bold text-gray-800 dark:text-gray-100 mb-2' type="text" placeholder='Add title' />
       </div>
       <div>
       <Slate  editor={editor} initialValue={INITIAL_VALUE} onChange={handleChange}>
@@ -476,7 +500,7 @@ const ArticleEditor = (props) => {
             Characters: {getTextLength(value)}
           </div>
           <div>
-            {isDirty && (
+            {isContentDirty && (
               <span className="text-orange-500">
                 • Unsaved changes
               </span>
@@ -511,7 +535,7 @@ const ArticleEditor = (props) => {
           maxLength={160}
           rows={3}
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={(e) => {setDescription(e.target.value); setIsDescriptionDirty(true)}}
           className="w-full focus:outline-none focus:ring-0 focus:shadow-none p-2 rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-600"
           placeholder="Short description of the post..."
         />

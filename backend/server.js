@@ -13,6 +13,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import adminRouter from './admin.js';
 import articleRouter from './article.js';
+import db from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -41,7 +42,7 @@ const db_user = process.env.DB_USER;
 
 
 
-let db;
+// let db;
 const MyDbName = "Pixel&Pen";
 
 async function connectToDatabase() {
@@ -59,12 +60,12 @@ async function connectToDatabase() {
     console.log(`Database "${MyDbName}" created or already exists.`);
     await serverConnection.end();
 
-    db = await mysql.createConnection({
-      host: db_host,
-      user: db_user,
-      password: databasePass,
-      database: MyDbName,
-    });
+    // db = await mysql.createConnection({
+    //   host: db_host,
+    //   user: db_user,
+    //   password: databasePass,
+    //   database: MyDbName,
+    // });
     // FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE
 
     const query_temp_user_table = `CREATE TABLE IF NOT EXISTS temp_users (
