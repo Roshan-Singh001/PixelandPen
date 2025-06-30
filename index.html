@@ -12,6 +12,15 @@
       cursor: pointer;
       color: rgb(0, 145, 255);
     }
+
+    @keyframes article_page_gradient {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .article_load_gradient {
+      animation: article_page_gradient 2s ease-in-out infinite;
+    }
     
     @keyframes gradientAnimation {
       0% {

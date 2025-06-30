@@ -151,7 +151,7 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/articlepage",
+    path: "/article/:slug",
     element: (
       <>
         <Navbar />
