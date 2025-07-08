@@ -1,62 +1,71 @@
 // AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const AuthContext = createContext();
 
+const AxiosInstance = axios.create({
+  baseURL: "http://localhost:3000",
+  withCredentials: true,
+});
+
 export const AuthProvider = ({ children }) => {
   const [loggedIn, setLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [userData, setUserData] = useState({});
+  // const navigate = useNavigate();
 
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem("authToken");
 
       if (!token) {
-        navigate("/login");
+        setLoggedIn(false);
+        setLoading(false);
         return;
       }
 
       try {
-        // Optional token validation
-        // const response = await fetch("/api/validate-token", {
-        //   headers: { Authorization: `Bearer ${token}` },
-        // });
-
-        setLoggedIn(true);
-      } catch (err) {
+          const response = await AxiosInstance.get("/auth/profile", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+      
+          const { username, role, id } = response.data;
+          setUserData({ userName: username, userRole: role, user_id: id });
+          setLoggedIn(true);
+      }
+      catch (err) {
         console.error("Auth check failed:", err);
-        localStorage.removeItem("authToken");
-        navigate("/login");
-      } finally {
+        logout();
+      } 
+      finally {
         setLoading(false);
       }
     };
 
     checkAuth();
-  }, [navigate]);
+  }, []);
 
   const logout = async () => {
     try {
-      const response = await axios.post(
-        "http://localhost:3000/logout",
-        {},
-        { withCredentials: true }
-      );
-      console.log(response.data.message); 
-
+      await AxiosInstance.post("/logout");
+      // console.log(response.data.message);
+    } 
+    catch (error) {
+      console.error("Logout failed:", error);
+    }
+    finally{
       localStorage.removeItem("authToken");
       setLoggedIn(false);
-      navigate("/login");
-    } catch (error) {
-      console.error("Logout failed:", error);
+      setUserData(null);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ loggedIn, loading, logout }}>
+    <AuthContext.Provider value={{ loggedIn, loading, logout, userData }}>
       {!loading && children}
     </AuthContext.Provider>
   );

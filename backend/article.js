@@ -52,7 +52,7 @@ articleRouter.post('/save/edit', async (req, res) => {
     console.log(content);
 
     try {
-        const tableName = `${user_id}` + '_draft_articles';
+        const tableName = `${'cont_'+user_id}` + '_articles';
         const values = [currentSlug, title, JSON.stringify(categories), description, JSON.stringify(content), JSON.stringify(tags), featuredImage];
         const query_insert_article = `INSERT INTO ${tableName} (slug, title, category, description, content, tags, thumbnail_url)
                                       VALUES (?,?,?,?,?,?,?)`;
@@ -76,7 +76,7 @@ articleRouter.get('/view/:slug', async (req,res)=>{
     try {
         const fetchArticleQuery = 'SELECT * FROM cont_99414393_581d_4f71_bf0d_3497019b40d5_draft_articles WHERE slug = ? LIMIT 1';
         const results = await db.query(fetchArticleQuery, [slug]);
-        if (results.length === 0) {
+        if (results[0].length === 0) {
             return res.status(404).json({ error: 'Article not found' });
         }
         const article = results[0];
@@ -115,7 +115,35 @@ articleRouter.get('/view/:slug', async (req,res)=>{
 
 });
 
-articleRouter.get('/preview/:slug', (req,res)=>{
+articleRouter.get('/preview/:slug', async (req,res)=>{
+    const { slug } = req.params;
+    const userId = req.headers['user_id'];
+
+    console.log("Slug: ",slug);
+
+    try {
+        const fetchArticleQuery = `SELECT * FROM cont_${userId}_articles WHERE slug = ? LIMIT 1`;
+        const results = await db.query(fetchArticleQuery, [slug]);
+        if (results[0].length === 0) {
+            return res.status(404).json({ error: 'Article not found' });
+        }
+
+        const article = results[0];
+
+        
+        article.tags = JSON.parse(article.tags || '[]');
+        article.category = JSON.parse(article.category || '[]');
+        article.content = JSON.parse(article.content || '[]');
+        res.json(article);
+
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error Fetching Article"});
+        
+    }
+
+
     res.send('Preview Article');
 
 

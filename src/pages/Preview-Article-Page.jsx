@@ -7,7 +7,9 @@ import { FaFacebook } from "react-icons/fa";
 import { renderSlateToHtml } from '../utils/renderSlateToHtml';
 import { useNavigate } from 'react-router-dom';
 
-const ArticlePage = () => {
+import { useAuth } from "../contexts/AuthContext";
+
+const PreviewArticlePage = () => {
   const AxiosInstance = axios.create({
         baseURL: 'http://localhost:3000/',
         withCredentials: true,
@@ -24,40 +26,32 @@ const ArticlePage = () => {
   const [comment, setComment] = useState('');
   const [isNavVisible, setIsNavVisible] = useState(false);
   const [featuredImage, setFeaturedImage] = useState(null);
-  const [comments, setComments] = useState([
-    {
-      id: 1,
-      author: "Alex Johnson",
-      content: "Great article! This really helped me understand the concept better.",
-      time: "2 hours ago",
-      likes: 5
-    },
-    {
-      id: 2,
-      author: "Sarah Chen",
-      content: "Thanks for sharing this. The examples are particularly useful.",
-      time: "5 hours ago",
-      likes: 3
-    }
-  ]);
 
+  const { loggedIn, logout, userData } = useAuth();
+
+  if (!loggedIn) return navigate("/login");
+  
   useEffect(() => {
-    console.log(slug);
-    AxiosInstance.get(`/article/view/${slug}`)
-    .then((res) => {
-      console.log("Article data:", res.data);
-      setArticle(res.data);
-      setIsExist(true);
-    })
-    .catch((err) => { 
-      console.error('Error fetching article:', err);
-      navigate("/notfound");
-    });
-
-  }, [slug]);
-
-
-
+    try {
+      AxiosInstance.get(`/article/preview/${slug}`,{
+        headers: {
+          user_id: userData.user_id,
+        }
+      })
+      .then((res) => {
+        console.log("Article data:", res.data);
+        setArticle(res.data);
+        setIsExist(true);
+      })
+      .catch((err) => { 
+        console.error('Error fetching article:', err);
+        navigate("/notfound");
+      });
+    } catch (error) {
+      console.log(error);
+      
+    }
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -70,10 +64,6 @@ const ArticlePage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // if (!article){
-
-  //   return <div>Loading...</div>;
-  // } 
 
   if (!article) {
     return (
@@ -290,19 +280,19 @@ const ArticlePage = () => {
     setIsBookmarked(!isBookmarked);
   };
 
-  const handleComment = () => {
-    if (comment.trim()) {
-      const newComment = {
-        id: comments.length + 1,
-        author: "You",
-        content: comment,
-        time: "Just now",
-        likes: 0
-      };
-      setComments([newComment, ...comments]);
-      setComment('');
-    }
-  };
+  // const handleComment = () => {
+  //   if (comment.trim()) {
+  //     const newComment = {
+  //       id: comments.length + 1,
+  //       author: "You",
+  //       content: comment,
+  //       time: "Just now",
+  //       likes: 0
+  //     };
+  //     setComments([newComment, ...comments]);
+  //     setComment('');
+  //   }
+  // };
 
   const handleShare = () => {
     setShowShareMenu(!showShareMenu);
@@ -451,11 +441,11 @@ const ArticlePage = () => {
                 <div className="flex items-center space-x-4 sm:space-x-6">
                   <div className="flex items-center space-x-2">
                     <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${isLiked ? 'fill-red-500 text-red-500' : 'text-slate-400'}`} />
-                    <span className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">{isLiked ? '2.4K' : '2.3K'}</span>
+                    {/* <span className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">{isLiked ? '2.4K' : '2.3K'}</span> */}
                   </div>
                   <div className="flex items-center space-x-2">
                     <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
-                    <span className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">{comments.length}</span>
+                    <span className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">0</span>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -475,7 +465,7 @@ const ArticlePage = () => {
         <section className="mt-6 sm:mt-8 bg-white dark:bg-slate-800 rounded-2xl shadow-xl dark:shadow-2xl overflow-hidden">
           <div className="p-4 sm:p-6 lg:p-8">
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-4 sm:mb-6">
-              Comments ({comments.length})
+              Comments
             </h2>
 
             {/* Comment Form */}
@@ -491,7 +481,6 @@ const ArticlePage = () => {
               </div>
               <div className="flex justify-end">
                 <button
-                  onClick={handleComment}
                   className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                   disabled={!comment.trim()}
                 >
@@ -500,41 +489,11 @@ const ArticlePage = () => {
               </div>
             </div>
 
-            {/* Comments List */}
-            <div className="space-y-4 sm:space-y-6">
-              {comments.map((comment) => (
-                <div key={comment.id} className="border-b border-slate-200 dark:border-slate-700 pb-4 sm:pb-6 last:border-b-0">
-                  <div className="flex items-start space-x-3 sm:space-x-4">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-green-500 to-blue-500 flex items-center justify-center flex-shrink-0">
-                      <User className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 mb-2">
-                        <h4 className="font-semibold text-slate-900 dark:text-white text-sm sm:text-base">{comment.author}</h4>
-                        <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{comment.time}</span>
-                      </div>
-                      <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-sm sm:text-base">{comment.content}</p>
-                      <div className="flex items-center space-x-4 mt-2 sm:mt-3">
-                        <button className="flex items-center space-x-1 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                          <Heart className="w-3 h-3 sm:w-4 sm:h-4" />
-                          <span className="text-xs sm:text-sm">{comment.likes}</span>
-                        </button>
-                        <button className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-xs sm:text-sm">
-                          Reply
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
 
-            {comments.length === 0 && (
               <div className="text-center py-8 sm:py-12">
                 <MessageCircle className="w-10 h-10 sm:w-12 sm:h-12 text-slate-400 mx-auto mb-3 sm:mb-4" />
                 <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">No comments yet. Be the first to share your thoughts!</p>
               </div>
-            )}
           </div>
         </section>
       </main>
@@ -542,4 +501,4 @@ const ArticlePage = () => {
   );
 };
 
-export default ArticlePage;
+export default PreviewArticlePage;

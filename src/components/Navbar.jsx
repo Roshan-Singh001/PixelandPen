@@ -3,6 +3,7 @@ import { Link, Navigate } from "react-router-dom";
 import axios from "axios";
 
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
 
 // Images and Icons
 import LogoLight from "../assets/images/Pixel & Pen.png";
@@ -12,63 +13,16 @@ import SunIcon from "../assets/images/light-mode-svgrepo-com.svg";
 import LanguageIcon from "../assets/images/language-svgrepo-com.svg";
 import { IoIosSearch } from "react-icons/io";
 import { FaChevronDown } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
-  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const { isDarkMode, toggleDark } = useTheme();
   const [Sidebar, setSidebar] = useState(false);
-  const [loggedIn, setloggedIn] = useState(false);
-
-  async function checkIfLoggedIn() {
-    const token = localStorage.getItem("authToken");
-    function toDashboard(params) {
-      if (result.token) {
-        localStorage.setItem("authToken", result.token);
-        if (result.role == "Admin") {
-          navigate(`/dashboard/admin`);
-        } else if (result.role == "Contributor") {
-          navigate("/dashboard/contributor");
-        } else if (result.role == "Reader") {
-          navigate("/dashboard/reader");
-        }
-      } else {
-        console.error("No token received from backend");
-      }
-    }
-
-    if (token) {
-      console.log("Token found:", token);
-      setloggedIn(true);
-    } else {
-      console.log("No token found");
-      setloggedIn(false);
-    }
-  }
-
-  useEffect(() => {
-    checkIfLoggedIn();
-  }, []);
-
+  const { loggedIn, logout, userData } = useAuth();
   const toggleSidebar = () => {
     setSidebar(!Sidebar);
   };
 
-  const handleLogout = async () => {
-    try {
-      const response = await axios.post(
-        "http://localhost:3000/logout",
-        {},
-        { withCredentials: true }
-      );
-      localStorage.removeItem("authToken");
-      navigate("/login");
-      console.log(response.data.message); // "Logged out successfully"
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
 
   return (
     <>
@@ -198,7 +152,7 @@ const Navbar = () => {
                   {isOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-20">
                       <Link
-                        to="/dashboard/admin"
+                        to={`/dashboard/${userData.userRole}`}
                         className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
                       >
                         Dashboard
@@ -210,7 +164,7 @@ const Navbar = () => {
                         Profile
                       </Link>
                       <button
-                        onClick={handleLogout}
+                        onClick={logout}
                         className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-600 dark:text-red-400"
                       >
                         Logout
@@ -325,7 +279,7 @@ const Navbar = () => {
                   {isOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-20">
                       <Link
-                        to="/dashboard"
+                        to={`/dashboard/${userData.userRole}`}
                         className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
                       >
                         Dashboard
@@ -337,7 +291,7 @@ const Navbar = () => {
                         Profile
                       </Link>
                       <button
-                        onClick={handleLogout}
+                        onClick={logout}
                         className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-700 dark:text-red-400"
                       >
                         Logout

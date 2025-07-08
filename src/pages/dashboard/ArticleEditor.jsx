@@ -1,4 +1,5 @@
 import React, { useMemo, useCallback, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { Slate, Editable, withReact, useSlate } from 'slate-react';
@@ -23,6 +24,7 @@ import { MdFormatListBulleted } from "react-icons/md";
 import { FaQuoteLeft, FaRegImage } from "react-icons/fa6";
 import { FaCaretDown, FaYoutube, FaAlignLeft, FaAlignCenter, FaAlignRight, FaAlignJustify } from "react-icons/fa";
 import { LuHeading, LuHeading1, LuHeading2, LuHeading3, LuHeading4, LuHeading5, LuHeading6 } from "react-icons/lu";
+import { Navigate } from 'react-router-dom';
 
 const INITIAL_VALUE = [
   {
@@ -40,7 +42,8 @@ const HOTKEYS = {
 
 const ArticleEditor = (props) => {
   const editor = useMemo(() => withHistory(withReact(createEditor())), []);
-  
+
+  const navigate = useNavigate();
   const [isArticleNew, setIsArticleNew] = useState(true);
   const [value, setValue] = useState(INITIAL_VALUE);
   const [title, setTitle] = useState("");
@@ -62,6 +65,7 @@ const ArticleEditor = (props) => {
   const [inputTag, setInputTag] = useState('');
   const [error, setError] = useState('');
 
+  const [isSave, setIsSave] = useState(false);
   const [isContentDirty, setIsContentDirty] = useState(false);
   const [isDescriptionDirty, setIsDescriptionDirty] = useState(false);
   const [isTitleDirty, setIsTitleDirty] = useState(false);
@@ -110,7 +114,13 @@ const ArticleEditor = (props) => {
         console.log(response);
 
         setIsArticleNew(false);
+        setIsSave(true);
         setIsContentDirty(false);
+        setIsDescriptionDirty(false);
+        setIsCategoryDirty(false);
+        setIsTagDirty(false);
+        setIsThumbImageDirty(false);
+        setIsTitleDirty(false);
       }
       else{
         const response = await AxiosInstance.post("/article/save/edit", {
@@ -123,8 +133,11 @@ const ArticleEditor = (props) => {
       
     } catch (error) {
       console.log(error);
-      
     }
+  }
+
+  const handlePreview = ()=>{
+    navigate(`/preview/${slug}`);
   }
 
   const handleImageChange = (e) => {
@@ -133,6 +146,7 @@ const ArticleEditor = (props) => {
       setFeaturedImage(URL.createObjectURL(file));
     }
     setIsThumbImageDirty(true);
+    setIsSave(false);
   };
 
   function getTextLength(nodes) {
@@ -154,6 +168,7 @@ const ArticleEditor = (props) => {
       prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
     );
     setIsCategoryDirty(true);
+    setIsSave(false);
   };
 
   const handleKeyDown = (e) => {
@@ -171,6 +186,7 @@ const ArticleEditor = (props) => {
         setTags([...tags, trimmed]);
         setError('');
         setIsTagDirty(true);
+        setIsSave(false);
       }
 
       setInputTag('');
@@ -182,6 +198,7 @@ const ArticleEditor = (props) => {
     setError('');
 
     setIsTagDirty(true);
+    setIsSave(false);
   };
 
   const canUndo = (editor) => {
@@ -321,6 +338,11 @@ const ArticleEditor = (props) => {
 
   };
 
+  const handleCanBeSave = ()=>{
+    return !(isTitleDirty && (isContentDirty || isCategoryDirty || isDescriptionDirty || isTagDirty || isThumbImageDirty))
+  }
+
+
   // Insert Links
   const insertLink = (editor, url) => {
     if (!url) return;
@@ -420,6 +442,7 @@ const ArticleEditor = (props) => {
   const handleChange = useCallback((newValue) => {
     setValue(newValue);
     setIsContentDirty(true);
+    setIsSave(false);
     
     // console.log('Content:', newValue);
   }, []);
@@ -452,15 +475,15 @@ const ArticleEditor = (props) => {
       </button>
       </div>
       <div className='flex gap-2'>
-      <button title='Preview' disabled={!getTextLength(value)>0} className='py-1 px-[0.7rem] rounded disabled:opacity-60  text-[1.2rem] dark:hover:bg-blue-600 hover:bg-blue-600 hover:text-white'><VscOpenPreview /></button>
+      <button onClick={handlePreview} title='Preview' disabled={!isSave} className='py-1 px-[0.7rem] rounded disabled:opacity-60  text-[1.2rem] dark:hover:bg-blue-600 hover:bg-blue-600 hover:text-white'><VscOpenPreview /></button>
       <button onClick={e=>{setIsRightSideBar(!isRightSideBar)}} title={isRightSideBar?'Sidebar Collapse': 'Sidebar Expand'} className={`py-1 px-[0.7rem] rounded disabled:opacity-60  text-[1.2rem] ${isRightSideBar?'dark:bg-blue-600 bg-blue-600 text-white':'dark:hover:bg-blue-600 hover:bg-blue-600 hover:text-white'}`}>
         {isRightSideBar? <GoSidebarCollapse />: <GoSidebarExpand/>}
       </button>
-      <button title='Save Draft' onClick={handleSave} disabled={!(getTextLength(value)>0)} className='flex justify-center items-center gap-2 py-2 px-[0.7rem] rounded disabled:opacity-60  text-[1rem] bg-teal-600 dark:hover:bg-teal-800 hover:bg-teal-800 text-white'>
+      <button title='Save Draft' onClick={handleSave} disabled={handleCanBeSave()} className='flex justify-center items-center gap-2 py-2 px-[0.7rem] rounded disabled:opacity-60  text-[1rem] bg-teal-600 dark:hover:bg-teal-800 hover:bg-teal-800 text-white'>
         <span>Save</span>
         <CiSaveDown2  /> 
       </button>
-      <button title='Send for Review' disabled={!(getTextLength(value)>0 && isContentDirty)} className='flex justify-center items-center gap-2 py-2 px-[0.7rem] rounded disabled:opacity-60  text-[1rem] bg-rose-600 dark:hover:bg-rose-800 hover:bg-rose-800 text-white'>
+      <button title='Send for Review' disabled={!isSave} className='flex justify-center items-center gap-2 py-2 px-[0.7rem] rounded disabled:opacity-60  text-[1rem] bg-rose-600 dark:hover:bg-rose-800 hover:bg-rose-800 text-white'>
         <span>Send</span> 
         <IoMdSend/> 
       </button>
@@ -500,7 +523,7 @@ const ArticleEditor = (props) => {
             Characters: {getTextLength(value)}
           </div>
           <div>
-            {isContentDirty && (
+            {(!isSave && isContentDirty) && (
               <span className="text-orange-500">
                 • Unsaved changes
               </span>

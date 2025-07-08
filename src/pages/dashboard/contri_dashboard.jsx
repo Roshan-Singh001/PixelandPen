@@ -47,8 +47,7 @@ const ContributorDashboard = () => {
   const [menuOption, setMenuOption] = useState("Dashboard");
   const [isAccepted, setAccecpted] = useState(false);
 
-  const [userData, setUserData] = useState({});
-  const { loggedIn, logout } = useAuth();
+  const { loggedIn, logout, userData } = useAuth();
   const AxiosInstance = axios.create({
     baseURL: "http://localhost:3000/",
     timeout: 30000,
@@ -57,36 +56,6 @@ const ContributorDashboard = () => {
   });
 
   if (!loggedIn) return navigate("/login");
-
-  const fetchUserData = async () => {
-    const token = localStorage.getItem("authToken");
-
-    if (!token) {
-      console.error("No token found");
-      return;
-    }
-
-    try {
-      const response = await AxiosInstance.get("/auth/profile", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const { username, role, id } = response.data;
-      setUserData({ userName: username, userRole: role, user_id: id });
-      if (role != "Contributor") {
-        navigate("/");
-      }
-    } catch (error) {
-      logout();
-      console.error("Failed to fetch user data:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchUserData();
-  }, []);
 
   const articleRequests = [
     { id: 1, title: "AI/ML", author: "Suraj Singh Bhoj" },

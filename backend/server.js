@@ -13,7 +13,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import adminRouter from './admin.js';
 import articleRouter from './article.js';
-import db from './db.js';
+// import db from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -42,7 +42,7 @@ const db_user = process.env.DB_USER;
 
 
 
-// let db;
+let db;
 const MyDbName = "Pixel&Pen";
 
 async function connectToDatabase() {
@@ -60,12 +60,12 @@ async function connectToDatabase() {
     console.log(`Database "${MyDbName}" created or already exists.`);
     await serverConnection.end();
 
-    // db = await mysql.createConnection({
-    //   host: db_host,
-    //   user: db_user,
-    //   password: databasePass,
-    //   database: MyDbName,
-    // });
+    db = await mysql.createConnection({
+      host: db_host,
+      user: db_user,
+      password: databasePass,
+      database: MyDbName,
+    });
     // FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE
 
     const query_temp_user_table = `CREATE TABLE IF NOT EXISTS temp_users (
@@ -341,9 +341,9 @@ app.post("/OtpVerification", async (req, res) => {
       const finalSetContri = `INSERT INTO contributor (cont_id,username, email, password) VALUES (?,?,?,?)`;
       await db.execute(finalSetContri, [`${'cont_'+user_id}`,username, email, password]);
 
-      const tableName = `${'cont_'+user_id}` + '_draft_articles';
+      const tableName = `${'cont_'+user_id}` + '_articles';
 
-      const query_draft_articles_table = `CREATE TABLE IF NOT EXISTS ${tableName} (
+      const query_cont_articles_table = `CREATE TABLE IF NOT EXISTS ${tableName} (
         slug VARCHAR(255) PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
         category JSON,
@@ -351,10 +351,12 @@ app.post("/OtpVerification", async (req, res) => {
         content JSON NOT NULL,
         tags JSON,
         thumbnail_url VARCHAR(255),
+        role ENUM('Approved', 'Draft', 'Rejected', 'Pending') DEFAULT 'Draft',
+        reject_reason VARCHAR(255) DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )`;
-      await db.execute(query_draft_articles_table);
+      await db.execute(query_cont_articles_table);
 
     } 
     else if (role == "Reader") {
