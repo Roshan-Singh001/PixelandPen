@@ -27,6 +27,8 @@ const PreviewArticlePage = () => {
   const [isNavVisible, setIsNavVisible] = useState(false);
   const [featuredImage, setFeaturedImage] = useState(null);
 
+  const [authorName, setAuthName] = useState('Unknown');
+
   const { loggedIn, logout, userData } = useAuth();
 
   if (!loggedIn) return navigate("/login");
@@ -36,11 +38,13 @@ const PreviewArticlePage = () => {
       AxiosInstance.get(`/article/preview/${slug}`,{
         headers: {
           user_id: userData.user_id,
+          user_role:userData.userRole,
         }
       })
       .then((res) => {
-        console.log("Article data:", res.data);
-        setArticle(res.data);
+        console.log("Article data:", res.data.article);
+        setArticle(res.data.article);
+        setAuthName(res.data.authName);
         setIsExist(true);
       })
       .catch((err) => { 
@@ -56,7 +60,6 @@ const PreviewArticlePage = () => {
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
-      // Show navbar when scrolled down more than 300px
       setIsNavVisible(scrollPosition > 300);
     };
 
@@ -317,7 +320,7 @@ const PreviewArticlePage = () => {
               onClick={scrollToTop}
               className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 truncate pr-4 flex-1 text-left"
             >
-              Building Modern Web Applications with React and Advanced State Management
+              {article[0].title}
             </button>
             <div className="flex items-center space-x-2 sm:space-x-4">
               <button 
@@ -421,13 +424,13 @@ const PreviewArticlePage = () => {
                   <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900 dark:text-white">Roshan Singh</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Senior Frontend Developer</p>
+                  <h3 className="font-semibold text-slate-900 dark:text-white">{authorName}</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Contributor</p>
                 </div>
               </div>
               <div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400 ml-13 sm:ml-0">
                 <Calendar className="w-4 h-4 flex-shrink-0" />
-                <span className="text-sm">November 7, 2024</span>
+                <span className="text-sm">N{article[0].updated_at}</span>
               </div>
             </div>
 

@@ -21,7 +21,7 @@ articleRouter.post('/save/new', async (req, res) => {
     console.log(content);
 
     try {
-        const tableName = `${user_id}` + '_draft_articles';
+        const tableName = `${user_id}` + '_articles';
         const values = [currentSlug, title, JSON.stringify(categories), description, JSON.stringify(content), JSON.stringify(tags), featuredImage];
         const query_insert_article = `INSERT INTO ${tableName} (slug, title, category, description, content, tags, thumbnail_url)
                                       VALUES (?,?,?,?,?,?,?)`;
@@ -118,11 +118,12 @@ articleRouter.get('/view/:slug', async (req,res)=>{
 articleRouter.get('/preview/:slug', async (req,res)=>{
     const { slug } = req.params;
     const userId = req.headers['user_id'];
+    const userRole = req.headers['userRole'];
 
     console.log("Slug: ",slug);
 
     try {
-        const fetchArticleQuery = `SELECT * FROM cont_${userId}_articles WHERE slug = ? LIMIT 1`;
+        const fetchArticleQuery = `SELECT * FROM ${userId+'_articles'} WHERE slug = ? LIMIT 1`;
         const results = await db.query(fetchArticleQuery, [slug]);
         if (results[0].length === 0) {
             return res.status(404).json({ error: 'Article not found' });
@@ -130,23 +131,48 @@ articleRouter.get('/preview/:slug', async (req,res)=>{
 
         const article = results[0];
 
+        if (article.article_status == 'Draft' && userRole == 'Admin') {
+            console.log("Denied");
+            return res.status(404).json({ error: 'Article not found' });
+        }
+
         
         article.tags = JSON.parse(article.tags || '[]');
         article.category = JSON.parse(article.category || '[]');
         article.content = JSON.parse(article.content || '[]');
-        res.json(article);
 
-        
+        const fetchNameQuery = `SELECT username FROM contributor WHERE cont_id = ?`;
+        const result2 = await db.query(fetchNameQuery,[userId]);
+        const userName = result2[0][0].username;
+        console.log(result2[0]);
+
+        res.json({article, authName: userName});
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Error Fetching Article"});
         
     }
+});
 
+articleRouter.get('/draft', async (req,res)=>{
+    const userId = req.headers['user_id'];
 
-    res.send('Preview Article');
+    try {
+        const fetchArticleQuery = `SELECT slug,title,updated_at FROM ${userId+'_articles'} WHERE article_status = 'Draft'`;
+        const results = await db.query(fetchArticleQuery);
+        if (results[0].length === 0) {
+            return res.status(404).json({ error: 'Article not found' });
+        }
+        console.log(results[0]);
 
+        const articles = results[0];
 
+        res.json(articles);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error Fetching Article"});
+        
+    }
 });
 
 

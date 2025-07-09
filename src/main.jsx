@@ -134,17 +134,32 @@ const router = createBrowserRouter([
       </>
     ),
   },
-  {
-    path: "/preview/:slug",
-    element: (
-      <>
-        <Navbar />
-        <PreviewArticlePage />
-        <Footer />
-      </>
-    ),
-  },
+  // {
+  //   path: "/preview/:slug",
+  //   element: (
+  //     <>
+  //       <Navbar />
+  //       <PreviewArticlePage />
+  //       <Footer />
+  //     </>
+  //   ),
+  // },
 
+  {
+    element: <PrivateRoute allowedRoles={["Admin", "Contributor"]}/>,
+    children:[
+      {
+        path: "/preview/:slug",
+        element: (
+          <>
+            <Navbar />
+            <PreviewArticlePage />
+            <Footer />
+          </>
+        ),
+      }
+    ],
+  },
   {
     element: <PrivateRoute allowedRoles={["Admin"]}/>,
     children:[

@@ -351,7 +351,7 @@ app.post("/OtpVerification", async (req, res) => {
         content JSON NOT NULL,
         tags JSON,
         thumbnail_url VARCHAR(255),
-        role ENUM('Approved', 'Draft', 'Rejected', 'Pending') DEFAULT 'Draft',
+        article_status ENUM('Approved', 'Draft', 'Rejected', 'Pending') DEFAULT 'Draft',
         reject_reason VARCHAR(255) DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
