@@ -31,6 +31,7 @@ import { FaAnglesRight } from "react-icons/fa6";
 import { FaAnglesLeft } from "react-icons/fa6";
 import { IoIosAddCircle } from "react-icons/io";
 
+import PixelPenLoader from "../../components/PixelPenLoader";
 import MyArticles from "./contri_components/MyArticles";
 import MyComments from "./contri_components/MyComments";
 import MyAnalytics from "./contri_components/MyAnalytics";
@@ -46,14 +47,17 @@ const ContributorDashboard = () => {
   const [menuMinimize, setMenuMinimize] = useState(false);
   const [menuOption, setMenuOption] = useState("Dashboard");
   const [isAccepted, setAccecpted] = useState(false);
+  const [refSlug, setRefslug] = useState("")
 
-  const { loggedIn, logout, userData } = useAuth();
+  const { loggedIn, logout, userData, loading } = useAuth();
   const AxiosInstance = axios.create({
     baseURL: "http://localhost:3000/",
     timeout: 30000,
     headers: { "X-Custom-Header": "foobar" },
     withCredentials: true,
   });
+
+  if (loading) return <PixelPenLoader/>
 
   if (!loggedIn) return navigate("/login");
 
@@ -64,79 +68,94 @@ const ContributorDashboard = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
-      {/* Sidebar */}
-      <aside
-        className={`${
-          menuMinimize ? "" : "w-64"
-        } bg-white dark:bg-gray-800 shadow-md py-6 space-y-6 ${
-          menuOpen ? "block" : "hidden"
-        } sm:block`}
+      <button
+        className="fixed top-4 left-4 sm:hidden text-2xl text-indigo-600 dark:text-indigo-400 z-[60]"
+        onClick={() => setMenuOpen(!menuOpen)}
+        >
+        <FaBars />
+      </button>
+
+      {/* Mobile Sidebar Backdrop (recommended) */}
+      {menuOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 sm:hidden"
+          onClick={() => setMenuOpen(false)}
+          ></div>
+        )}
+
+        {/* Sidebar */}
+        <aside
+  className={`
+    h-screen py-6 m-0 transition-all duration-300 ease-in-out bg-white dark:bg-gray-800
+    fixed top-0 left-0 z-50
+    ${menuOpen ? 'translate-x-0' : '-translate-x-full'}
+    ${menuOpen ? '' : 'w-0 overflow-hidden'}
+    sm:static sm:translate-x-0 sm:z-auto
+    ${menuMinimize ? 'sm:w-[4.6rem]' : 'sm:w-64'}
+    
+  `}
+>
+  <div className="flex justify-evenly gap-2">
+    {menuMinimize == false && (
+      <h2 className="inline text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+        Contributor Panel
+      </h2>
+    )}
+    {menuMinimize ? (
+      <button
+        onClick={() => setMenuMinimize(false)}
+        className="p-2 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-600"
       >
-        <div className="flex justify-evenly gap-2">
-          {menuMinimize == false && (
-            <h2 className="inline text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-              Contributor Panel
-            </h2>
-          )}
-          {menuMinimize ? (
-            <button
-              onClick={(e) => setMenuMinimize(false)}
-              className="p-2 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-600"
-            >
-              <FaAnglesRight size={20} className="text-black dark:text-white" />
-            </button>
-          ) : (
-            <button
-              onClick={(e) => setMenuMinimize(true)}
-              className="p-2 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-600"
-            >
-              <FaAnglesLeft size={20} className="text-black dark:text-white" />
-            </button>
-          )}
-        </div>
-        <nav className="flex flex-col mt-4">
-          {[
-            { label: "Dashboard", icon: <BiSolidDashboard size={25} /> },
-            { label: "My Articles", icon: <MdArticle size={25} /> },
-            { label: "Comments", icon: <FaComments size={25} /> },
-            { label: "My Stats", icon: <MdAnalytics size={25} /> },
-            { label: "Profile", icon: <FaUserCog  size={25} /> },
-            { label: "Settings", icon: <IoSettingsSharp size={25} /> },
-            { label: "Add Article", icon: <IoIosAddCircle  size={25} /> },
-          ].map(({ label, icon }) => (
-            <button
-              title={label}
-              key={label}
-              onClick={() => setMenuOption(label)}
-              className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
-                menuOption === label
-                  ? "bg-indigo-100 dark:bg-indigo-600 text-indigo-700 dark:text-white font-semibold"
-                  : "hover:bg-gray-200 dark:hover:bg-gray-700"
-              }`}
-            >
-              {icon}
-              {menuMinimize == false && <span>{label}</span>}
-            </button>
-          ))}
-          <button
-            onClick={logout}
-            title="Log out"
-            className="flex items-center gap-3 px-4 py-3 mx-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-600 text-red-600 dark:text-red-300"
-          >
-            <MdLogout size={25} />
-            {menuMinimize == false && <span>Log Out</span>}
-          </button>
-        </nav>
-      </aside>
+        <FaAnglesRight size={20} className="text-black dark:text-white" />
+      </button>
+    ) : (
+      <button
+        onClick={() => setMenuMinimize(true)}
+        className="p-2 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-600"
+      >
+        <FaAnglesLeft size={20} className="text-black dark:text-white" />
+      </button>
+    )}
+  </div>
+  <nav className="flex flex-col mt-4">
+    {[
+      { label: "Dashboard", icon: <BiSolidDashboard size={25} /> },
+      { label: "My Articles", icon: <MdArticle size={25} /> },
+      { label: "Comments", icon: <FaComments size={25} /> },
+      { label: "My Stats", icon: <MdAnalytics size={25} /> },
+      { label: "Profile", icon: <FaUserCog size={25} /> },
+      { label: "Settings", icon: <IoSettingsSharp size={25} /> },
+      { label: "Add Article", icon: <IoIosAddCircle size={25} /> },
+    ].map(({ label, icon }) => (
+      <button
+        title={label}
+        key={label}
+        onClick={() => setMenuOption(label)}
+        className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
+          menuOption === label
+            ? "bg-indigo-100 dark:bg-indigo-600 text-indigo-700 dark:text-white font-semibold"
+            : "hover:bg-gray-200 dark:hover:bg-gray-700"
+        }`}
+      >
+        {icon}
+        {menuMinimize == false && <span>{label}</span>}
+      </button>
+    ))}
+    <button
+      onClick={logout}
+      title="Log out"
+      className="flex items-center gap-3 px-4 py-3 mx-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-600 text-red-600 dark:text-red-300"
+    >
+      <MdLogout size={25} />
+      {menuMinimize == false && <span>Log Out</span>}
+    </button>
+  </nav>
+        </aside>
+
+
 
       {/* Main Content */}
-      <main className="flex-1 px-5 py-2">
-        <button
-          className="sm:hidden text-2xl mb-4 text-indigo-600 dark:text-indigo-400"
-          onClick={() => setMenuOpen(!menuOpen)}
-        >
-          <FaBars />
-        </button>
+      <main className="flex-1 px-5 py-2 overflow-y-auto">
 
         {menuOption === "Dashboard" && (
           <div>
@@ -237,7 +256,7 @@ const ContributorDashboard = () => {
           </div>
         )}
 
-        {menuOption === "My Articles" && <MyArticles />}
+        {menuOption === "My Articles" && <MyArticles userdata={userData} setMenuOption={setMenuOption} setRefslug={setRefslug} />}
         {menuOption === "Comments" && <MyComments />}
         {menuOption === "My Stats" && <MyAnalytics />}
         {menuOption === "Profile" && <ContriProfile />}
@@ -246,7 +265,7 @@ const ContributorDashboard = () => {
             <ContriSettings />
           </ThemeProvider>
         )}
-        {menuOption === "Add Article" && <ArticleEditor userdata={userData} />}
+        {menuOption === "Add Article" && <ArticleEditor userdata={userData} refSlug={refSlug} />}
       </main>
     </div>
   );

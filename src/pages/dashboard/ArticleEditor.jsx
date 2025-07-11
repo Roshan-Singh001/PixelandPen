@@ -7,6 +7,9 @@ import { Node, Text, createEditor, Editor, Range, Transforms, Element as SlateEl
 import { withHistory, HistoryEditor } from 'slate-history';
 import isHotkey from 'is-hotkey';
 
+import PixelPenLoaderSmall from '../../components/PixelPenLoaderSmall';
+import PixelPenLoader from '../../components/PixelPenLoader';
+
 //Icons
 import {
   MdFormatBold,
@@ -26,7 +29,7 @@ import { FaCaretDown, FaYoutube, FaAlignLeft, FaAlignCenter, FaAlignRight, FaAli
 import { LuHeading, LuHeading1, LuHeading2, LuHeading3, LuHeading4, LuHeading5, LuHeading6 } from "react-icons/lu";
 import { Navigate } from 'react-router-dom';
 
-const INITIAL_VALUE = [
+var INITIAL_VALUE = [
   {
     type: 'paragraph',
     children: [{ text: '' }],
@@ -42,10 +45,12 @@ const HOTKEYS = {
 
 const ArticleEditor = (props) => {
   const editor = useMemo(() => withHistory(withReact(createEditor())), []);
+  const [isLoading, setIsLoading] = useState(true);
 
   const navigate = useNavigate();
   const [isArticleNew, setIsArticleNew] = useState(true);
   const [value, setValue] = useState(INITIAL_VALUE);
+  const [editorKey, setEditorKey] = useState(0);
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState('');
   const [isRightSideBar, setIsRightSideBar] = useState(true);
@@ -65,6 +70,7 @@ const ArticleEditor = (props) => {
   const [inputTag, setInputTag] = useState('');
   const [error, setError] = useState('');
 
+  const [inProgress, setInProgress] = useState(false);
   const [isSave, setIsSave] = useState(false);
   const [isContentDirty, setIsContentDirty] = useState(false);
   const [isDescriptionDirty, setIsDescriptionDirty] = useState(false);
@@ -72,6 +78,43 @@ const ArticleEditor = (props) => {
   const [isTagDirty, setIsTagDirty] = useState(false);
   const [isCategoryDirty, setIsCategoryDirty] = useState(false);
   const [isThumbImageDirty, setIsThumbImageDirty] = useState(false);
+
+  useEffect(() => {
+    if (props.refSlug != "") {
+      try {
+        AxiosInstance.get('/article/fetch',{
+          headers:{
+            user_id: props.userdata.user_id,
+            slug: props.refSlug,
+          }
+        })
+        .then((res)=>{
+          console.log(res.data);
+
+          setTitle(res.data[0].title);
+          setCategories(res.data[0].category);
+          setDescription(res.data[0].description);
+          setSlug(res.data[0].slug);
+          setValue(res.data[0].content);
+          setTags(res.data[0].tags);
+          setFeaturedImage(res.data[0].thumbnail_url);
+
+          setIsSave(true);
+          setEditorKey(prev => prev + 1);
+          setIsArticleNew(false);
+        })
+        .catch((err)=>{
+          console.log(err);
+        });
+        
+      } catch (error) {
+        console.log(error);
+        
+      }
+    }
+    setIsLoading(false);
+  }, []);
+
 
   const allCategories = ['News', 'Health', 'Technology', 'Education', 'Politics'];
 
@@ -84,8 +127,11 @@ const ArticleEditor = (props) => {
         .replace(/-+/g, '-');           
   }
 
+
+
   // SAVE DRAFT
   const handleSave = async ()=>{
+    setInProgress(true);
     let prevSlug = slug;
     let currentSlug = slug;
     const generated = generateSlug(title);
@@ -94,18 +140,19 @@ const ArticleEditor = (props) => {
 
     console.log(props.userdata);
 
+    const article = {
+      currentSlug,
+      title,
+      description,
+      currentSlug,
+      categories,
+      tags, 
+      featuredImage, 
+      content: value,
+    };
+
     try {
       if (isArticleNew) {
-        const article = {
-          currentSlug,
-          title,
-          description,
-          currentSlug,
-          categories,
-          tags, 
-          featuredImage, 
-          content: value,
-        };
         
         const response = await AxiosInstance.post("/article/save/new", {
           user_id: props.userdata.user_id,
@@ -129,15 +176,24 @@ const ArticleEditor = (props) => {
           article: JSON.stringify(article),
         });
         console.log(response);
+
+        setIsSave(true);
+        setIsContentDirty(false);
+        setIsDescriptionDirty(false);
+        setIsCategoryDirty(false);
+        setIsTagDirty(false);
+        setIsThumbImageDirty(false);
+        setIsTitleDirty(false);
       }
       
     } catch (error) {
       console.log(error);
     }
+    setInProgress(false);
   }
 
   const handlePreview = ()=>{
-    navigate(`/preview/${slug}`);
+    window.open(`/preview/${slug}`, '_blank');
   }
 
   const handleImageChange = (e) => {
@@ -229,7 +285,7 @@ const ArticleEditor = (props) => {
       justify: 'text-justify',
     }[props.element.children[0].align || 'left'];
     // console.log("ALignment: ",props.element.children[0].align, alignment);
-
+    console.log(props.element.type);
     switch (props.element.type) {
       case 'code':
         return <CodeElement {...props} alignment={alignment} />
@@ -339,7 +395,26 @@ const ArticleEditor = (props) => {
   };
 
   const handleCanBeSave = ()=>{
-    return !(isTitleDirty && (isContentDirty || isCategoryDirty || isDescriptionDirty || isTagDirty || isThumbImageDirty))
+    if(title.length <= 5) return true;
+    else if(getTextLength(value) == 0) return true;
+
+    console.log(!(
+      isTitleDirty ||
+      isContentDirty ||
+      isCategoryDirty ||
+      isDescriptionDirty ||
+      isTagDirty ||
+      isThumbImageDirty
+    ));
+
+    return !(
+      isTitleDirty ||
+      isContentDirty ||
+      isCategoryDirty ||
+      isDescriptionDirty ||
+      isTagDirty ||
+      isThumbImageDirty
+    );
   }
 
 
@@ -444,8 +519,11 @@ const ArticleEditor = (props) => {
     setIsContentDirty(true);
     setIsSave(false);
     
-    // console.log('Content:', newValue);
   }, []);
+
+  if (isLoading) {
+    return <PixelPenLoader/>
+  }
 
   return (<>
     <nav className='flex justify-between items-center gap-2 p-2 rounded-lg bg-white dark:bg-gray-800'>
@@ -479,9 +557,11 @@ const ArticleEditor = (props) => {
       <button onClick={e=>{setIsRightSideBar(!isRightSideBar)}} title={isRightSideBar?'Sidebar Collapse': 'Sidebar Expand'} className={`py-1 px-[0.7rem] rounded disabled:opacity-60  text-[1.2rem] ${isRightSideBar?'dark:bg-blue-600 bg-blue-600 text-white':'dark:hover:bg-blue-600 hover:bg-blue-600 hover:text-white'}`}>
         {isRightSideBar? <GoSidebarCollapse />: <GoSidebarExpand/>}
       </button>
-      <button title='Save Draft' onClick={handleSave} disabled={handleCanBeSave()} className='flex justify-center items-center gap-2 py-2 px-[0.7rem] rounded disabled:opacity-60  text-[1rem] bg-teal-600 dark:hover:bg-teal-800 hover:bg-teal-800 text-white'>
+      <button title='Save Draft' onClick={handleSave} disabled={handleCanBeSave()} className={`flex justify-center items-center gap-2 ${inProgress ? '': 'py-2 px-[0.7rem]'} rounded disabled:opacity-60  text-[1rem] bg-teal-600 dark:hover:bg-teal-800 hover:bg-teal-800 text-white`}>
+        {inProgress? <PixelPenLoaderSmall/>:<> 
         <span>Save</span>
         <CiSaveDown2  /> 
+        </>}
       </button>
       <button title='Send for Review' disabled={!isSave} className='flex justify-center items-center gap-2 py-2 px-[0.7rem] rounded disabled:opacity-60  text-[1rem] bg-rose-600 dark:hover:bg-rose-800 hover:bg-rose-800 text-white'>
         <span>Send</span> 
@@ -491,12 +571,12 @@ const ArticleEditor = (props) => {
     </nav>
 
     <div className='mt-2 flex flex-auto max-[1000px]:flex-wrap gap-2'>
-    <div className="w-full p-4  bg-white dark:bg-gray-800 rounded-2xl shadow-md dark:shadow-lg transition-colors">
+    <div className={`w-full ${isRightSideBar && 'max-w-[54rem]'} p-4  bg-white dark:bg-gray-800 rounded-2xl shadow-md dark:shadow-lg transition-colors`}>
       <div className="mb-4">
-        <input onChange={e=>{setTitle(e.target.value); setIsTitleDirty(true);}} className='text-3xl border-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none bg-transparent w-full font-bold text-gray-800 dark:text-gray-100 mb-2' type="text" placeholder='Add title' />
+        <input value={title} onChange={e=>{setTitle(e.target.value); setIsTitleDirty(true);}} className='text-3xl border-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none bg-transparent w-full font-bold text-gray-800 dark:text-gray-100 mb-2' type="text" placeholder='Add title' />
       </div>
       <div>
-      <Slate  editor={editor} initialValue={INITIAL_VALUE} onChange={handleChange}>
+      <Slate  key={editorKey}  editor={editor} initialValue={value} onChange={handleChange}>
         <Toolbar toggleMark={toggleMark} toggleBlock={toggleBlock} isBlockActive={isBlockActive} toggleAlignment={toggleAlignment} toggleLink={toggleLink} isLinkActive={isLinkActive} unwrapLink={unwrapLink} insertImage={insertImage} embedYoutube={embedYoutube} isAlignActive={isAlignActive}/>
         <div className="h-[50vh] overflow-auto mt-4 border border-gray-300 dark:border-gray-700 rounded-lg p-3 min-h-[300px]">
           <Editable
@@ -658,12 +738,21 @@ const Toolbar = ({ toggleMark, toggleBlock, isBlockActive, toggleAlignment, isAl
         toggleMark={toggleMark} 
         title="Underline (Ctrl+U)"
       />
-      <ToolbarButton 
+      {/* <ToolbarButton 
         icon={<MdCode />} 
         format="code" 
         editor={editor} 
         toggleMark={toggleMark} 
         title="Code (Ctrl+`)"
+      /> */}
+
+      <BlockButton
+         icon={<MdCode />}
+         format="code"
+         editor={editor}
+         toggleBlock={toggleBlock}
+         isBlockActive={isBlockActive}
+         title="Code"
       />
 
       <button
@@ -870,11 +959,10 @@ const BlockButton = ({ icon, format, editor, toggleBlock, isBlockActive,title })
 };
 
 const CodeElement = ({ attributes, children, alignment }) => (
-  <pre 
-    {...attributes} 
-    className={`${alignment} bg-gray-100 dark:bg-gray-800 p-2 rounded overflow-x-auto font-mono text-sm`}
-  >
-    <code>{children}</code>
+  <pre {...attributes} className={`${alignment} relative bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/50 rounded-lg p-4 overflow-x-auto font-mono text-sm leading-relaxed shadow-sm backdrop-blur-sm transition-colors duration-200 group`}>
+    <code className="text-slate-800 dark:text-slate-200 selection:bg-blue-200 dark:selection:bg-blue-900/50">
+      {children}
+    </code>
   </pre>
 );
 
@@ -960,14 +1048,6 @@ const ListItemElement = ({ attributes, children }) => (
 const Leaf = ({ attributes, children, leaf }) => {
   if (leaf.bold) {
     children = <strong>{children}</strong>;
-  }
-  
-  if (leaf.code) {
-    children = (
-      <code className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-sm font-mono">
-        {children}
-      </code>
-    );
   }
   
   if (leaf.italic) {

@@ -1,80 +1,72 @@
 import React from "react";
-import { TbMessageChatbot } from "react-icons/tb";
 import { GiCoffeeCup } from "react-icons/gi";
 import { IoMdPerson } from "react-icons/io";
-import { MdEmail } from "react-icons/md";
 import { FcGoogle } from "react-icons/fc";
 import { useNavigate } from "react-router-dom";
 import { BiLogoFacebookCircle } from "react-icons/bi";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { FaApple } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import LogoLight from "../assets/images/Pixel & Pen.png";
 import LogoDark from "../assets/images/Pixel & Pen(B&W).png";
-import axios from "axios";
+
+import PixelPenLoader from "../components/PixelPenLoader";
+import { useAuth } from "../contexts/AuthContext";
 
 function Login_page() {
+  const { loggedIn, userData, loading, login } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setshowPassword] = useState(false);
   const [role, setRole] = useState("");
   const [form, setform] = useState({ username: "", pass: "", loginAs: "" });
   const navigate = useNavigate();
-  const AxiosInstance = axios.create({
-    baseURL: 'http://localhost:3000/',
-    timeout: 3000,
-    headers: {'X-Custom-Header': 'foobar'}
-  });
+  useEffect(() => {
+    console.log(loggedIn, userData);
+    if (loggedIn && !loading && userData?.userRole) {
+      console.log("hello");
+      navigate(`/dashboard/${userData.userRole.toLowerCase()}`);
+    }
+  }, [loggedIn, loading, userData, navigate]);
+  
+
   const showPasswordToggle = () => {
     setshowPassword((prevState) => !prevState);
   };
 
   function handleChange(e) {
     setform({ ...form, [e.target.name]: e.target.value });
-
-    console.log(form);
   }
 
   async function handleFormValidation(e) {
     e.preventDefault();
+    setIsLoading(true);
     try {
-      const response = await AxiosInstance.post("/validate", {
-        username: form.username, // assuming `form.username` is the email
-        password: form.pass,
-        role: form.loginAs,
-      });
+      const result = await login(form.username, form.pass, form.loginAs);
 
-      const result = response.data;
-      console.log("Login successful:", result.message);
-
-      // Save the JWT token in localStorage
-      if (result.token) {
-        localStorage.setItem("authToken", result.token);
-        if (result.role == "Admin") {
-          navigate(`/dashboard/admin`);
-        }
-        else if (result.role == "Contributor") {
-          navigate("/dashboard/contributor");
-        }
-        else if(result.role== "Reader"){
-          navigate("/dashboard/reader");
-        }
+      if (result.success) {
+        toast.success("Login successful!");
+        navigate(`/dashboard/${result.userRole.toLowerCase()}`);
       } else {
-        console.error("No token received from backend");
+        toast.error(`Error: ${result.error || "Login failed, please try again."}`);
       }
-
-      
-
-      // Redirect to Dashboard
     } catch (err) {
-      // Handle any errors like 401, 400, network issues
-      const errorMessage =
-        err.response?.data?.message || "Login failed, please try again.";
-      console.error("Error during login:", err);
-      toast.error(`Error: ${errorMessage}`);
+      console.error("Unexpected error during login form submission:", err);
+      toast.error("An unexpected error occurred during login.");
     }
+    setIsLoading(false);
   }
+
+  if (isLoading || loading) {
+    return <PixelPenLoader/>
+    
+  }
+
+  if (loggedIn && userData?.userRole) {
+    return null; 
+}
 
   return (
     <>

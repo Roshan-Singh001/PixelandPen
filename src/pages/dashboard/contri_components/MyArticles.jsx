@@ -1,16 +1,62 @@
 import React from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { Eye, Edit, FileText, Clock, CheckCircle, XCircle, Trash2, Calendar, Tag } from 'lucide-react';
 
-const MyArticles = () => {
-  const pendingArticles = [
-    { id: 1, title: 'Edge Computing in 2025', submittedOn: '2025-07-05' },
-    { id: 2, title: 'Data Lakes vs Data Warehouses', submittedOn: '2025-07-03' },
-  ];
-  
-  const draftArticles = [
-    { id: 1, title: 'Edge Computing in 2025', lastModified: '2025-07-08' },
-    { id: 2, title: 'Data Lakes vs Data Warehouses', lastModified: '2025-07-06' },
-  ];
+import PixelPenLoader from '../../../components/PixelPenLoader';
+
+const MyArticles = (props) => {
+  const AxiosInstance = axios.create({
+      baseURL: "http://localhost:3000/",
+      timeout: 30000,
+      headers: { "X-Custom-Header": "foobar" },
+      withCredentials: true,
+    });
+  const navigate = useNavigate();
+  const [draftArticles, setDraftArticles] = useState([]);
+  const [pendingArticles, setPendingArticles] = useState([]);
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    try {
+      AxiosInstance.get('/article/draft', {
+        headers:{
+          user_id: props.userdata.user_id,
+        }
+      })
+      .then((res)=>{
+        setDraftArticles(res.data);
+      })
+      .catch((err)=>{
+        console.log(err);
+      });
+
+      AxiosInstance.get('/article/pending', {
+        headers:{
+          user_id: props.userdata.user_id,
+        }
+      })
+      .then((res)=>{
+        setPendingArticles(res.data);
+      })
+      .catch((err)=>{
+        console.log(err);
+      });
+
+      setIsLoading(false);
+
+    } catch (error) {
+      console.log(error);
+    }
+
+  }, []);
+
+  if (isLoading) {
+    return <PixelPenLoader/>
+    
+  }
 
   const rejectedArticles = [
     { id: 3, title: 'Old Trends in AI', reason: 'Plagiarized content', rejectedOn: '2025-07-01' },
@@ -20,6 +66,15 @@ const MyArticles = () => {
     { id: 4, title: 'The Future of Blockchain', category: 'DevOps', date: '2025-05-20', views: 1250 },
     { id: 5, title: 'AI in Healthcare', category: 'AI/ML', date: '2025-05-18', views: 2340 },
   ];
+
+  const handleEdit = (slug)=>{
+    props.setRefslug(slug);
+    props.setMenuOption("Add Article");
+  }
+
+  const handlePreview = (slug)=>{
+    window.open(`/preview/${slug}`, '_blank');
+  }
 
   const StatusBadge = ({ status }) => {
     const statusConfig = {
@@ -83,10 +138,10 @@ const MyArticles = () => {
                   Submitted: {article.submittedOn}
                 </span>
               )}
-              {article.lastModified && (
+              {article.updated_at && (
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  Modified: {article.lastModified}
+                  Modified: {new Date(article.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                 </span>
               )}
               {article.rejectedOn && (
@@ -143,9 +198,6 @@ const MyArticles = () => {
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
             Articles
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Manage your articles, track submissions, and monitor performance
-          </p>
         </div>
 
         {/* Pending Articles */}
@@ -158,7 +210,7 @@ const MyArticles = () => {
           <div className="space-y-4">
             {pendingArticles.length > 0 ? (
               pendingArticles.map((article) => (
-                <ArticleCard key={article.id} article={article} status="pending">
+                <ArticleCard key={article.slug} article={article} status="pending">
                   <ActionButton 
                     icon={Eye} 
                     variant="secondary" 
@@ -182,13 +234,15 @@ const MyArticles = () => {
           <div className="space-y-4">
             {draftArticles.length > 0 ? (
               draftArticles.map((article) => (
-                <ArticleCard key={article.id} article={article} status="draft">
-                  <ActionButton 
+                <ArticleCard key={article.slug} article={article} status="draft">
+                  <ActionButton
+                    onClick={()=>handleEdit(article.slug)}
                     icon={Edit} 
                     variant="primary" 
                     title="Edit Article"
                   />
-                  <ActionButton 
+                  <ActionButton
+                    onClick={()=>handlePreview(article.slug)}
                     icon={Eye} 
                     variant="secondary" 
                     title="Preview Article"

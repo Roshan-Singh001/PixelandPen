@@ -35,11 +35,11 @@ articleRouter.post('/save/new', async (req, res) => {
 });
 
 articleRouter.post('/save/edit', async (req, res) => {
-    const { user_id, article } = req.body;
+    const { prevSlug,user_id, article } = req.body;
 
     const newArticle = JSON.parse(article);
     console.log("Received:", user_id);
-    console.log("Received:", newArticle.currentSlug);
+    console.log("Received:", newArticle.prevSlug);
 
     const { currentSlug, title, description, categories, tags, featuredImage, content} = newArticle;
 
@@ -52,10 +52,17 @@ articleRouter.post('/save/edit', async (req, res) => {
     console.log(content);
 
     try {
-        const tableName = `${'cont_'+user_id}` + '_articles';
-        const values = [currentSlug, title, JSON.stringify(categories), description, JSON.stringify(content), JSON.stringify(tags), featuredImage];
-        const query_insert_article = `INSERT INTO ${tableName} (slug, title, category, description, content, tags, thumbnail_url)
-                                      VALUES (?,?,?,?,?,?,?)`;
+        const tableName = `${user_id}` + '_articles';
+        const values = [currentSlug, title, JSON.stringify(categories), description, JSON.stringify(content), JSON.stringify(tags), featuredImage, prevSlug];
+        const query_insert_article = `UPDATE ${tableName}
+                                      SET slug = ?,
+                                          title = ?,
+                                          category = ?,
+                                          description =?,  
+                                          content = ?,
+                                          tags = ?,
+                                          thumbnail_url = ?
+                                      WHERE slug = ?`;
         await db.execute(query_insert_article, values);
         
         res.status(200).json({ Saved: "Article saved successfully" });
@@ -154,20 +161,59 @@ articleRouter.get('/preview/:slug', async (req,res)=>{
     }
 });
 
+articleRouter.get('/fetch', async (req,res)=>{
+    const userId = req.headers['user_id'];
+    const slug = req.headers['slug'];
+
+    console.log("Slug: ",slug);
+
+    try {
+        const fetchArticleQuery = `SELECT * FROM ${userId+'_articles'} WHERE slug = ?`;
+        const results = await db.query(fetchArticleQuery, [slug]);
+        if (results[0].length === 0) {
+            return res.status(404).json({ error: 'Article not found' });
+        }
+
+        const article = results[0];
+        
+        article.tags = JSON.parse(article.tags || '[]');
+        article.category = JSON.parse(article.category || '[]');
+        article.content = JSON.parse(article.content || '[]');
+
+        res.json(article);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error Fetching Article"});   
+    }
+});
+
 articleRouter.get('/draft', async (req,res)=>{
     const userId = req.headers['user_id'];
 
     try {
         const fetchArticleQuery = `SELECT slug,title,updated_at FROM ${userId+'_articles'} WHERE article_status = 'Draft'`;
         const results = await db.query(fetchArticleQuery);
-        if (results[0].length === 0) {
-            return res.status(404).json({ error: 'Article not found' });
-        }
-        console.log(results[0]);
 
-        const articles = results[0];
+        const DraftArticles = results[0];
 
-        res.json(articles);
+        res.json(DraftArticles);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error Fetching Article"});
+        
+    }
+});
+
+articleRouter.get('/pending', async (req,res)=>{
+    const userId = req.headers['user_id'];
+
+    try {
+        const fetchArticleQuery = `SELECT slug,title,updated_at FROM ${userId+'_articles'} WHERE article_status = 'Pending'`;
+        const results = await db.query(fetchArticleQuery);
+
+        const PendingArticles = results[0];
+
+        res.json(PendingArticles);
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Error Fetching Article"});

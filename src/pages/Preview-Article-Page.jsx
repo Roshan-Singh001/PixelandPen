@@ -430,7 +430,8 @@ const PreviewArticlePage = () => {
               </div>
               <div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400 ml-13 sm:ml-0">
                 <Calendar className="w-4 h-4 flex-shrink-0" />
-                <span className="text-sm">N{article[0].updated_at}</span>
+                <span className="text-sm">{new Date(article[0].updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </span>
               </div>
             </div>
 

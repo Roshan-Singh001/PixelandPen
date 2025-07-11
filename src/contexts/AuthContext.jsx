@@ -1,6 +1,4 @@
-// AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
-// import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const AuthContext = createContext();
@@ -14,7 +12,6 @@ export const AuthProvider = ({ children }) => {
   const [loggedIn, setLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState({});
-  // const navigate = useNavigate();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -49,10 +46,44 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
+  const login = async (username, password, role) => {
+    setLoading(true);
+    try {
+      const response = await AxiosInstance.post("/validate", {
+        username,
+        password,
+        role,
+      });
+
+      const result = response.data;
+      if (result.token) {
+        localStorage.setItem("authToken", result.token);
+        const profileResponse = await AxiosInstance.get("/auth/profile", {
+          headers: {
+            Authorization: `Bearer ${result.token}`,
+          },
+        });
+        const { username: profileUsername, role: profileRole, id: profileId } = profileResponse.data;
+        setUserData({ userName: profileUsername, userRole: profileRole, user_id: profileId });
+        setLoggedIn(true);
+        return { success: true, userRole: profileRole };
+      } else {
+        throw new Error("No token received");
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+      setLoggedIn(false);
+      setUserData({});
+      localStorage.removeItem("authToken");
+      return { success: false, error: error.response?.data?.message || "Login failed" };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       await AxiosInstance.post("/logout");
-      // console.log(response.data.message);
     } 
     catch (error) {
       console.error("Logout failed:", error);
@@ -65,7 +96,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ loggedIn, loading, logout, userData }}>
+    <AuthContext.Provider value={{ loggedIn, setLoggedIn,loading, logout,login, userData }}>
       {!loading && children}
     </AuthContext.Provider>
   );
