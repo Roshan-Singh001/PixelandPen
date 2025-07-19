@@ -116,6 +116,7 @@ async function connectToDatabase() {
     )`;
 
     await db.execute(query_subscriber_table);
+
     const query_articles_table = `CREATE TABLE IF NOT EXISTS articles (
       article_id VARCHAR(255) PRIMARY KEY,
       slug VARCHAR(255) UNIQUE,
@@ -127,13 +128,30 @@ async function connectToDatabase() {
       thumbnail_url VARCHAR(255),
       author VARCHAR(255) NOT NULL,
       views INT DEFAULT 0,
+      likes INT DEFAULT 0,
+      comments JSON,
       is_featured BOOLEAN DEFAULT FALSE,
+      publish_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`;
+
+    await db.execute(query_articles_table);
+
+    const query_review_article = `CREATE TABLE IF NOT EXISTS review_articles (
+      review_id INT AUTO_INCREMENT PRIMARY KEY,
+      slug VARCHAR(255) UNIQUE,
+      author VARCHAR(255) NOT NULL,
+      cont_id VARCHAR(255) NOT NULL,
       status ENUM('Approved', 'Rejected', 'Pending') DEFAULT 'Pending',
-      reject_reason VARCHAR(255) DEFAULT NULL,
+      is_featured BOOLEAN DEFAULT FALSE,
+      reject_reason TEXT DEFAULT NULL,
+      reject_at TIMESTAMP DEFAULT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )`;
-    await db.execute(query_articles_table);
+
+    await db.execute(query_review_article);
+
+
   } catch (error) {
     console.error("Database connection error:", error.message);
   }

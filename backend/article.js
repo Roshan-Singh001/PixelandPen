@@ -12,14 +12,6 @@ articleRouter.post('/save/new', async (req, res) => {
 
     const { currentSlug, title, description, categories, tags, featuredImage, content} = newArticle;
 
-    console.log(currentSlug);
-    console.log(title);
-    console.log(description);
-    console.log(categories);
-    console.log(tags);
-    console.log(featuredImage);
-    console.log(content);
-
     try {
         const tableName = `${user_id}` + '_articles';
         const values = [currentSlug, title, JSON.stringify(categories), description, JSON.stringify(content), JSON.stringify(tags), featuredImage];
@@ -43,14 +35,6 @@ articleRouter.post('/save/edit', async (req, res) => {
 
     const { currentSlug, title, description, categories, tags, featuredImage, content} = newArticle;
 
-    console.log(currentSlug);
-    console.log(title);
-    console.log(description);
-    console.log(categories);
-    console.log(tags);
-    console.log(featuredImage);
-    console.log(content);
-
     try {
         const tableName = `${user_id}` + '_articles';
         const values = [currentSlug, title, JSON.stringify(categories), description, JSON.stringify(content), JSON.stringify(tags), featuredImage, prevSlug];
@@ -72,8 +56,42 @@ articleRouter.post('/save/edit', async (req, res) => {
     }
 });
 
-articleRouter.post('/article/send', (req, res) => {
-    res.send('Admin Dashboard');
+articleRouter.post('/send', async(req, res) => {
+    const { slug, cont_id, author } = req.body;
+
+    try {
+        const check_query = `SELECT status WHERE slug = ?`;
+        const results = await db.execute(check_query, slug);
+
+        if (results[0].length === 0) {
+            const review_query = `INSERT INTO review_articles (slug, author, cont_id) VALUES (?,?,?)`;
+            await db.execute(review_query,[slug,cont_id,author]);
+            const tableName = `${user_id}` + '_articles';
+            
+            const update_query = `UPDATE ${tableName} SET article_status = 'Pending' WHERE slug = ?`;
+            await db.execute(update_query,[slug]);
+            
+            res.status(200).json({ Saved: "Article Sended for Review Successfully" });
+        }
+        else{
+            if (results[0].status == 'Rejected') {
+                const review_query = `UPDATE review_articles
+                                        SET status = 'Pending',
+                                            reject_reason = NULL,
+                                            reject_at = NULL,
+                                            slug = ?
+                                        WHERE review_id = ?`;
+                await db.execute(review_query,[slug, results[0].review_id]);
+            }
+            else{
+                res.status(500).json({ message: "Title is already is already in use"});
+
+            }
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error during Sending"});
+    }
 });
   
 articleRouter.get('/view/:slug', async (req,res)=>{

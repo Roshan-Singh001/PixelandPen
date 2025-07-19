@@ -155,7 +155,7 @@ const ContributorDashboard = () => {
 
 
       {/* Main Content */}
-      <main className="flex-1 px-5 py-2 overflow-y-auto">
+      <main className="flex-1 px-5 py-2 h-screen overflow-y-auto">
 
         {menuOption === "Dashboard" && (
           <div>

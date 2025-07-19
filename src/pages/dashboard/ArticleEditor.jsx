@@ -196,6 +196,23 @@ const ArticleEditor = (props) => {
     window.open(`/preview/${slug}`, '_blank');
   }
 
+  const handleSend = async()=>{
+    console.log("Hello");
+    try {
+      const response = await AxiosInstance.post("/article/send", {
+        slug: slug,
+        cont_id: props.userdata.user_id,
+        author: props.userdata.userName,
+      });
+      console.log(response);
+
+      
+    } catch (error) {
+      console.log(error);
+      
+    }
+  }
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -331,6 +348,12 @@ const ArticleEditor = (props) => {
   }, []);
 
   const toggleMark = useCallback((editor, format) => {
+    const [codeBlock] = Editor.nodes(editor, {
+      match: n => SlateElement.isElement(n) && n.type === 'code',
+    });
+    
+    if (codeBlock) return;    
+
     const isActive = isMarkActive(editor, format);
     if (isActive) {
       Editor.removeMark(editor, format);
@@ -350,6 +373,14 @@ const ArticleEditor = (props) => {
   const toggleBlock = (editor, format) => {
     const isActive = isBlockActive(editor, format);
     const isList = LIST_TYPES.includes(format);
+    const [codeBlock] = Editor.nodes(editor, {
+      match: n => SlateElement.isElement(n) && n.type === 'code',
+    });
+  
+    if (codeBlock && format !== 'code') {
+
+      Transforms.setNodes(editor, { type: 'paragraph' });
+    }
   
     Transforms.unwrapNodes(editor, {
       match: n =>
@@ -563,7 +594,7 @@ const ArticleEditor = (props) => {
         <CiSaveDown2  /> 
         </>}
       </button>
-      <button title='Send for Review' disabled={!isSave} className='flex justify-center items-center gap-2 py-2 px-[0.7rem] rounded disabled:opacity-60  text-[1rem] bg-rose-600 dark:hover:bg-rose-800 hover:bg-rose-800 text-white'>
+      <button title='Send for Review' onClick={handleSend} disabled={!isSave} className='flex justify-center items-center gap-2 py-2 px-[0.7rem] rounded disabled:opacity-60  text-[1rem] bg-rose-600 dark:hover:bg-rose-800 hover:bg-rose-800 text-white'>
         <span>Send</span> 
         <IoMdSend/> 
       </button>
@@ -589,6 +620,27 @@ const ArticleEditor = (props) => {
                 if (isHotkey(hotkey, event)) {
                   event.preventDefault();
                   toggleMark(editor, HOTKEYS[hotkey]);
+                  return;
+                }
+              }
+              const [match] = Editor.nodes(editor, {
+                match: n => SlateElement.isElement(n) && n.type === 'code',
+              });
+          
+              if (match) {
+                if (event.key === 'Enter') {
+                  if (event.shiftKey || event.ctrlKey) {
+                    event.preventDefault();
+                    Transforms.insertNodes(editor, {
+                      type: 'paragraph',
+                      children: [{ text: '' }],
+                    });
+                    return;
+                  }
+              
+                  event.preventDefault();
+                  Transforms.insertText(editor, '\n');
+                  return;
                 }
               }
             }}
