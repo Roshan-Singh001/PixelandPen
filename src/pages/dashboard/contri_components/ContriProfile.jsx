@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 
 const ContriProfile = () => {
+  const AxiosInstance = axios.create({
+    baseURL: 'http://localhost:3000/',
+    withCredentials: true,
+    timeout: 3000,
+    headers: {'X-Custom-Header': 'foobar'}
+  });
+
   const [profile, setProfile] = useState({
     displayName: 'Roshan Singh',
     bio: 'Writer',
@@ -65,11 +73,11 @@ const ContriProfile = () => {
         {/* Display Name */}
         <div>
           <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
-            Display Name
+            User Name
           </label>
           <input
             type="text"
-            name="displayName"
+            name="userName"
             value={profile.displayName}
             onChange={handleChange}
             className="w-full px-4 py-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-white border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"

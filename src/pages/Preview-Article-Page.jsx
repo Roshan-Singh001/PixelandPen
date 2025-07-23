@@ -44,6 +44,8 @@ const PreviewArticlePage = () => {
       .then((res) => {
         console.log("Article data:", res.data.article);
         setArticle(res.data.article);
+
+        setFeaturedImage(res.data.article[0].thumbnail_url);
         setAuthName(res.data.authName);
         setIsExist(true);
       })

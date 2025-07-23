@@ -103,6 +103,10 @@ async function connectToDatabase() {
       username VARCHAR(100) NOT NULL,
       email VARCHAR(100) NOT NULL UNIQUE,
       password VARCHAR(255) NOT NULL,
+      bio VARCHAR(255),
+      profile_pic VARCHAR(255),
+      dob DATE,
+      status ENUM('Pending','Approved', 'Rejected', 'Block') DEFAULT 'Pending',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`;
     await db.execute(query_contributor_table);
@@ -112,6 +116,8 @@ async function connectToDatabase() {
       username VARCHAR(100) NOT NULL,
       email VARCHAR(100) NOT NULL UNIQUE,
       password VARCHAR(255) NOT NULL,
+      bio VARCHAR(255),
+      profile_pic VARCHAR(255),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`;
 

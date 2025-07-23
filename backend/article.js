@@ -1,7 +1,42 @@
 import express from 'express';
+import multer from 'multer';
+import FormData from 'form-data';
+import fs from 'fs';
+import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import db from './db.js';
 const articleRouter = express.Router();
+
+const upload = multer({ dest: "uploads/" });
+
+articleRouter.post("/uploads/featuredimage", upload.single("file"), async (req, res) => {
+    try {
+      const fileStream = fs.createReadStream(req.file.path);
+  
+      const form = new FormData();
+      form.append("file", fileStream);
+      form.append("name", req.file.originalname);
+      form.append("network", "public"); // or "private"
+      // Optional:
+      // form.append("keyvalues", JSON.stringify({ userId: "contrib-123", purpose: "editor" }));
+  
+      const pinataRes = await axios.post("https://uploads.pinata.cloud/v3/files", form, {
+        headers: {
+          Authorization: `Bearer ${process.env.PINATA_BEARER_TOKEN}`,
+          ...form.getHeaders(),
+        },
+      });
+  
+      fs.unlinkSync(req.file.path); // delete temp file
+  
+      const imageUrl = pinataRes.data?.data?.preview || `https://gateway.pinata.cloud/ipfs/${pinataRes.data?.data?.cid}`;
+  
+      res.json({ success: true, imageUrl });
+    } catch (err) {
+      console.error("Pinata v3 Upload Error:", err?.response?.data || err.message);
+      res.status(500).json({ success: false, error: "Upload failed" });
+    }
+  });
 
 articleRouter.post('/save/new', async (req, res) => {
     const { user_id, article } = req.body;
@@ -84,7 +119,7 @@ articleRouter.post('/send', async(req, res) => {
                 await db.execute(review_query,[slug, results[0].review_id]);
             }
             else{
-                res.status(500).json({ message: "Title is already is already in use"});
+                res.status(500).json({ message: "Title is already in use"});
 
             }
         }

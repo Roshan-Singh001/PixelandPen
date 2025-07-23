@@ -71,6 +71,7 @@ const ArticleEditor = (props) => {
   const [error, setError] = useState('');
 
   const [inProgress, setInProgress] = useState(false);
+  const [inSaveProgress, setSaveInProgress] = useState(false);
   const [isSave, setIsSave] = useState(false);
   const [isContentDirty, setIsContentDirty] = useState(false);
   const [isDescriptionDirty, setIsDescriptionDirty] = useState(false);
@@ -197,6 +198,7 @@ const ArticleEditor = (props) => {
   }
 
   const handleSend = async()=>{
+    setSaveInProgress(true);
     console.log("Hello");
     try {
       const response = await AxiosInstance.post("/article/send", {
@@ -211,15 +213,26 @@ const ArticleEditor = (props) => {
       console.log(error);
       
     }
+    setSaveInProgress(false);
   }
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setFeaturedImage(URL.createObjectURL(file));
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await axios.post("http://localhost:3000/article/uploads/featuredimage", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+  
+      setFeaturedImage(res.data.imageUrl);
+      setIsSave(false);
+      setIsThumbImageDirty(true);
+    } catch (err) {
+      console.error("Frontend Upload Error:", err);
     }
-    setIsThumbImageDirty(true);
-    setIsSave(false);
   };
 
   function getTextLength(nodes) {
@@ -582,22 +595,27 @@ const ArticleEditor = (props) => {
       >
         <IoMdRedo />
       </button>
+      
       </div>
       <div className='flex gap-2'>
       <button onClick={handlePreview} title='Preview' disabled={!isSave} className='py-1 px-[0.7rem] rounded disabled:opacity-60  text-[1.2rem] dark:hover:bg-blue-600 hover:bg-blue-600 hover:text-white'><VscOpenPreview /></button>
       <button onClick={e=>{setIsRightSideBar(!isRightSideBar)}} title={isRightSideBar?'Sidebar Collapse': 'Sidebar Expand'} className={`py-1 px-[0.7rem] rounded disabled:opacity-60  text-[1.2rem] ${isRightSideBar?'dark:bg-blue-600 bg-blue-600 text-white':'dark:hover:bg-blue-600 hover:bg-blue-600 hover:text-white'}`}>
         {isRightSideBar? <GoSidebarCollapse />: <GoSidebarExpand/>}
       </button>
-      <button title='Save Draft' onClick={handleSave} disabled={handleCanBeSave()} className={`flex justify-center items-center gap-2 ${inProgress ? '': 'py-2 px-[0.7rem]'} rounded disabled:opacity-60  text-[1rem] bg-teal-600 dark:hover:bg-teal-800 hover:bg-teal-800 text-white`}>
+      <button title='Save Draft' onClick={handleSave} disabled={handleCanBeSave()} className={`flex justify-center items-center gap-2 py-2 px-[0.7rem] rounded disabled:opacity-60  text-[1rem] bg-teal-600 dark:hover:bg-teal-800 hover:bg-teal-800 text-white`}>
         {inProgress? <PixelPenLoaderSmall/>:<> 
-        <span>Save</span>
-        <CiSaveDown2  /> 
+          <span>Save</span>
+          <CiSaveDown2  /> 
         </>}
+        
       </button>
       <button title='Send for Review' onClick={handleSend} disabled={!isSave} className='flex justify-center items-center gap-2 py-2 px-[0.7rem] rounded disabled:opacity-60  text-[1rem] bg-rose-600 dark:hover:bg-rose-800 hover:bg-rose-800 text-white'>
-        <span>Send</span> 
-        <IoMdSend/> 
+        {inSaveProgress? <PixelPenLoaderSmall/>:<>
+          <span>Send</span> 
+          <IoMdSend/> 
+        </>}
       </button>
+
       </div>
     </nav>
 
