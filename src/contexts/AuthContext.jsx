@@ -72,8 +72,8 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error("Login failed:", error);
-      setLoggedIn(false);
-      setUserData({});
+      // setLoggedIn(false);
+      // setUserData({});
       localStorage.removeItem("authToken");
       return { success: false, error: error.response?.data?.message || "Login failed" };
     } finally {

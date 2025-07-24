@@ -16,6 +16,8 @@ const MyArticles = (props) => {
   const navigate = useNavigate();
   const [draftArticles, setDraftArticles] = useState([]);
   const [pendingArticles, setPendingArticles] = useState([]);
+  const [rejectedArticles, setRejectedArticles] = useState([]);
+  const [approvedArticles, setApprovedArticles] = useState([]);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -45,6 +47,30 @@ const MyArticles = (props) => {
         console.log(err);
       });
 
+      AxiosInstance.get('/article/reject', {
+        headers:{
+          user_id: props.userdata.user_id,
+        }
+      })
+      .then((res)=>{
+        setRejectedArticles(res.data);
+      })
+      .catch((err)=>{
+        console.log(err);
+      });
+
+      AxiosInstance.get('/article/approve', {
+        headers:{
+          user_id: props.userdata.user_id,
+        }
+      })
+      .then((res)=>{
+        setApprovedArticles(res.data);
+      })
+      .catch((err)=>{
+        console.log(err);
+      });
+
       setIsLoading(false);
 
     } catch (error) {
@@ -58,14 +84,9 @@ const MyArticles = (props) => {
     
   }
 
-  const rejectedArticles = [
-    { id: 3, title: 'Old Trends in AI', reason: 'Plagiarized content', rejectedOn: '2025-07-01' },
-  ];
+  
 
-  const approvedArticles = [
-    { id: 4, title: 'The Future of Blockchain', category: 'DevOps', date: '2025-05-20', views: 1250 },
-    { id: 5, title: 'AI in Healthcare', category: 'AI/ML', date: '2025-05-18', views: 2340 },
-  ];
+  
 
   const handleEdit = (slug)=>{
     props.setRefslug(slug);
@@ -132,10 +153,10 @@ const MyArticles = (props) => {
             </div>
             <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
               <StatusBadge status={status} />
-              {article.submittedOn && (
+              {article.pending_date && (
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  Submitted: {article.submittedOn}
+                  Submitted: {new Date(article.pending_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                 </span>
               )}
               {article.updated_at && (
@@ -144,17 +165,17 @@ const MyArticles = (props) => {
                   Modified: {new Date(article.updated_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                 </span>
               )}
-              {article.rejectedOn && (
+              {article.reject_date && (
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  Rejected: {article.rejectedOn}
+                  Rejected: {new Date(article.reject_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                 </span>
               )}
             </div>
-            {article.reason && (
+            {article.reject_reason && (
               <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border-l-4 border-red-400">
                 <p className="text-sm text-red-700 dark:text-red-300">
-                  <strong>Reason:</strong> {article.reason}
+                  <strong>Reason:</strong> {article.reject_reason}
                 </p>
               </div>
             )}
@@ -265,7 +286,7 @@ const MyArticles = (props) => {
           <div className="space-y-4">
             {rejectedArticles.length > 0 ? (
               rejectedArticles.map((article) => (
-                <ArticleCard key={article.id} article={article} status="rejected">
+                <ArticleCard key={article.slug} article={article} status="rejected">
                   <ActionButton 
                     icon={Edit} 
                     variant="primary" 
@@ -311,7 +332,7 @@ const MyArticles = (props) => {
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {approvedArticles.length > 0 ? (
                     approvedArticles.map((article) => (
-                      <tr key={article.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                      <tr key={article.slug} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <FileText className="w-4 h-4 text-gray-400 dark:text-gray-500 mr-3" />
@@ -327,7 +348,7 @@ const MyArticles = (props) => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {new Date(article.date).toLocaleDateString('en-US', {
+                          {new Date(article.approve_date).toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'short',
                             day: 'numeric'
@@ -343,11 +364,11 @@ const MyArticles = (props) => {
                               variant="secondary" 
                               title="View Article"
                             />
-                            <ActionButton 
+                            {/* <ActionButton 
                               icon={Trash2} 
                               variant="danger" 
                               title="Delete Article"
-                            />
+                            /> */}
                           </div>
                         </td>
                       </tr>

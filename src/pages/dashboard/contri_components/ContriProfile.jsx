@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const ContriProfile = () => {
+const ContriProfile = (props) => {
   const AxiosInstance = axios.create({
     baseURL: 'http://localhost:3000/',
     withCredentials: true,
@@ -9,12 +9,36 @@ const ContriProfile = () => {
     headers: {'X-Custom-Header': 'foobar'}
   });
 
-  const [profile, setProfile] = useState({
-    displayName: 'Roshan Singh',
-    bio: 'Writer',
-    dob: '1999-09-30',
-    profilePicture: '',
-  });
+  // const [profile, setProfile] = useState({
+  //   displayName: 'Roshan Singh',
+  //   bio: 'Writer',
+  //   dob: '1999-09-30',
+  //   profilePicture: '',
+  // });
+  const [profile, setProfile] = useState([]);
+
+  useEffect(() => {
+    AxiosInstance.get('/dashboard/contri/profile', {
+      headers:{
+        user_id: props.userdata.user_id,
+      }
+    })
+    .then((res)=>{
+      setProfile(res.data);
+
+      if (profile.profile_pic) {
+        setPreview(profile.profile_pic);
+      }
+    })
+    .catch((err)=>{
+      console.log(err);
+    });
+  
+
+  })
+  
+
+
 
   const [preview, setPreview] = useState('/default-avatar.png');
 
@@ -78,7 +102,7 @@ const ContriProfile = () => {
           <input
             type="text"
             name="userName"
-            value={profile.displayName}
+            value={profile.username}
             onChange={handleChange}
             className="w-full px-4 py-2 border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-white border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />

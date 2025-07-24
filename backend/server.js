@@ -13,6 +13,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import adminRouter from './admin.js';
 import articleRouter from './article.js';
+import contriRouter from './cont.js';
 // import db from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -34,6 +35,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/dashboard/admin', adminRouter);
+app.use('/dashboard/contri', contriRouter);
 app.use('/article', articleRouter);
 
 const databasePass = process.env.DATABASE_PASS;
@@ -107,6 +109,7 @@ async function connectToDatabase() {
       profile_pic VARCHAR(255),
       dob DATE,
       status ENUM('Pending','Approved', 'Rejected', 'Block') DEFAULT 'Pending',
+      followers INT DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`;
     await db.execute(query_contributor_table);
@@ -118,6 +121,8 @@ async function connectToDatabase() {
       password VARCHAR(255) NOT NULL,
       bio VARCHAR(255),
       profile_pic VARCHAR(255),
+      follow JSON,
+      bookmarks JSON,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`;
 
@@ -375,8 +380,12 @@ app.post("/OtpVerification", async (req, res) => {
         content JSON NOT NULL,
         tags JSON,
         thumbnail_url VARCHAR(255),
+        views INT DEFAULT 0,
         article_status ENUM('Approved', 'Draft', 'Rejected', 'Pending') DEFAULT 'Draft',
         reject_reason VARCHAR(255) DEFAULT NULL,
+        reject_date DATE DEFAULT NULL,
+        approve_date DATE DEFAULT NULL,
+        pending_date DATE DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )`;
@@ -430,24 +439,32 @@ app.post("/validate", async (req, res) => {
       const query = "SELECT * FROM admin WHERE username = ?";
       const [result1] = await db.execute(query, [username]);
       result = result1;
+      if (result.length === 0) {
+        return res.status(401).json({ message: "Invalid username or role." });
+      }
       user_id = result[0].admin_id;
     }
     else if (role == 'Contributor') {
       const query = "SELECT * FROM contributor WHERE username = ?";
       const [result1] = await db.execute(query, [username]);
       result = result1;
+      if (result.length === 0) {
+        return res.status(401).json({ message: "Invalid username or role." });
+      }
+      console.log("hello",result[0])
       user_id = result[0].cont_id;
     }
     else if (role == 'Reader') {
       const query = "SELECT * FROM reader WHERE username = ?";
       const [result1] = await db.execute(query, [username]);
       result = result1;
+      if (result.length === 0) {
+        return res.status(401).json({ message: "Invalid username or role." });
+      }
       user_id = result[0].sub_id;
     }
     
-    if (result.length === 0) {
-      return res.status(401).json({ message: "Invalid username or role." });
-    }
+
 
     const {
       password: hashedPassword,

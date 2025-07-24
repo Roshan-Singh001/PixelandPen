@@ -3,7 +3,6 @@ import multer from 'multer';
 import FormData from 'form-data';
 import fs from 'fs';
 import axios from 'axios';
-import { v4 as uuidv4 } from 'uuid';
 import db from './db.js';
 const articleRouter = express.Router();
 
@@ -16,10 +15,7 @@ articleRouter.post("/uploads/featuredimage", upload.single("file"), async (req, 
       const form = new FormData();
       form.append("file", fileStream);
       form.append("name", req.file.originalname);
-      form.append("network", "public"); // or "private"
-      // Optional:
-      // form.append("keyvalues", JSON.stringify({ userId: "contrib-123", purpose: "editor" }));
-  
+      form.append("network", "public");
       const pinataRes = await axios.post("https://uploads.pinata.cloud/v3/files", form, {
         headers: {
           Authorization: `Bearer ${process.env.PINATA_BEARER_TOKEN}`,
@@ -27,7 +23,7 @@ articleRouter.post("/uploads/featuredimage", upload.single("file"), async (req, 
         },
       });
   
-      fs.unlinkSync(req.file.path); // delete temp file
+      fs.unlinkSync(req.file.path);
   
       const imageUrl = pinataRes.data?.data?.preview || `https://gateway.pinata.cloud/ipfs/${pinataRes.data?.data?.cid}`;
   
@@ -261,12 +257,48 @@ articleRouter.get('/pending', async (req,res)=>{
     const userId = req.headers['user_id'];
 
     try {
-        const fetchArticleQuery = `SELECT slug,title,updated_at FROM ${userId+'_articles'} WHERE article_status = 'Pending'`;
+        const fetchArticleQuery = `SELECT slug,title,pending_date FROM ${userId+'_articles'} WHERE article_status = 'Pending'`;
         const results = await db.query(fetchArticleQuery);
 
         const PendingArticles = results[0];
 
         res.json(PendingArticles);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error Fetching Article"});
+        
+    }
+});
+
+articleRouter.get('/reject', async (req,res)=>{
+    const userId = req.headers['user_id'];
+
+    try {
+        const fetchArticleQuery = `SELECT slug,title,reject_date,reject_reason FROM ${userId+'_articles'} WHERE article_status = 'Rejected'`;
+        const results = await db.query(fetchArticleQuery);
+
+        const RejectedArticles = results[0];
+
+        res.json(RejectedArticles);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error Fetching Article"});
+        
+    }
+});
+
+articleRouter.get('/approve', async (req,res)=>{
+    const userId = req.headers['user_id'];
+
+    try {
+        const fetchArticleQuery = `SELECT slug,title,category,approve_date,views FROM ${userId+'_articles'} WHERE article_status = 'Rejected'`;
+        const results = await db.query(fetchArticleQuery);
+
+        const ApproveArticles = results[0];
+
+        ApproveArticles.category = JSON.parse(ApproveArticles.category || '[]');
+
+        res.json(ApproveArticles);
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Error Fetching Article"});

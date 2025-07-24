@@ -259,7 +259,7 @@ const ContributorDashboard = () => {
         {menuOption === "My Articles" && <MyArticles userdata={userData} setMenuOption={setMenuOption} setRefslug={setRefslug} />}
         {menuOption === "Comments" && <MyComments />}
         {menuOption === "My Stats" && <MyAnalytics />}
-        {menuOption === "Profile" && <ContriProfile />}
+        {menuOption === "Profile" && <ContriProfile userdata={userData} />}
         {menuOption === "Settings" && (
           <ThemeProvider>
             <ContriSettings />
