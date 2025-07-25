@@ -32,7 +32,7 @@ articleRouter.post("/uploads/featuredimage", upload.single("file"), async (req, 
       console.error("Pinata v3 Upload Error:", err?.response?.data || err.message);
       res.status(500).json({ success: false, error: "Upload failed" });
     }
-  });
+});
 
 articleRouter.post('/save/new', async (req, res) => {
     const { user_id, article } = req.body;
