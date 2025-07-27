@@ -70,6 +70,27 @@ contriRouter.post('/updateprofile', async (req, res) => {
         }
 });
 
+contriRouter.get('/stat/posts', async (req, res)=>{
+  const userId = req.headers['user_id'];
+
+  try {
+    const tableName = `${userId}` + '_articles';
+    const fetchinfoQuery = `SELECT COUNT(*) AS "Total_Posts" FROM ${tableName}`;
+    const results = await db.query(fetchinfoQuery);
+
+    const total_posts = results[0];
+    res.status(200).json({total_p: total_posts[0].Total_Posts});
+    
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data"});
+
+    
+  }
+
+
+})
+
 
   
 export default contriRouter;

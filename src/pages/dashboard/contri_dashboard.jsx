@@ -1,18 +1,29 @@
 import React, { useState, useEffect } from "react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  Legend,
-} from "recharts";
+
+import { 
+  LayoutDashboard, 
+  FileText, 
+  MessageCircle, 
+  BarChart3, 
+  UserCog, 
+  Settings, 
+  Plus, 
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+  Menu,
+  Users,
+  Eye,
+  Heart,
+  TrendingUp,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Calendar,
+  Megaphone,
+  Sparkles,
+  Wrench
+} from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -41,27 +52,98 @@ import ArticleEditor from "./ArticleEditor";
 import { useAuth } from "../../contexts/AuthContext";
 import { ThemeProvider } from "../../contexts/ThemeContext";
 
+const AxiosInstance = axios.create({
+  baseURL: "http://localhost:3000/",
+  timeout: 30000,
+  headers: { "X-Custom-Header": "foobar" },
+  withCredentials: true,
+});
+
 const ContributorDashboard = () => {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { loggedIn, logout, userData, loading } = useAuth();
   const [menuMinimize, setMenuMinimize] = useState(false);
   const [menuOption, setMenuOption] = useState("Dashboard");
   const [isAccepted, setAccecpted] = useState(false);
-  const [refSlug, setRefslug] = useState("")
+  const [refSlug, setRefslug] = useState("");
+  const [statsData,setStatsData] = useState([]);
 
-  const { loggedIn, logout, userData, loading } = useAuth();
-  const AxiosInstance = axios.create({
-    baseURL: "http://localhost:3000/",
-    timeout: 30000,
-    headers: { "X-Custom-Header": "foobar" },
-    withCredentials: true,
-  });
+  // { title: "Total Posts", value: "120", color: "blue", icon: FileText },
+  //   { title: "Total Views", value: "85,000", color: "green", icon: Eye },
+  //   { title: "Total Likes", value: "1,834", color: "red", icon: Heart },
+  //   { title: "Followers", value: "708", color: "purple", icon: Users },
+
+  useEffect(() => {
+    const fetchStats = async()=>{
+    try {
+      const response = await AxiosInstance.get('/dashboard/contri/stat/posts', {
+        headers: {
+          user_id: userData.user_id,
+        }
+      });
+
+      setStatsData((prev)=>([...prev, {title: "Total Posts", value: response.data.total_p, color: "blue", icon: FileText} ]))
+      console.log(statsData);
+    } catch (error) {
+      console.log(error);
+      
+    }
+  }
+
+  fetchStats();
+
+  }, [])
+  
+
+  
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'approved': return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20';
+      case 'pending': return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20';
+      case 'rejected': return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
+      default: return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/20';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'approved': return CheckCircle;
+      case 'pending': return Clock;
+      case 'rejected': return XCircle;
+      default: return FileText;
+    }
+  };
+
+  const announcements = [
+    {
+      id: 1,
+      title: "New Feature: Stats Dashboard!",
+      content: "Track your post views, likes, and more in the new contributor stats dashboard. Go check it out now!",
+      date: "May 28, 2025",
+      icon: Sparkles,
+      type: "feature"
+    },
+    {
+      id: 2,
+      title: "Maintenance Notice",
+      content: "The site will undergo maintenance on June 2nd, from 12:00 AM to 4:00 AM UTC. Expect temporary downtime.",
+      date: "May 25, 2025",
+      icon: Wrench,
+      type: "maintenance"
+    }
+  ];
+
+  
+
+  
+
 
   if (loading) return <PixelPenLoader/>
 
   if (!loggedIn) return navigate("/login");
 
-  const articleRequests = [
+  const recentArticles = [
     { id: 1, title: "AI/ML", author: "Suraj Singh Bhoj" },
     { id: 2, title: "Cloud Computing", author: "Md Javed" },
   ];
@@ -158,102 +240,129 @@ const ContributorDashboard = () => {
       <main className="flex-1 px-5 py-2 h-screen overflow-y-auto">
 
         {menuOption === "Dashboard" && (
-          <div>
-            <h1 className="text-3xl font-bold text-sky-600 dark:text-sky-400 mb-6">
-              Dashboard
-            </h1>
-            <div className=" mt-10 mb-5 p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg flex flex-col items-center text-center transition duration-300 ease-in-out">
-              <h1 className="text-3xl md:text-4xl font-bold text-sky-600 dark:text-sky-400 mb-4">
-                Welcome to your dashboard, {userData.userName}. 👋
-              </h1>
+          <div className="space-y-8">
+          {/* Welcome Section */}
+          <div className="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl p-8 text-white shadow-xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-4xl font-bold mb-2">
+                  Welcome back, {userData.userName}! 👋
+                </h1>
+                <p className="text-blue-100 text-lg">
+                  Ready to create amazing content today?
+                </p>
+              </div>
+              <div className="hidden md:block">
+                <div className="w-32 h-32 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <TrendingUp className="w-16 h-16 text-white" />
+                </div>
+              </div>
             </div>
+          </div>
 
-            {/* Analytics */}
-            <section>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center">
-          <p className="text-gray-500 dark:text-gray-300">Total Posts</p>
-          <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">120</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center">
-          <p className="text-gray-500 dark:text-gray-300">Total Views</p>
-          <p className="text-2xl font-bold text-green-600 dark:text-green-400">85,000</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center">
-          <p className="text-gray-500 dark:text-gray-300">Total Likes</p>
-          <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">18</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center">
-          <p className="text-gray-500 dark:text-gray-300">Total Followers</p>
-          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">708</p>
-        </div>
-      </div>
-            </section>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {statsData.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <div key={index} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-lg bg-${stat.color}-100 dark:bg-${stat.color}-900/20`}>
+                      <Icon className={`w-6 h-6 text-${stat.color}-600 dark:text-${stat.color}-400`} />
+                    </div>
+                  </div>
+                  <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">
+                    {stat.title}
+                  </h3>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                    {stat.value}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
 
-            {/* Article Requests */}
-            <section className="my-5">
-              <h2 className="text-2xl font-semibold mb-4">
-                All Articles
+          {/* Articles Section */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                Recent Articles
               </h2>
-              <div className="space-y-4">
-                {articleRequests.map((article) => (
+            </div>
+            <div className="p-6 space-y-4">
+              {recentArticles.map((article) => {
+                const StatusIcon = getStatusIcon(article.status);
+                return (
                   <div
                     key={article.id}
-                    className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow flex justify-between items-center"
+                    className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                   >
-                    <div>
-                      <h3 className="font-bold text-lg">{article.title}</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 dark:text-white text-lg mb-1">
+                        {article.title}
+                      </h3>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">
                         by {article.author}
                       </p>
                     </div>
-                    <div className="flex space-x-4">
-                      <button className="text-green-500 hover:text-green-600">
-                        <div>Accepted</div>
-                      </button>
-                      <button className="text-red-500 hover:text-red-600">
-                        <div>Rejected</div>
-                      </button>
+                    <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(article.status)}`}>
+                      <StatusIcon className="w-4 h-4" />
+                      {/* {article.status + article.status.slice(1)} */}
                     </div>
                   </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Announcements */}
-<section className="mb-6">
-  <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
-    Announcements
-  </h2>
-  <div className="space-y-4">
-    {/* Announcement Card */}
-    <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-5 transition-all duration-300 hover:shadow-lg">
-      <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-        ✨ New Feature: Stats Dashboard!
-      </h3>
-      <p className="text-gray-700 dark:text-gray-300 mt-1">
-        Track your post views, likes, and more in the new contributor stats dashboard. Go check it out now!
-      </p>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-        Posted on May 28, 2025
-      </p>
-    </div>
-
-    <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-5 transition-all duration-300 hover:shadow-lg">
-      <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-        📢 Maintenance Notice
-      </h3>
-      <p className="text-gray-700 dark:text-gray-300 mt-1">
-        The site will undergo maintenance on June 2nd, from 12:00 AM to 4:00 AM UTC. Expect temporary downtime.
-      </p>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-        Posted on May 25, 2025
-      </p>
-    </div>
-  </div>
-</section>
-
+                );
+              })}
+            </div>
           </div>
+
+          {/* Announcements */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                <Megaphone className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                Announcements
+              </h2>
+            </div>
+            <div className="p-6 space-y-4">
+              {announcements.map((announcement) => {
+                const Icon = announcement.icon;
+                return (
+                  <div
+                    key={announcement.id}
+                    className="p-5 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className={`p-2 rounded-lg ${
+                        announcement.type === 'feature' 
+                          ? 'bg-blue-100 dark:bg-blue-900/20' 
+                          : 'bg-orange-100 dark:bg-orange-900/20'
+                      }`}>
+                        <Icon className={`w-5 h-5 ${
+                          announcement.type === 'feature'
+                            ? 'text-blue-600 dark:text-blue-400'
+                            : 'text-orange-600 dark:text-orange-400'
+                        }`} />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-2">
+                          {announcement.title}
+                        </h3>
+                        <p className="text-gray-700 dark:text-gray-300 mb-3">
+                          {announcement.content}
+                        </p>
+                        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                          <Calendar className="w-4 h-4" />
+                          Posted on {announcement.date}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
         )}
 
         {menuOption === "My Articles" && <MyArticles userdata={userData} setMenuOption={setMenuOption} setRefslug={setRefslug} />}

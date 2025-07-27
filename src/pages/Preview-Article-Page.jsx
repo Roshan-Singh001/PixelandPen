@@ -26,6 +26,7 @@ const PreviewArticlePage = () => {
   const [comment, setComment] = useState('');
   const [isNavVisible, setIsNavVisible] = useState(false);
   const [featuredImage, setFeaturedImage] = useState(null);
+  const [authorPic, setAuthorPic] = useState('');
 
   const [authorName, setAuthName] = useState('Unknown');
 
@@ -46,6 +47,7 @@ const PreviewArticlePage = () => {
         setArticle(res.data.article);
 
         setFeaturedImage(res.data.article[0].thumbnail_url);
+        setAuthorPic(res.data.authPic);
         setAuthName(res.data.authName);
         setIsExist(true);
       })
@@ -423,7 +425,15 @@ const PreviewArticlePage = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-slate-200 dark:border-slate-700 space-y-4 sm:space-y-0">
               <div className="flex items-center space-x-3 sm:space-x-4">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
-                  <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  {authorPic==''?<User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />: 
+                  <>
+                    <img
+                    src={authorPic}
+                    alt="Author Pic"
+                    className="w-full h-full rounded-full object-cover transition-shadow"
+                    />
+                  
+                  </>}
                 </div>
                 <div>
                   <h3 className="font-semibold text-slate-900 dark:text-white">{authorName}</h3>

@@ -197,12 +197,13 @@ articleRouter.get('/preview/:slug', async (req,res)=>{
         article.category = JSON.parse(article.category || '[]');
         article.content = JSON.parse(article.content || '[]');
 
-        const fetchNameQuery = `SELECT username FROM contributor WHERE cont_id = ?`;
+        const fetchNameQuery = `SELECT username, profile_pic FROM contributor WHERE cont_id = ?`;
         const result2 = await db.query(fetchNameQuery,[userId]);
         const userName = result2[0][0].username;
+        const userpic = result2[0][0].profile_pic;
         console.log(result2[0]);
 
-        res.json({article, authName: userName});
+        res.json({article, authName: userName, authPic: userpic});
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Error Fetching Article"});

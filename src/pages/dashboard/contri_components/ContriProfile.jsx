@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { User, Camera, Calendar, FileText, Save, Upload, Check, AlertCircle } from 'lucide-react';
+import PixelPenLoader from '../../../components/PixelPenLoader';
 
 const ContriProfile = (props) => {
   const AxiosInstance = axios.create({
@@ -11,7 +12,7 @@ const ContriProfile = (props) => {
   });
 
   const [profile, setProfile] = useState({});
-  const [preview, setPreview] = useState('/default-avatar.png');
+  const [preview, setPreview] = useState('../../../assets/images/icons-user-30.png');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -75,13 +76,12 @@ const ContriProfile = (props) => {
     const formData = new FormData();
     formData.append("file", file);
     if (file) {
-      // Validate file size (max 5MB)
+
       if (file.size > 5 * 1024 * 1024) {
         setErrors((prev) => ({ ...prev, image: 'Image size must be less than 5MB' }));
         return;
       }
       
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         setErrors((prev) => ({ ...prev, image: 'Please select a valid image file' }));
         return;
@@ -117,10 +117,7 @@ const ContriProfile = (props) => {
         user_id: props.userdata.user_id,
         updatedProfile: profile,
       });
-
-      console.log(response.data);
       
-      console.log('Profile Updated:', profile);
       setSaveSuccess(true);
       
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -134,21 +131,10 @@ const ContriProfile = (props) => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded-md w-64 mb-6"></div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm">
-              <div className="space-y-6">
-                <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
-                <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
-                <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
-                <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <>
+      
+      <PixelPenLoader/>
+      </>
     );
   }
 
@@ -287,7 +273,7 @@ const ContriProfile = (props) => {
                   <input
                     type="date"
                     name="dob"
-                    value={profile.dob || ''}
+                    value={profile.dob.split('T')[0] || ''}
                     onChange={handleChange}
                     className="w-full pl-11 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
