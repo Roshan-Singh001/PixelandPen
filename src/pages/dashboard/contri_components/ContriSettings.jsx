@@ -1,9 +1,39 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Switch } from '@headlessui/react';
+import { useAuth } from "../../../contexts/AuthContext";
 import { useTheme } from '../../../contexts/ThemeContext';
+import PixelPenLoaderSmall from '../../../components/PixelPenLoaderSmall';
+
+const AxiosInstance = axios.create({
+  baseURL: "http://localhost:3000/",
+  timeout: 30000,
+  headers: { "X-Custom-Header": "foobar" },
+  withCredentials: true,
+});
 
 const ContriSettings = () => {
   const { isDarkMode, toggleDark } = useTheme();
+  const { setLoggedIn, userData} = useAuth();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handle_delete_account = async()=>{
+    setIsDeleting(true);
+    try {
+        const response = await AxiosInstance.get('/dashboard/contri/delete', {
+           headers: {
+              user_id: userData.user_id,
+              username: userData.userName,
+           }
+        });
+        console.log(response.data);
+        setLoggedIn(false);
+    } 
+    catch (error) {
+      console.log(error);      
+    }
+  setIsDeleting(false);
+  }
 
   return (
     <>
@@ -57,6 +87,14 @@ const ContriSettings = () => {
             </button>
           </div>
         </div>
+
+        <button onClick={handle_delete_account} className='px-4 py-2 relative left-[40%] bg-red-600 hover:bg-red-700 text-white rounded shadow'>
+          {isDeleting? <PixelPenLoaderSmall/>:<> 
+                    <span>Delete Account</span> 
+          </>}
+          
+          </button>
+
       </div>
     </>
   );

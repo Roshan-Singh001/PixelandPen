@@ -69,10 +69,7 @@ const ContributorDashboard = () => {
   const [refSlug, setRefslug] = useState("");
   const [statsData,setStatsData] = useState([]);
 
-  // { title: "Total Posts", value: "120", color: "blue", icon: FileText },
-  //   { title: "Total Views", value: "85,000", color: "green", icon: Eye },
-  //   { title: "Total Likes", value: "1,834", color: "red", icon: Heart },
-  //   { title: "Followers", value: "708", color: "purple", icon: Users },
+  const [recentArticles, setRecentArticles] = useState([]);
 
   useEffect(() => {
     const fetchStats = async()=>{
@@ -83,7 +80,50 @@ const ContributorDashboard = () => {
         }
       });
 
-      setStatsData((prev)=>([...prev, {title: "Total Posts", value: response.data.total_p, color: "blue", icon: FileText} ]))
+      setStatsData((prev)=>([...prev, {title: "Total Posts", value: response.data.total_p || 0, color: "blue", icon: FileText} ]))
+
+      console.log(statsData);
+    } catch (error) {
+      console.log(error);
+      
+    }
+
+    try {
+      const response = await AxiosInstance.get('/dashboard/contri/stat/views', {
+        headers: {
+          user_id: userData.user_id,
+        }
+      });
+
+      setStatsData((prev)=>([...prev, {title: "Total Views", value: response.data.total_v || 0, color: "green", icon: Eye} ]))
+      console.log(statsData);
+    } catch (error) {
+      console.log(error);
+      
+    }
+
+    try {
+      const response = await AxiosInstance.get('/dashboard/contri/stat/likes', {
+        headers: {
+          user_id: userData.user_id,
+        }
+      });
+
+      setStatsData((prev)=>([...prev, {title: "Total Likes", value: response.data.total_l || 0, color: "red", icon: Heart} ]))
+      console.log(statsData);
+    } catch (error) {
+      console.log(error);
+      
+    }
+
+    try {
+      const response = await AxiosInstance.get('/dashboard/contri/stat/followers', {
+        headers: {
+          user_id: userData.user_id,
+        }
+      });
+
+      setStatsData((prev)=>([...prev, {title: "Followers", value: response.data.total_f || 0, color: "purple", icon: Users} ]))
       console.log(statsData);
     } catch (error) {
       console.log(error);
@@ -91,11 +131,27 @@ const ContributorDashboard = () => {
     }
   }
 
+  const fetchRecent = async ()=>{
+    try {
+      const response = await AxiosInstance.get('/dashboard/contri/recent', {
+        headers: {
+          user_id: userData.user_id,
+        }
+      });
+
+      setRecentArticles(response.data.recents);
+
+      console.log(recentArticles);
+    } catch (error) {
+      console.log(error); 
+    }
+
+  }
+
   fetchStats();
+  fetchRecent();
 
   }, [])
-  
-
   
   const getStatusColor = (status) => {
     switch (status) {
@@ -135,18 +191,9 @@ const ContributorDashboard = () => {
   ];
 
   
-
-  
-
-
   if (loading) return <PixelPenLoader/>
 
   if (!loggedIn) return navigate("/login");
-
-  const recentArticles = [
-    { id: 1, title: "AI/ML", author: "Suraj Singh Bhoj" },
-    { id: 2, title: "Cloud Computing", author: "Md Javed" },
-  ];
 
   return (
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
@@ -291,28 +338,34 @@ const ContributorDashboard = () => {
               </h2>
             </div>
             <div className="p-6 space-y-4">
-              {recentArticles.map((article) => {
-                const StatusIcon = getStatusIcon(article.status);
+              {recentArticles.length > 0 ? (recentArticles.map((article) => {
+                const StatusIcon = getStatusIcon(article.article_status);
                 return (
                   <div
-                    key={article.id}
+                    key={article.title}
                     className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                   >
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-900 dark:text-white text-lg mb-1">
                         {article.title}
                       </h3>
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">
-                        by {article.author}
-                      </p>
                     </div>
                     <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(article.status)}`}>
                       <StatusIcon className="w-4 h-4" />
-                      {/* {article.status + article.status.slice(1)} */}
+                      {article.article_status}
                     </div>
                   </div>
                 );
-              })}
+              })): (
+              <>
+                <div className="text-center py-12">
+                  <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                    <XCircle className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                  </div>
+                  <p className="text-gray-500 dark:text-gray-400 text-lg">No Articles</p>
+                </div>
+              
+              </>)}
             </div>
           </div>
 

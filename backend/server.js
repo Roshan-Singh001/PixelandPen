@@ -162,6 +162,20 @@ async function connectToDatabase() {
 
     await db.execute(query_review_article);
 
+    const query_comment = `CREATE TABLE comments (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      article_id VARCHAR(255) NOT NULL,
+      user_id VARCHAR(255),
+      content TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      status ENUM('Pending', 'Approved', 'Deleted') DEFAULT 'Pending',
+
+      FOREIGN KEY (article_id) REFERENCES articles(article_id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    )`;
+
+    await db.execute(query_comment);
+
 
   } catch (error) {
     console.error("Database connection error:", error.message);
@@ -333,12 +347,6 @@ app.post("/OtpVerification", async (req, res) => {
     // Starts a new SQL transaction so that either both the insert and delete happen, or none do. Ensures atomicity (no partial operations).
     await db.beginTransaction();
 
-    // const moveUserQuery = `
-    //   INSERT INTO users (username, email, password, role)
-    //   SELECT username, email, password, role FROM temp_users WHERE email = ? AND otp = ?
-    // `;
-    // await db.execute(moveUserQuery, [email, otp]);
-
     let a_id = uuidv4();
     const user_id = a_id.replaceAll("-","_");
     if (role == "Admin") {
@@ -381,6 +389,7 @@ app.post("/OtpVerification", async (req, res) => {
         tags JSON,
         thumbnail_url VARCHAR(255),
         views INT DEFAULT 0,
+        likes INT DEFAULT 0,
         article_status ENUM('Approved', 'Draft', 'Rejected', 'Pending') DEFAULT 'Draft',
         reject_reason VARCHAR(255) DEFAULT NULL,
         reject_date DATE DEFAULT NULL,

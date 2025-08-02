@@ -29,11 +29,11 @@ const ContriProfile = (props) => {
         });
         
         const profileData = response.data[0];
+        if (profileData.dob == null) profileData.dob = "";
         setProfile(profileData);
         
-        if (profileData.profile_pic) {
-          setPreview(profileData.profile_pic);
-        }
+        if (profileData.profile_pic) setPreview(profileData.profile_pic);
+
       } catch (error) {
         console.error('Error fetching profile:', error);
         setErrors({ fetch: 'Failed to load profile data' });
