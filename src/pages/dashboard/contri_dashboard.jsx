@@ -74,56 +74,35 @@ const ContributorDashboard = () => {
   useEffect(() => {
     const fetchStats = async()=>{
     try {
-      const response = await AxiosInstance.get('/dashboard/contri/stat/posts', {
+      const response1 = await AxiosInstance.get('/dashboard/contri/stat/posts', {
+        headers: {
+          user_id: userData.user_id,
+        }
+      });
+      setStatsData((prev)=>([...prev, {title: "Total Posts", value: response1.data.total_p || 0, color: "blue", icon: FileText} ]));
+
+      const response2 = await AxiosInstance.get('/dashboard/contri/stat/views', {
+        headers: {
+          user_id: userData.user_id,
+        }
+      });
+      setStatsData((prev)=>([...prev, {title: "Total Views", value: response2.data.total_v || 0, color: "green", icon: Eye} ]))
+
+      const response3 = await AxiosInstance.get('/dashboard/contri/stat/likes', {
         headers: {
           user_id: userData.user_id,
         }
       });
 
-      setStatsData((prev)=>([...prev, {title: "Total Posts", value: response.data.total_p || 0, color: "blue", icon: FileText} ]))
+      setStatsData((prev)=>([...prev, {title: "Total Likes", value: response3.data.total_l || 0, color: "red", icon: Heart} ]));
 
-      console.log(statsData);
-    } catch (error) {
-      console.log(error);
-      
-    }
-
-    try {
-      const response = await AxiosInstance.get('/dashboard/contri/stat/views', {
+      const response4 = await AxiosInstance.get('/dashboard/contri/stat/followers', {
         headers: {
           user_id: userData.user_id,
         }
       });
+      setStatsData((prev)=>([...prev, {title: "Followers", value: response4.data.total_f || 0, color: "purple", icon: Users} ]));
 
-      setStatsData((prev)=>([...prev, {title: "Total Views", value: response.data.total_v || 0, color: "green", icon: Eye} ]))
-      console.log(statsData);
-    } catch (error) {
-      console.log(error);
-      
-    }
-
-    try {
-      const response = await AxiosInstance.get('/dashboard/contri/stat/likes', {
-        headers: {
-          user_id: userData.user_id,
-        }
-      });
-
-      setStatsData((prev)=>([...prev, {title: "Total Likes", value: response.data.total_l || 0, color: "red", icon: Heart} ]))
-      console.log(statsData);
-    } catch (error) {
-      console.log(error);
-      
-    }
-
-    try {
-      const response = await AxiosInstance.get('/dashboard/contri/stat/followers', {
-        headers: {
-          user_id: userData.user_id,
-        }
-      });
-
-      setStatsData((prev)=>([...prev, {title: "Followers", value: response.data.total_f || 0, color: "purple", icon: Users} ]))
       console.log(statsData);
     } catch (error) {
       console.log(error);

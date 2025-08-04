@@ -203,6 +203,7 @@ const ArticleEditor = (props) => {
     try {
       const response = await AxiosInstance.post("/article/send", {
         slug: slug,
+        title:title,
         cont_id: props.userdata.user_id,
         author: props.userdata.userName,
       });

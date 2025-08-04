@@ -150,6 +150,7 @@ async function connectToDatabase() {
     const query_review_article = `CREATE TABLE IF NOT EXISTS review_articles (
       review_id INT AUTO_INCREMENT PRIMARY KEY,
       slug VARCHAR(255) UNIQUE,
+      title VARCHAR(255) NOT NULL,
       author VARCHAR(255) NOT NULL,
       cont_id VARCHAR(255) NOT NULL,
       status ENUM('Approved', 'Rejected', 'Pending') DEFAULT 'Pending',
@@ -162,7 +163,7 @@ async function connectToDatabase() {
 
     await db.execute(query_review_article);
 
-    const query_comment = `CREATE TABLE comments (
+    const query_comment = `CREATE TABLE IF NOT EXISTS comments (
       id INT AUTO_INCREMENT PRIMARY KEY,
       article_id VARCHAR(255) NOT NULL,
       user_id VARCHAR(255),

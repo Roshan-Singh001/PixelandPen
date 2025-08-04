@@ -1,122 +1,295 @@
-import React from 'react';
-import { FaCheckCircle, FaTimesCircle, FaEye } from 'react-icons/fa';
-import { MdPreview } from "react-icons/md";
-import { MdDelete } from "react-icons/md";
+import React, { useState } from 'react';
+import { CheckCircle, XCircle, Eye, FileText, Trash2, X } from 'lucide-react';
 
 const ArticleRequests = () => {
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+
   const pendingArticles = [
-    { id: 1, title: 'Edge Computing in 2025', author: 'Roshan Singh' },
-    { id: 2, title: 'Data Lakes vs Data Warehouses', author: 'ABC' },
+    { id: 1, title: 'Edge Computing in 2025', author: 'Roshan Singh', submittedDate: '2025-08-01' },
+    { id: 2, title: 'Data Lakes vs Data Warehouses', author: 'ABC', submittedDate: '2025-08-02' },
   ];
 
   const rejectedArticles = [
-    { id: 3, title: 'Old Trends in AI', author: 'DPS', reason: 'Plagiarized content' },
+    { id: 3, title: 'Old Trends in AI', author: 'DPS', reason: 'Plagiarized content', rejectedDate: '2025-07-30' },
   ];
 
   const approvedArticles = [
-    { id: 4, title: 'The Future of Blockchain', category: 'DevOps', author: 'ZBH', date: '2025-05-20' },
-    { id: 5, title: 'AI in Healthcare',category:'AI/ML', author: 'OPS', date: '2025-05-18' },
+    { id: 4, title: 'The Future of Blockchain', category: 'DevOps', author: 'ZBH', date: '2025-05-20', views: 1243 },
+    { id: 5, title: 'AI in Healthcare', category: 'AI/ML', author: 'OPS', date: '2025-05-18', views: 892 },
   ];
 
+  const handleReject = (article) => {
+    setSelectedArticle(article);
+    setShowRejectModal(true);
+  };
+
+  const confirmReject = () => {
+    // Here you would typically handle the rejection logic
+    console.log(`Rejecting article: ${selectedArticle.title} with reason: ${rejectReason}`);
+    setShowRejectModal(false);
+    setRejectReason('');
+    setSelectedArticle(null);
+  };
+
+  const StatusBadge = ({ status, count }) => (
+    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-sky-500/10 to-blue-500/10 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800">
+      <div className="w-2 h-2 rounded-full bg-sky-500"></div>
+      {status} ({count})
+    </div>
+  );
+
   return (
-    <>
-      <h1 className="text-3xl font-bold text-sky-500 dark:text-sky-400 mb-6">Articles</h1>
-
-      {/* Pending Articles */}
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">Pending Article Requests</h2>
-        <div className="space-y-4">
-          {pendingArticles.length > 0 ? (
-            pendingArticles.map((article) => (
-              <div key={article.id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow flex justify-between items-center">
-                <div>
-                  <h3 className="text-lg font-semibold">{article.title}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">by {article.author}</p>
-                </div>
-                <div className="flex gap-3">
-                  <button className='flex items-center gap-2'>
-                    <MdPreview size={20} />
-                  </button>
-                  <button className="text-green-500 hover:text-green-600">
-                    <FaCheckCircle size={20} />
-                  </button>
-                  <button className="text-red-500 hover:text-red-600">
-                    <FaTimesCircle size={20} />
-                  </button>
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-500 dark:text-gray-400">No pending requests.</p>
-          )}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-2">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent mb-2">
+            Article Management
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 text-lg">Manage article submissions and publications</p>
         </div>
-      </section>
 
-      {/* Rejected Articles */}
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">Rejected Article Requests</h2>
-        <div className="space-y-4">
-          {rejectedArticles.length > 0 ? (
-            rejectedArticles.map((article) => (
-              <div key={article.id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold">{article.title}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">by {article.author}</p>
-                <p className="text-sm text-red-400 mt-1">Reason: {article.reason}</p>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pending</p>
+                <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{pendingArticles.length}</p>
               </div>
-            ))
-          ) : (
-            <p className="text-gray-500 dark:text-gray-400">No rejected articles.</p>
-          )}
+              <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-full">
+                <FileText className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Approved</p>
+                <p className="text-3xl font-bold text-green-600 dark:text-green-400">{approvedArticles.length}</p>
+              </div>
+              <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
+                <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Rejected</p>
+                <p className="text-3xl font-bold text-red-600 dark:text-red-400">{rejectedArticles.length}</p>
+              </div>
+              <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
+                <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+            </div>
+          </div>
         </div>
-      </section>
 
-      {/* All Approved and Posted Articles */}
-      <section>
-        <h2 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">All Approved Articles</h2>
-        <div className="overflow-x-auto rounded-lg shadow">
-          <table className="min-w-full bg-white dark:bg-gray-800 text-sm">
-            <thead className="bg-gray-100 dark:bg-gray-700 text-left">
+        {/* Pending Articles */}
+        <section className="mb-8">
+          <div className="flex items-center gap-3 mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Pending Review</h2>
+            <StatusBadge status="Awaiting Review" count={pendingArticles.length} />
+          </div>
+          
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-auto">
+            {pendingArticles.length > 0 ? (
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                {pendingArticles.map((article) => (
+                  <div key={article.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{article.title}</h3>
+                        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                          <span>By {article.author}</span>
+                          <span>•</span>
+                          <span>Submitted {article.submittedDate}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 ml-4">
+                        <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors">
+                          <Eye size={16} />
+                          Preview
+                        </button>
+                        <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-lg transition-colors">
+                          <CheckCircle size={16} />
+                          Approve
+                        </button>
+                        <button 
+                          onClick={() => handleReject(article)}
+                          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-colors"
+                        >
+                          <XCircle size={16} />
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-12 text-center">
+                <FileText className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400 text-lg">No pending requests</p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Rejected Articles */}
+        <section className="mb-8">
+          <div className="flex items-center gap-3 mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Rejected Articles</h2>
+            <StatusBadge status="Rejected" count={rejectedArticles.length} />
+          </div>
+          
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            {rejectedArticles.length > 0 ? (
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                {rejectedArticles.map((article) => (
+                  <div key={article.id} className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{article.title}</h3>
+                    <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      <span>By {article.author}</span>
+                      <span>•</span>
+                      <span>Rejected {article.rejectedDate}</span>
+                    </div>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full text-sm">
+                      <XCircle size={14} />
+                      {article.reason}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-12 text-center">
+                <XCircle className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400 text-lg">No rejected articles</p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Approved Articles */}
+        <section>
+      <div className="flex items-center gap-3 mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Published Articles</h2>
+        <StatusBadge status="Published" count={approvedArticles.length} />
+      </div>
+      
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-900/50">
               <tr>
-                <th className="p-3 font-semibold">Title</th>
-                <th className="p-3 font-semibold">Category</th>
-                <th className="p-3 font-semibold">Author</th>
-                <th className="p-3 font-semibold">Posted On</th>
-                <th className="p-3 font-semibold">View</th>
-                <th className="p-3 font-semibold"> </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Article</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Author</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Published</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Views</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {approvedArticles.length > 0 ? (
                 approvedArticles.map((article) => (
-                  <tr key={article.id} className="border-b dark:border-gray-700">
-                    <td className="p-3">{article.title}</td>
-                    <td className="p-3">{article.category}</td>
-                    <td className="p-3">{article.author}</td>
-                    <td className="p-3">{article.date}</td>
-                    <td className="flex p-3">
-                      <button className="text-blue-500 hover:text-blue-600">
-                        <FaEye size={20} />
-                      </button>
+                  <tr key={article.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">{article.title}</div>
                     </td>
-                    <td className="p-3">
-                      <button className="text-red-500 hover:text-red-600">
-                        <MdDelete size={20} />
-                      </button>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                        {article.category}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{article.author}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{article.date}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white font-medium">{article.views?.toLocaleString()}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <button className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors">
+                          <Eye size={14} />
+                          View
+                        </button>
+                        <button className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors">
+                          <Trash2 size={14} />
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" className="p-3 text-center text-gray-500 dark:text-gray-400">
-                    No articles have been posted yet.
+                  <td colSpan="6" className="px-6 py-12 text-center">
+                    <FileText className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400 text-lg">No articles published yet</p>
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-      </section>
-    </>
+      </div>
+    </section>
+      </div>
+
+      {/* Reject Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Reject Article</h3>
+              <button
+                onClick={() => setShowRejectModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                You are about to reject "<strong>{selectedArticle?.title}</strong>" by {selectedArticle?.author}.
+              </p>
+              
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Reason for rejection <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Please provide a clear reason for rejecting this article..."
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white resize-none"
+                rows={4}
+                required
+              />
+            </div>
+            
+            <div className="flex gap-3 p-6 pt-0">
+              <button
+                onClick={() => setShowRejectModal(false)}
+                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmReject}
+                disabled={!rejectReason.trim()}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed rounded-lg transition-colors"
+              >
+                Reject Article
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

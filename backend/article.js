@@ -88,15 +88,15 @@ articleRouter.post('/save/edit', async (req, res) => {
 });
 
 articleRouter.post('/send', async(req, res) => {
-    const { slug, cont_id, author } = req.body;
+    const { slug,title, cont_id, author } = req.body;
 
     try {
         const check_query = `SELECT status WHERE slug = ?`;
         const results = await db.execute(check_query, slug);
 
         if (results[0].length === 0) {
-            const review_query = `INSERT INTO review_articles (slug, author, cont_id) VALUES (?,?,?)`;
-            await db.execute(review_query,[slug,cont_id,author]);
+            const review_query = `INSERT INTO review_articles (slug, title, author, cont_id) VALUES (?,?,?,?)`;
+            await db.execute(review_query,[slug,title,author,cont_id]);
             const tableName = `${user_id}` + '_articles';
             
             const update_query = `UPDATE ${tableName} SET article_status = 'Pending' WHERE slug = ?`;
