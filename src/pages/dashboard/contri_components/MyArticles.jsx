@@ -212,7 +212,7 @@ const MyArticles = (props) => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-2">
+    <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -232,7 +232,8 @@ const MyArticles = (props) => {
             {pendingArticles.length > 0 ? (
               pendingArticles.map((article) => (
                 <ArticleCard key={article.slug} article={article} status="pending">
-                  <ActionButton 
+                  <ActionButton
+                    onClick={()=>handlePreview(article.slug)}
                     icon={Eye} 
                     variant="secondary" 
                     title="Preview Article"

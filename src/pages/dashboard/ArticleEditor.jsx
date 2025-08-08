@@ -73,6 +73,7 @@ const ArticleEditor = (props) => {
   const [inProgress, setInProgress] = useState(false);
   const [inSaveProgress, setSaveInProgress] = useState(false);
   const [isSave, setIsSave] = useState(false);
+  const [isSend, setIsSend] = useState(false);
   const [isContentDirty, setIsContentDirty] = useState(false);
   const [isDescriptionDirty, setIsDescriptionDirty] = useState(false);
   const [isTitleDirty, setIsTitleDirty] = useState(false);
@@ -215,6 +216,7 @@ const ArticleEditor = (props) => {
       
     }
     setSaveInProgress(false);
+    setIsSend(true);
   }
 
   const handleImageChange = async (e) => {
@@ -610,7 +612,7 @@ const ArticleEditor = (props) => {
         </>}
         
       </button>
-      <button title='Send for Review' onClick={handleSend} disabled={!isSave} className='flex justify-center items-center gap-2 py-2 px-[0.7rem] rounded disabled:opacity-60  text-[1rem] bg-rose-600 dark:hover:bg-rose-800 hover:bg-rose-800 text-white'>
+      <button title={isSend?'Article is sended For review':'Send for Review'} onClick={handleSend} disabled={!isSave || isSend} className='flex justify-center items-center gap-2 py-2 px-[0.7rem] rounded disabled:opacity-60  text-[1rem] bg-rose-600 dark:hover:bg-rose-800 hover:bg-rose-800 text-white'>
         {inSaveProgress? <PixelPenLoaderSmall/>:<>
           <span>Send</span> 
           <IoMdSend/> 

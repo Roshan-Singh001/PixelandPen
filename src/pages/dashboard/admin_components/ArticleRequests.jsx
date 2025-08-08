@@ -1,37 +1,84 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, Eye, FileText, Trash2, X } from 'lucide-react';
+import axios from 'axios';
+
+import PixelPenLoader from "../../../components/PixelPenLoader";
+
+const AxiosInstance = axios.create({
+  baseURL: "http://localhost:3000/",
+  timeout: 30000,
+  headers: { "X-Custom-Header": "foobar" },
+  withCredentials: true,
+});
 
 const ArticleRequests = () => {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [isloading, setLoading] = useState(true);
+  const [pendingArticles, setPendingArticles] = useState([]);
+  const [rejectedArticles, setRejectedArticles] = useState([]);
+  const [approvedArticles, setApprovedArticles] = useState([]);
 
-  const pendingArticles = [
-    { id: 1, title: 'Edge Computing in 2025', author: 'Roshan Singh', submittedDate: '2025-08-01' },
-    { id: 2, title: 'Data Lakes vs Data Warehouses', author: 'ABC', submittedDate: '2025-08-02' },
-  ];
+  // const approvedArticles = [
+  //   { id: 4, title: 'The Future of Blockchain', category: 'DevOps', author: 'ZBH', date: '2025-05-20', views: 1243 },
+  //   { id: 5, title: 'AI in Healthcare', category: 'AI/ML', author: 'OPS', date: '2025-05-18', views: 892 },
+  // ];
 
-  const rejectedArticles = [
-    { id: 3, title: 'Old Trends in AI', author: 'DPS', reason: 'Plagiarized content', rejectedDate: '2025-07-30' },
-  ];
+  useEffect(() => {
+    const fetchData =  async()=>{
+      try {
+        const response1 = await AxiosInstance.get('/dashboard/admin/fetch/article/pending');
+        setPendingArticles(response1.data.pending);
 
-  const approvedArticles = [
-    { id: 4, title: 'The Future of Blockchain', category: 'DevOps', author: 'ZBH', date: '2025-05-20', views: 1243 },
-    { id: 5, title: 'AI in Healthcare', category: 'AI/ML', author: 'OPS', date: '2025-05-18', views: 892 },
-  ];
+        const response2 = await AxiosInstance.get('/dashboard/admin/fetch/article/rejected');
+        setRejectedArticles(response2.data.rejected);
+        console.log(response2.data.rejected);
 
-  const handleReject = (article) => {
+        const response3 = await AxiosInstance.get('/dashboard/admin/fetch/article/published');
+        setApprovedArticles(response3.data.published);
+      } catch (error) {
+        console.log(error);
+        
+      }
+    }
+    fetchData();
+    setLoading(false);
+  }, []);
+
+  if (isloading) return <PixelPenLoader/>
+
+  const handlePreview = (slug)=>{
+    window.open(`/preview/${slug}`, '_blank');
+  }
+  
+  const handleReject = async (article) => {
     setSelectedArticle(article);
     setShowRejectModal(true);
   };
 
-  const confirmReject = () => {
-    // Here you would typically handle the rejection logic
+  const confirmReject = async () => {
     console.log(`Rejecting article: ${selectedArticle.title} with reason: ${rejectReason}`);
+
+    try {
+      await AxiosInstance.post('/dashboard/admin/article/reject',{
+        slug: selectedArticle.slug,
+        cont_id: selectedArticle.cont_id,
+        review_id: selectedArticle.review_id,
+        rejectReason: rejectReason,
+        rejectAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
+      });
+      
+    } catch (error) {
+      console.log(error);
+      
+    }
+
     setShowRejectModal(false);
     setRejectReason('');
     setSelectedArticle(null);
   };
+
 
   const StatusBadge = ({ status, count }) => (
     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-sky-500/10 to-blue-500/10 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800">
@@ -41,7 +88,7 @@ const ArticleRequests = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-2">
+    <div className="min-h-screen p-2">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -101,18 +148,18 @@ const ArticleRequests = () => {
             {pendingArticles.length > 0 ? (
               <div className="divide-y divide-gray-200 dark:divide-gray-700">
                 {pendingArticles.map((article) => (
-                  <div key={article.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <div key={article.review_id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{article.title}</h3>
                         <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                           <span>By {article.author}</span>
                           <span>•</span>
-                          <span>Submitted {article.submittedDate}</span>
+                          <span>Submitted {new Date(article.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 ml-4">
-                        <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors">
+                        <button onClick={()=>handlePreview(article.slug)} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors">
                           <Eye size={16} />
                           Preview
                         </button>
@@ -152,16 +199,16 @@ const ArticleRequests = () => {
             {rejectedArticles.length > 0 ? (
               <div className="divide-y divide-gray-200 dark:divide-gray-700">
                 {rejectedArticles.map((article) => (
-                  <div key={article.id} className="p-6">
+                  <div key={article.review_id} className="p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{article.title}</h3>
                     <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-2">
                       <span>By {article.author}</span>
                       <span>•</span>
-                      <span>Rejected {article.rejectedDate}</span>
+                      <span>Rejected {new Date(article.reject_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                     </div>
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full text-sm">
                       <XCircle size={14} />
-                      {article.reason}
+                      {article.reject_reason}
                     </div>
                   </div>
                 ))}

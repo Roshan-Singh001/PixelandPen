@@ -94,8 +94,9 @@ const ContriProfile = (props) => {
           },
         });
 
-        setPreview(response.data.imageUrl);
-        setProfile((prev) => ({ ...prev, profile_pic: preview}));
+        let profile_image = response.data.imageUrl; 
+        setPreview(profile_image);
+        setProfile((prev) => ({ ...prev, profile_pic: profile_image}));
         
         setErrors((prev) => ({ ...prev, image: '' }));
       } catch (error) {
@@ -111,11 +112,18 @@ const ContriProfile = (props) => {
     
     setIsSaving(true);
     setSaveSuccess(false);
+
+    const formattedProfile = {
+      ...profile,
+      dob: profile.dob ? new Date(profile.dob).toISOString().split('T')[0] : null
+    };
+
+    console.log(formattedProfile);
     
     try {
       const response = await AxiosInstance.post('/dashboard/contri/updateprofile', {
         user_id: props.userdata.user_id,
-        updatedProfile: profile,
+        updatedProfile: formattedProfile,
       });
       
       setSaveSuccess(true);
@@ -139,7 +147,7 @@ const ContriProfile = (props) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen p-2">
       <div>
         <div className="mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">

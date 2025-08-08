@@ -47,6 +47,7 @@ import SiteAnalytics from "./admin_components/SiteAnalytics";
 import AdminSettings from "./admin_components/AdminSettings";
 import { useAuth } from "../../contexts/AuthContext";
 import { ThemeProvider } from "../../contexts/ThemeContext";
+import PixelPenLoader from "../../components/PixelPenLoader";
 
 const AxiosInstance = axios.create({
   baseURL: "http://localhost:3000/",
@@ -63,6 +64,10 @@ const AdminDashboard = () => {
   const { loggedIn, logout, userData, loading } = useAuth();
   const [statsData, setStatsData] = useState([]);
   const [articleRequests, setArticleRequests] = useState([]);
+  const contributorRequests = [
+    { id: 1, name: "ABC", email: "abc@example.com", status: "approved" },
+    { id: 2, name: "DEF", email: "def@example.com", status: "rejected" },
+  ];
 
   useEffect(() => {
     const fetchStats = async()=>{
@@ -103,15 +108,8 @@ const AdminDashboard = () => {
 
   }, [])
 
-
-
-  const contributorRequests = [
-    { id: 1, name: "ABC", email: "abc@example.com" },
-    { id: 2, name: "DEF", email: "def@example.com" },
-  ];
-
   const getStatusColor = (status) => {
-      switch (status) {
+      switch (status.toLowerCase()) {
         case 'approved': return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20';
         case 'pending': return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20';
         case 'rejected': return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
@@ -120,7 +118,7 @@ const AdminDashboard = () => {
     };
   
     const getStatusIcon = (status) => {
-      switch (status) {
+      switch (status.toLowerCase()) {
         case 'approved': return CheckCircle;
         case 'pending': return Clock;
         case 'rejected': return XCircle;
@@ -296,34 +294,41 @@ const AdminDashboard = () => {
             </section>
 
             {/* Contributor Requests */}
-            <section className="mb-1">
-              <h2 className="text-2xl font-semibold mb-4">
-                Contributor Access Requests
-              </h2>
-              <div className="space-y-4">
-                {contributorRequests.map((user) => (
-                  <div
-                    key={user.id}
-                    className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow flex justify-between items-center"
-                  >
-                    <div>
-                      <h3 className="font-bold text-lg">{user.name}</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {user.email}
-                      </p>
-                    </div>
-                    <div className="flex space-x-4">
-                      <button className="text-green-500 hover:text-green-600">
-                        <FaUserPlus size={20} />
-                      </button>
-                      <button className="text-red-500 hover:text-red-600">
-                        <FaTimesCircle size={20} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+            <section className="my-5">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                    <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    Recent Contributors
+                  </h2>
+                </div>
+                <div className="p-6 space-y-4">
+                  {contributorRequests.map((cont) => {
+                    const StatusIcon = getStatusIcon(cont.status);
+                    return (
+                      <div
+                        key={cont.id}
+                        className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                      >
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900 dark:text-white text-lg mb-1">
+                            {cont.name}
+                          </h3>
+                          <p className="text-gray-500 dark:text-gray-400 text-sm">
+                            {cont.email}
+                          </p>
+                        </div>
+                        <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(cont.status)}`}>
+                          <StatusIcon className="w-4 h-4" />
+                          {cont.status.charAt(0).toUpperCase() + cont.status.slice(1)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </section>
+
           </div>
         )}
 

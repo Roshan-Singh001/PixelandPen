@@ -138,9 +138,9 @@ async function connectToDatabase() {
       tags JSON,
       thumbnail_url VARCHAR(255),
       author VARCHAR(255) NOT NULL,
+      cont_id VARCHAR(255) NOT NULL,
       views INT DEFAULT 0,
       likes INT DEFAULT 0,
-      comments JSON,
       is_featured BOOLEAN DEFAULT FALSE,
       publish_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`;

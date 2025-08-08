@@ -134,9 +134,9 @@ const ContributorDashboard = () => {
   
   const getStatusColor = (status) => {
     switch (status) {
-      case 'approved': return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20';
-      case 'pending': return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20';
-      case 'rejected': return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
+      case 'Approved': return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20';
+      case 'Pending': return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20';
+      case 'Rejected': return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
       default: return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/20';
     }
   };
@@ -329,7 +329,7 @@ const ContributorDashboard = () => {
                         {article.title}
                       </h3>
                     </div>
-                    <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(article.status)}`}>
+                    <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(article.article_status)}`}>
                       <StatusIcon className="w-4 h-4" />
                       {article.article_status}
                     </div>

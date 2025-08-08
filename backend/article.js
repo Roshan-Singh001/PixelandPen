@@ -89,15 +89,16 @@ articleRouter.post('/save/edit', async (req, res) => {
 
 articleRouter.post('/send', async(req, res) => {
     const { slug,title, cont_id, author } = req.body;
-
+    console.log("Send Request Received: ",slug);
+    
     try {
-        const check_query = `SELECT status WHERE slug = ?`;
-        const results = await db.execute(check_query, slug);
-
+        const check_query = `SELECT status FROM review_articles  WHERE slug = ?`;
+        const results = await db.execute(check_query, [slug]);
+        
         if (results[0].length === 0) {
             const review_query = `INSERT INTO review_articles (slug, title, author, cont_id) VALUES (?,?,?,?)`;
             await db.execute(review_query,[slug,title,author,cont_id]);
-            const tableName = `${user_id}` + '_articles';
+            const tableName = `${cont_id}` + '_articles';
             
             const update_query = `UPDATE ${tableName} SET article_status = 'Pending' WHERE slug = ?`;
             await db.execute(update_query,[slug]);
@@ -105,6 +106,7 @@ articleRouter.post('/send', async(req, res) => {
             res.status(200).json({ Saved: "Article Sended for Review Successfully" });
         }
         else{
+
             if (results[0].status == 'Rejected') {
                 const review_query = `UPDATE review_articles
                                         SET status = 'Pending',
@@ -174,36 +176,64 @@ articleRouter.get('/view/:slug', async (req,res)=>{
 articleRouter.get('/preview/:slug', async (req,res)=>{
     const { slug } = req.params;
     const userId = req.headers['user_id'];
-    const userRole = req.headers['userRole'];
+    const userRole = req.headers['user_role'];
 
     console.log("Slug: ",slug);
+    console.log("preview: ",slug);
+    console.log(userRole);
 
     try {
-        const fetchArticleQuery = `SELECT * FROM ${userId+'_articles'} WHERE slug = ? LIMIT 1`;
-        const results = await db.query(fetchArticleQuery, [slug]);
-        if (results[0].length === 0) {
-            return res.status(404).json({ error: 'Article not found' });
+        if (userRole == 'Contributor') {
+            const fetchArticleQuery = `SELECT * FROM ${userId+'_articles'} WHERE slug = ?`;
+            const results = await db.query(fetchArticleQuery, [slug]);
+            if (results[0].length === 0) {
+                return res.status(404).json({ error: 'Article not found' });
+            }
+    
+            const article = results[0];
+            
+            article.tags = JSON.parse(article.tags || '[]');
+            article.category = JSON.parse(article.category || '[]');
+            article.content = JSON.parse(article.content || '[]');
+    
+            const fetchNameQuery = `SELECT username, profile_pic FROM contributor WHERE cont_id = ?`;
+            const result2 = await db.query(fetchNameQuery,[userId]);
+            const userName = result2[0][0].username;
+            const userpic = result2[0][0].profile_pic;
+            console.log(result2[0]);
+    
+            res.json({article, authName: userName, authPic: userpic});
+            
+        }
+        else if (userRole == 'Admin') {
+            console.log("hello");
+            const fetchQuery = `SELECT cont_id FROM review_articles WHERE slug = ?`;
+            const results1 = await db.query(fetchQuery, [slug]);
+            if (results1[0].length === 0) {
+                return res.status(404).json({ error: 'Article not found' });
+            }
+
+            const cont_id = results1[0][0].cont_id;
+
+            const fetchArticleQuery = `SELECT * FROM ${cont_id+'_articles'} WHERE slug = ?`;
+            const results = await db.query(fetchArticleQuery, [slug]);
+
+            const article = results[0];
+            
+            article.tags = JSON.parse(article.tags || '[]');
+            article.category = JSON.parse(article.category || '[]');
+            article.content = JSON.parse(article.content || '[]');
+    
+            const fetchNameQuery = `SELECT username, profile_pic FROM contributor WHERE cont_id = ?`;
+            const result2 = await db.query(fetchNameQuery,[cont_id]);
+            const userName = result2[0][0].username;
+            const userpic = result2[0][0].profile_pic;
+            console.log(result2[0]);
+    
+            res.json({article, authName: userName, authPic: userpic});
         }
 
-        const article = results[0];
 
-        if (article.article_status == 'Draft' && userRole == 'Admin') {
-            console.log("Denied");
-            return res.status(404).json({ error: 'Article not found' });
-        }
-
-        
-        article.tags = JSON.parse(article.tags || '[]');
-        article.category = JSON.parse(article.category || '[]');
-        article.content = JSON.parse(article.content || '[]');
-
-        const fetchNameQuery = `SELECT username, profile_pic FROM contributor WHERE cont_id = ?`;
-        const result2 = await db.query(fetchNameQuery,[userId]);
-        const userName = result2[0][0].username;
-        const userpic = result2[0][0].profile_pic;
-        console.log(result2[0]);
-
-        res.json({article, authName: userName, authPic: userpic});
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Error Fetching Article"});
