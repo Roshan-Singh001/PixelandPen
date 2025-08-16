@@ -6,7 +6,6 @@ import mysql from "mysql2/promise";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
-import { MailtrapTransport } from "mailtrap";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 import path from "path";
@@ -41,6 +40,8 @@ app.use('/article', articleRouter);
 const databasePass = process.env.DATABASE_PASS;
 const db_host = process.env.DB_HOST;
 const db_user = process.env.DB_USER;
+const email_user = process.env.EMAIL_USER;
+const email_pass = process.env.EMAIL_PASS;
 
 
 
@@ -68,7 +69,7 @@ async function connectToDatabase() {
       password: databasePass,
       database: MyDbName,
     });
-    // FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE
+
 
     const query_temp_user_table = `CREATE TABLE IF NOT EXISTS temp_users (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -108,7 +109,12 @@ async function connectToDatabase() {
       bio VARCHAR(255),
       profile_pic VARCHAR(255),
       dob DATE,
+      expertise JSON,
+      links JSON,
+      city VARCHAR(255),
+      country VARCHAR(255),
       status ENUM('Pending','Approved', 'Rejected', 'Block') DEFAULT 'Pending',
+      reject_reason TEXT DEFAULT NULL,
       followers INT DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`;
@@ -225,13 +231,13 @@ async function sendOtpEmail(email, otp) {
   const transport = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+      user: email_user,
+      pass: email_pass,
     },
   });
 
   const mailOptions = {
-    from: `"Pixel & Pen" <${process.env.EMAIL_USER}>`,
+    from: `"Pixel & Pen" <${email_user}>`,
     to: email,
     subject: "Pixel & Pen OTP Code",
     html: `<div style="max-width: 500px; margin: auto; background: #ffffff; border-radius: 12px; padding: 30px; font-family: 'Segoe UI', sans-serif; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #e0e0e0;">
@@ -393,9 +399,9 @@ app.post("/OtpVerification", async (req, res) => {
         likes INT DEFAULT 0,
         article_status ENUM('Approved', 'Draft', 'Rejected', 'Pending') DEFAULT 'Draft',
         reject_reason VARCHAR(255) DEFAULT NULL,
-        reject_date DATE DEFAULT NULL,
-        approve_date DATE DEFAULT NULL,
-        pending_date DATE DEFAULT NULL,
+        reject_date TIMESTAMP DEFAULT NULL,
+        approve_date TIMESTAMP DEFAULT NULL,
+        pending_date TIMESTAMP DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )`;

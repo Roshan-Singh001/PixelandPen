@@ -39,7 +39,7 @@ contriRouter.get('/profile', async (req, res) => {
     const userId = req.headers['user_id'];
 
     try {
-            const fetchinfoQuery = `SELECT username, bio, profile_pic, dob FROM contributor WHERE cont_id = ?`;
+            const fetchinfoQuery = `SELECT username, bio, profile_pic, dob, expertise, links, city, country FROM contributor WHERE cont_id = ?`;
             const results = await db.query(fetchinfoQuery,userId);
     
             const profileInfo = results[0];
@@ -47,7 +47,25 @@ contriRouter.get('/profile', async (req, res) => {
             res.json(profileInfo);
         } catch (error) {
             console.log(error);
-            res.status(500).json({ message: "Error Fetching Article"});
+            res.status(500).json({ message: "Error Fetching Profile Info"});
+            
+        }
+});
+
+contriRouter.get('/status', async (req, res) => {
+    const userId = req.headers['user_id'];
+
+    try {
+            const fetchinfoQuery = `SELECT status, reject_reason FROM contributor WHERE cont_id = ?`;
+            const results = await db.query(fetchinfoQuery,userId);
+    
+            const status = results[0];
+            console.log(status);
+    
+            res.json(status);
+        } catch (error) {
+            console.log(error);
+            res.status(500).json({ message: "Error Fetching Status"});
             
         }
 });
@@ -59,13 +77,27 @@ contriRouter.post('/updateprofile', async (req, res) => {
     console.log(updatedProfile);
 
     try {
-            const fetchinfoQuery = `UPDATE contributor SET username = ?, bio = ?, profile_pic = ?, dob = ?  WHERE cont_id = ?`;
-            const results = await db.query(fetchinfoQuery,[updatedProfile.username, updatedProfile.bio, updatedProfile.profile_pic, updatedProfile.dob ,user_id]);
+            const fetchinfoQuery = `UPDATE contributor SET username = ?, bio = ?, profile_pic = ?, dob = ?, expertise = ?, links = ?, city = ?, country = ?  WHERE cont_id = ?`;
+            const results = await db.query(fetchinfoQuery,[updatedProfile.username, updatedProfile.bio, updatedProfile.profile_pic, updatedProfile.dob, updatedProfile.expertise, updatedProfile.links, updatedProfile.city, updatedProfile.country, user_id]);
     
             res.status(200).json({message: "Profile Updated Successfully"});
         } catch (error) {
             console.log(error);
             res.status(500).json({ message: "Error Fetching Article"});
+            
+        }
+});
+
+contriRouter.post('/resend', async (req, res) => {
+    const {cont_id} = req.body;
+    try {
+            const Query = `UPDATE contributor SET status='Pending', reject_reason='' WHERE cont_id = ?`;
+            const results = await db.query(Query,[cont_id]);
+    
+            res.status(200).json({message: "Request Resended Successfully"});
+        } catch (error) {
+            console.log(error);
+            res.status(500).json({ message: "Error sending request"});
             
         }
 });
@@ -184,7 +216,7 @@ contriRouter.get('/delete', async (req, res)=>{
     const dropQuery3 = `DELETE FROM articles WHERE author=?`;
     await db.query(dropQuery3,username);
 
-    const dropQuery4 = `DELETE FROM users WHERE username=?`;
+    const dropQuery4 = `DELETE FROM users WHERE id=?`;
     await db.query(dropQuery4,username);
 
     const dropQuery5 = `DELETE FROM review_articles WHERE cont_id=?`;
@@ -195,8 +227,6 @@ contriRouter.get('/delete', async (req, res)=>{
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Error Fetching Data"});
-
-    
   }
 });
 

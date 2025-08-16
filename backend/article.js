@@ -100,7 +100,7 @@ articleRouter.post('/send', async(req, res) => {
             await db.execute(review_query,[slug,title,author,cont_id]);
             const tableName = `${cont_id}` + '_articles';
             
-            const update_query = `UPDATE ${tableName} SET article_status = 'Pending' WHERE slug = ?`;
+            const update_query = `UPDATE ${tableName} SET article_status = 'Pending', pending_date=NOW() WHERE slug = ?`;
             await db.execute(update_query,[slug]);
             
             res.status(200).json({ Saved: "Article Sended for Review Successfully" });

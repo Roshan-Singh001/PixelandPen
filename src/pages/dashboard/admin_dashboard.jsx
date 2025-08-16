@@ -64,10 +64,7 @@ const AdminDashboard = () => {
   const { loggedIn, logout, userData, loading } = useAuth();
   const [statsData, setStatsData] = useState([]);
   const [articleRequests, setArticleRequests] = useState([]);
-  const contributorRequests = [
-    { id: 1, name: "ABC", email: "abc@example.com", status: "approved" },
-    { id: 2, name: "DEF", email: "def@example.com", status: "rejected" },
-  ];
+  const [contributorRequests, setContributorRequests] = useState([]);
 
   useEffect(() => {
     const fetchStats = async()=>{
@@ -96,7 +93,8 @@ const AdminDashboard = () => {
       const response = await AxiosInstance.get('/dashboard/admin/recent/article');
       setArticleRequests(response.data.recents);
 
-      console.log(articleRequests);
+      const response1 = await AxiosInstance.get('/dashboard/admin/recent/contributor');
+      setContributorRequests(response1.data.recents);
     } catch (error) {
       console.log(error); 
     }
@@ -267,7 +265,7 @@ const AdminDashboard = () => {
                   </h2>
                 </div>
                 <div className="p-6 space-y-4">
-                  {articleRequests.map((article) => {
+                  {articleRequests.length >0? articleRequests.map((article) => {
                     const StatusIcon = getStatusIcon(article.status);
                     return (
                       <div
@@ -288,7 +286,12 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                     );
-                  })}
+                  }):<><div className="text-center py-12">
+                          <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                              <XCircle className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                          </div>
+                          <p className="text-gray-500 dark:text-gray-400 text-lg">No Articles</p>
+                        </div></>}
                 </div>
               </div>
             </section>
@@ -303,16 +306,16 @@ const AdminDashboard = () => {
                   </h2>
                 </div>
                 <div className="p-6 space-y-4">
-                  {contributorRequests.map((cont) => {
+                  {contributorRequests.length?contributorRequests.map((cont) => {
                     const StatusIcon = getStatusIcon(cont.status);
                     return (
                       <div
-                        key={cont.id}
+                        key={cont.cont_id}
                         className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                       >
                         <div className="flex-1">
                           <h3 className="font-semibold text-gray-900 dark:text-white text-lg mb-1">
-                            {cont.name}
+                            {cont.username}
                           </h3>
                           <p className="text-gray-500 dark:text-gray-400 text-sm">
                             {cont.email}
@@ -324,7 +327,12 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                     );
-                  })}
+                  }): <><div className="text-center py-12">
+                          <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                            <XCircle className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                          </div>
+                          <p className="text-gray-500 dark:text-gray-400 text-lg">No Contributors</p>
+                        </div></>}
                 </div>
               </div>
             </section>

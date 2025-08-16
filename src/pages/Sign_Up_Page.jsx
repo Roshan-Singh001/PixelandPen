@@ -404,7 +404,7 @@ function Sign_Up_Page() {
                   </form>
 
                   {/* Divider */}
-                  <div className="relative my-8">
+                  {/* <div className="relative my-8">
                     <div className="absolute inset-0 flex items-center">
                       <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
                     </div>
@@ -413,9 +413,9 @@ function Sign_Up_Page() {
                         Or continue with
                       </span>
                     </div>
-                  </div>
+                  </div> */}
 
-                  {/* Social Sign Up */}
+                  {/* Social Sign Up
                   <div className="flex justify-center space-x-4 mb-8">
                     <button className="w-12 h-12 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-110">
                       <FcGoogle size={24} />
@@ -426,7 +426,7 @@ function Sign_Up_Page() {
                     <button className="w-12 h-12 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-110">
                       <FaApple size={24} className="text-gray-800 dark:text-gray-200" />
                     </button>
-                  </div>
+                  </div> */}
 
                   {/* Login Link */}
                   <div className="text-center">

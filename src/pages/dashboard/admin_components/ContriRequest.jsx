@@ -1,76 +1,73 @@
-import React, { useState } from 'react';
-import { UserPlus, XCircle, CheckCircle, Eye, X, User, Calendar, Mail, FileText, Shield, ShieldOff, MapPin, Award } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { UserPlus, XCircle, CheckCircle, Eye, X, User, Calendar, Mail, FileText, Shield, ShieldOff, MapPin, Award, Github, Linkedin, Twitter, Facebook, Trash2 } from 'lucide-react';
+import { FaXTwitter  } from 'react-icons/fa6';
+import { FaGithub, FaLinkedin, FaFacebook   } from "react-icons/fa";
+
+import PixelPenLoader from '../../../components/PixelPenLoader';
+
+const AxiosInstance = axios.create({
+    baseURL: 'http://localhost:3000/',
+    withCredentials: true,
+    timeout: 3000,
+    headers: {'X-Custom-Header': 'foobar'}
+  });
 
 const ContriRequest = () => {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedContributor, setSelectedContributor] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [isRender, setIsRender] = useState(1);
+  const [isloading, setIsloading] = useState(false);
+  const [pendingContributors, setPendingContributors] = useState([]);
+  const [approvedContributors, setApprovedContributors] = useState([]);
+  const [rejectedContributors, setRejectedContributors] = useState([]);
 
-  const pendingContributors = [
-    { 
-      id: 1, 
-      name: 'Roshan Singh', 
-      email: 'roshan@example.com',
-      profilePhoto: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-      dob: '1990-05-15',
-      bio: 'Full-stack developer with 5+ years of experience in React, Node.js, and cloud technologies. Passionate about writing technical articles and sharing knowledge with the developer community.',
-      location: 'Mumbai, India',
-      linkedin: 'https://linkedin.com/in/roshansingh',
-      github: 'https://github.com/roshansingh',
-      appliedDate: '2025-08-01',
-      expertise: ['React', 'Node.js', 'AWS', 'MongoDB']
-    },
-    { 
-      id: 2, 
-      name: 'Suraj Kumar', 
-      email: 'suraj@example.com',
-      profilePhoto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-      dob: '1992-08-22',
-      bio: 'DevOps engineer specializing in container orchestration and CI/CD pipelines. Love to write about cloud infrastructure and automation best practices.',
-      location: 'Bangalore, India',
-      linkedin: 'https://linkedin.com/in/surajkumar',
-      github: 'https://github.com/surajkumar',
-      appliedDate: '2025-08-02',
-      expertise: ['Docker', 'Kubernetes', 'Jenkins', 'Terraform']
-    },
-  ];
+  useEffect(() => {
+    setIsloading(true);
+    const fetchData = async()=>{
+      try {
+        const response1 = await AxiosInstance.get('/dashboard/admin/fetch/cont/pending');
+        setPendingContributors(response1.data.pending);
+        
+        const response2 = await AxiosInstance.get('/dashboard/admin/fetch/cont/approved');
+        setApprovedContributors(response2.data.approved);
+      
+        const response3 = await AxiosInstance.get('/dashboard/admin/fetch/cont/rejected');
+        setRejectedContributors(response3.data.rejected);
+        
+      } 
+      catch (error) {
+        console.log(error);
+        
+      }
+    }
+    fetchData();
+    setIsloading(false);
+  }, [isRender]);
 
-  const approvedContributors = [
-    { 
-      id: 3, 
-      name: 'ABC Developer', 
-      email: 'abc@example.com', 
-      joined: '2025-04-10', 
-      articles: 45,
-      profilePhoto: 'https://images.unsplash.com/photo-1494790108755-2616b9c955cc?w=150&h=150&fit=crop&crop=face',
-      status: 'active',
-      lastArticle: '2025-07-28',
-      expertise: ['JavaScript', 'Python', 'Machine Learning']
-    },
-    { 
-      id: 4, 
-      name: 'ZCV Writer', 
-      email: 'zcv@example.com', 
-      joined: '2025-03-21', 
-      articles: 67,
-      profilePhoto: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
-      status: 'blocked',
-      lastArticle: '2025-07-15',
-      expertise: ['Data Science', 'AI', 'Analytics']
-    },
-  ];
+  const handleApprove = async(cont_id) =>{
+    try {
+      await AxiosInstance.post('/dashboard/admin/cont/approve',{
+        cont_id: cont_id
+      });
+      setIsRender(isRender+1);
+    } catch (error) {
+      console.log(error); 
+    }
+  }
 
-  const rejectedContributors = [
-    { 
-      id: 5, 
-      name: 'DOL Smith', 
-      email: 'dol@example.com', 
-      reason: 'Incomplete profile - Missing portfolio links and writing samples',
-      rejectedDate: '2025-07-25',
-      profilePhoto: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face'
-    },
-  ];
+  const handleDelete = async(cont_id) =>{
+    try {
+      await AxiosInstance.post('/dashboard/admin/cont/delete',{
+        cont_id: cont_id
+      });
+      setIsRender(isRender+1);
+    } catch (error) {
+      console.log(error); 
+    }
+  }
 
   const handleReject = (contributor) => {
     setSelectedContributor(contributor);
@@ -82,16 +79,37 @@ const ContriRequest = () => {
     setShowDetailModal(true);
   };
 
-  const confirmReject = () => {
+  const confirmReject = async() => {
     console.log(`Rejecting contributor: ${selectedContributor.name} with reason: ${rejectReason}`);
+
+    try {
+      await AxiosInstance.post('/dashboard/admin/cont/reject',{
+        cont_id: selectedContributor.cont_id,
+        reject_reason: rejectReason
+      });
+      setIsRender(isRender+1);
+      
+    } catch (error) {
+      console.log(error);
+    }
+
     setShowRejectModal(false);
     setRejectReason('');
     setSelectedContributor(null);
   };
 
-  const toggleUserStatus = (userId, currentStatus) => {
+  const toggleUserStatus = async(userId, currentStatus) => {
     console.log(`Toggling status for user ${userId} from ${currentStatus}`);
-    // Here you would implement the actual status toggle logic
+    try {
+      await AxiosInstance.post('/dashboard/admin/cont/status',{
+        cont_id: userId,
+        set_status: currentStatus=='Approved'?'Block':'Approved'
+      });
+      setIsRender(isRender+1);
+    } catch (error) {
+      console.log(error);
+      
+    }
   };
 
   const StatusBadge = ({ status, count }) => (
@@ -100,6 +118,8 @@ const ContriRequest = () => {
       {status} ({count})
     </div>
   );
+
+  if (isloading) return <> <PixelPenLoader/> </>
 
   return (
     <div className="min-h-screen p-2">
@@ -131,7 +151,7 @@ const ContriRequest = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active</p>
                 <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-                  {approvedContributors.filter(c => c.status === 'active').length}
+                  {approvedContributors.length}
                 </p>
               </div>
               <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
@@ -164,23 +184,23 @@ const ContriRequest = () => {
             {pendingContributors.length > 0 ? (
               <div className="divide-y divide-gray-200 dark:divide-gray-700">
                 {pendingContributors.map((contributor) => (
-                  <div key={contributor.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <div key={contributor.cont_id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4 flex-1">
                         <img 
-                          src={contributor.profilePhoto} 
-                          alt={contributor.name}
+                          src={contributor.profile_pic} 
+                          alt={contributor.username}
                           className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
                         />
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{contributor.name}</h3>
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{contributor.username}</h3>
                           <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-2">
                             <span className="flex items-center gap-1">
                               <Mail size={14} />
                               {contributor.email}
                             </span>
                             <span>•</span>
-                            <span>Applied {contributor.appliedDate}</span>
+                            <span>Applied {new Date(contributor.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                           </div>
                           <div className="flex flex-wrap gap-1">
                             {contributor.expertise?.slice(0, 3).map((skill) => (
@@ -204,7 +224,7 @@ const ContriRequest = () => {
                           <Eye size={16} />
                           Details
                         </button>
-                        <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-lg transition-colors">
+                        <button onClick={()=>handleApprove(contributor.cont_id)} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-lg transition-colors">
                           <UserPlus size={16} />
                           Approve
                         </button>
@@ -240,24 +260,29 @@ const ContriRequest = () => {
             {rejectedContributors.length > 0 ? (
               <div className="divide-y divide-gray-200 dark:divide-gray-700">
                 {rejectedContributors.map((contributor) => (
-                  <div key={contributor.id} className="p-6">
+                  <div key={contributor.cont_id} className="p-6">
                     <div className="flex items-center gap-4 mb-3">
                       <img 
-                        src={contributor.profilePhoto} 
-                        alt={contributor.name}
+                        src={contributor.profile_pic} 
+                        alt={contributor.username}
                         className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
                       />
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{contributor.name}</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{contributor.username}</h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400">{contributor.email}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-2">
-                      <XCircle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
+                      <XCircle size={16} className="text-red-500 mt-0.5" />
                       <div>
-                        <p className="text-sm text-red-600 dark:text-red-400 font-medium">{contributor.reason}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Rejected on {contributor.rejectedDate}</p>
+                        <p className="text-sm text-red-600 dark:text-red-400 font-medium">{contributor.reject_reason}</p>
                       </div>
+                    </div>
+
+                    <div className='flex justify-end'>
+                      <button title='Delete' onClick={()=>handleDelete(contributor.cont_id)} className="inline-flex items-center gap-1 px-2 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors">
+                        <Trash2 size={14} /> Delete Account
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -286,52 +311,46 @@ const ContriRequest = () => {
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Contributor</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Joined</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Articles</th>
+                    
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {approvedContributors.map((contributor) => (
-                    <tr key={contributor.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <tr key={contributor.cont_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <img 
-                            src={contributor.profilePhoto} 
-                            alt={contributor.name}
+                            src={contributor.profile_pic} 
+                            alt={contributor.username}
                             className="w-8 h-8 rounded-full object-cover"
                           />
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{contributor.name}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{contributor.username}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{contributor.email}</td>
-                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{contributor.joined}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1">
-                          <FileText size={14} className="text-gray-400" />
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">{contributor.articles}</span>
-                        </div>
-                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{new Date(contributor.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          contributor.status === 'active' 
+                          contributor.status === 'Approved' 
                             ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
                             : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
                         }`}>
-                          {contributor.status === 'active' ? 'Active' : 'Blocked'}
+                          {contributor.status === 'Approved' ? 'Active' : 'Blocked'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <button 
-                            onClick={() => toggleUserStatus(contributor.id, contributor.status)}
+                            onClick={() => toggleUserStatus(contributor.cont_id, contributor.status)}
                             className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                              contributor.status === 'active'
+                              contributor.status === 'Approved'
                                 ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30'
                                 : 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30'
                             }`}
                           >
-                            {contributor.status === 'active' ? (
+                            {contributor.status === 'Approved' ? (
                               <>
                                 <Shield size={14} />
                                 Block
@@ -372,12 +391,12 @@ const ContriRequest = () => {
               {/* Profile Header */}
               <div className="flex items-start gap-6 mb-6">
                 <img 
-                  src={selectedContributor.profilePhoto} 
-                  alt={selectedContributor.name}
+                  src={selectedContributor.profile_pic} 
+                  alt={selectedContributor.username}
                   className="w-24 h-24 rounded-full object-cover border-4 border-gray-200 dark:border-gray-600"
                 />
                 <div className="flex-1">
-                  <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{selectedContributor.name}</h4>
+                  <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{selectedContributor.username}</h4>
                   <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                     <div className="flex items-center gap-2">
                       <Mail size={16} />
@@ -389,10 +408,11 @@ const ContriRequest = () => {
                         <span>Born {new Date(selectedContributor.dob).toLocaleDateString()}</span>
                       </div>
                     )}
-                    {selectedContributor.location && (
+                    {(selectedContributor.city || selectedContributor.country) && (
                       <div className="flex items-center gap-2">
                         <MapPin size={16} />
-                        <span>{selectedContributor.location}</span>
+                        <span>{selectedContributor.city}</span>
+                        {selectedContributor.country && <span>, {selectedContributor.country}</span>}
                       </div>
                     )}
                   </div>
@@ -422,30 +442,52 @@ const ContriRequest = () => {
               )}
 
               {/* Links */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {selectedContributor.linkedin && (
+              {selectedContributor.links && <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {selectedContributor.links.linkedin && (
                   <a 
-                    href={selectedContributor.linkedin} 
+                    href={selectedContributor.links.linkedin} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-400 dark:text-blue-600 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                  >
+                    <FaLinkedin size={16} />
+                    LinkedIn Profile
+                  </a>
+                )}
+                {selectedContributor.links.twitter && (
+                  <a 
+                    href={selectedContributor.links.twitter} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
                   >
-                    <Award size={16} />
-                    LinkedIn Profile
+                    <FaXTwitter  size={16} />
+                    Twitter(X) Profile
                   </a>
                 )}
-                {selectedContributor.github && (
+                {selectedContributor.links.facebook && (
                   <a 
-                    href={selectedContributor.github} 
+                    href={selectedContributor.links.facebook} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                  >
+                    <FaFacebook size={16} />
+                    Facebook Profile
+                  </a>
+                )}
+                {selectedContributor.links.github && (
+                  <a 
+                    href={selectedContributor.links.github} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                   >
-                    <Award size={16} />
+                    <FaGithub size={16} />
                     GitHub Profile
                   </a>
                 )}
-              </div>
+              </div>}
             </div>
           </div>
         </div>
@@ -468,8 +510,8 @@ const ContriRequest = () => {
             <div className="p-6">
               <div className="flex items-center gap-3 mb-4">
                 <img 
-                  src={selectedContributor.profilePhoto} 
-                  alt={selectedContributor.name}
+                  src={selectedContributor.profile_pic} 
+                  alt={selectedContributor.username}
                   className="w-10 h-10 rounded-full object-cover"
                 />
                 <div>
@@ -477,7 +519,7 @@ const ContriRequest = () => {
                     You are about to reject the application from
                   </p>
                   <p className="font-semibold text-gray-900 dark:text-white">
-                    {selectedContributor.name}
+                    {selectedContributor.username}
                   </p>
                 </div>
               </div>

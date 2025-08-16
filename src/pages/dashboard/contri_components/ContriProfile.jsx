@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { User, Camera, Calendar, FileText, Save, Upload, Check, AlertCircle } from 'lucide-react';
+import { 
+  User, Camera, Calendar, FileText, Save, Upload, Check, AlertCircle, 
+  MapPin, Globe, Plus, X, ExternalLink,
+  Tag, Trash2
+} from 'lucide-react';
+import { FaXTwitter  } from 'react-icons/fa6';
+import { FaGithub, FaLinkedin, FaFacebook   } from "react-icons/fa";
 import PixelPenLoader from '../../../components/PixelPenLoader';
 
 const ContriProfile = (props) => {
@@ -18,6 +24,16 @@ const ContriProfile = (props) => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [errors, setErrors] = useState({});
 
+  // State for dynamic fields
+  const [expertiseInput, setExpertiseInput] = useState('');
+  const [expertise, setExpertise] = useState([]);
+  const [links, setLinks] = useState({
+    facebook: '',
+    twitterX: '',
+    github: '',
+    linkedin: ''
+  });
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -30,6 +46,29 @@ const ContriProfile = (props) => {
         
         const profileData = response.data[0];
         if (profileData.dob == null) profileData.dob = "";
+        try {
+          setExpertise(profileData.expertise ? profileData.expertise: []);
+
+        } catch (e) {
+          setExpertise([]);
+        }
+        
+        try {
+          setLinks(profileData.links ? profileData.links : {
+            facebook: '',
+            twitter: '',
+            github: '',
+            linkedin: ''
+          });
+        } catch (e) {
+          setLinks({
+            facebook: '',
+            twitter: '',
+            github: '',
+            linkedin: ''
+          });
+        }
+        
         setProfile(profileData);
         
         if (profileData.profile_pic) setPreview(profileData.profile_pic);
@@ -57,6 +96,23 @@ const ContriProfile = (props) => {
     if (profile.bio && profile.bio.length > 500) {
       newErrors.bio = 'Bio must be less than 500 characters';
     }
+
+    // Validate social media links format
+    const urlPattern = /^https?:\/\/.+/;
+    Object.keys(links).forEach(platform => {
+      if (links[platform] && !urlPattern.test(links[platform])) {
+        newErrors[`links_${platform}`] = `Please enter a valid ${platform} URL (starting with http:// or https://)`;
+      }
+    });
+
+    // Validate city and country
+    if (profile.city && profile.city.length > 100) {
+      newErrors.city = 'City name must be less than 100 characters';
+    }
+    
+    if (profile.country && profile.country.length > 100) {
+      newErrors.country = 'Country name must be less than 100 characters';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -68,6 +124,32 @@ const ContriProfile = (props) => {
     
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const handleLinkChange = (platform, value) => {
+    setLinks(prev => ({ ...prev, [platform]: value }));
+    
+    if (errors[`links_${platform}`]) {
+      setErrors((prev) => ({ ...prev, [`links_${platform}`]: '' }));
+    }
+  };
+
+  const addExpertise = () => {
+    if (expertiseInput.trim() && !expertise.includes(expertiseInput.trim()) && expertise.length < 10) {
+      setExpertise(prev => [...prev, expertiseInput.trim()]);
+      setExpertiseInput('');
+    }
+  };
+
+  const removeExpertise = (index) => {
+    setExpertise(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleExpertiseKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addExpertise();
     }
   };
 
@@ -105,6 +187,25 @@ const ContriProfile = (props) => {
     }
   };
 
+  const sanitizeData = (data) => {
+    // Helper function to sanitize string inputs
+    const sanitizeString = (str) => {
+      if (typeof str !== 'string') return str;
+      return str.trim().replace(/[<>]/g, ''); // Remove potential XSS characters
+    };
+
+    const sanitized = { ...data };
+    
+    // Sanitize string fields
+    ['username', 'bio', 'city', 'country'].forEach(field => {
+      if (sanitized[field]) {
+        sanitized[field] = sanitizeString(sanitized[field]);
+      }
+    });
+
+    return sanitized;
+  };
+
   const handleSubmit = async () => {
     if (!validateForm()) {
       return;
@@ -113,17 +214,25 @@ const ContriProfile = (props) => {
     setIsSaving(true);
     setSaveSuccess(false);
 
+    // Prepare the profile data with proper JSON serialization
     const formattedProfile = {
       ...profile,
-      dob: profile.dob ? new Date(profile.dob).toISOString().split('T')[0] : null
+      dob: profile.dob ? new Date(profile.dob).toISOString().split('T')[0] : null,
+      expertise: JSON.stringify(expertise),
+      links: JSON.stringify(Object.fromEntries(
+        Object.entries(links).filter(([_, value]) => value.trim() !== '')
+      ))
     };
 
-    console.log(formattedProfile);
+    // Sanitize the data before sending
+    const sanitizedProfile = sanitizeData(formattedProfile);
+
+    console.log('Sending profile data:', sanitizedProfile);
     
     try {
       const response = await AxiosInstance.post('/dashboard/contri/updateprofile', {
         user_id: props.userdata.user_id,
-        updatedProfile: formattedProfile,
+        updatedProfile: sanitizedProfile,
       });
       
       setSaveSuccess(true);
@@ -140,11 +249,21 @@ const ContriProfile = (props) => {
   if (isLoading) {
     return (
       <>
-      
       <PixelPenLoader/>
       </>
     );
   }
+
+  const linkIcons = {
+    facebook: FaFacebook,
+    twitter: FaXTwitter,
+    github: FaGithub,
+    linkedin: FaLinkedin
+  };
+
+  console.log(expertise);
+  console.log(expertiseInput);
+  console.log(links);
 
   return (
     <div className="min-h-screen p-2">
@@ -175,6 +294,7 @@ const ContriProfile = (props) => {
         )}
 
         <div className="space-y-8">
+          {/* Profile Picture Section */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
             <div className="flex items-center gap-6 mb-6">
               <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
@@ -281,11 +401,67 @@ const ContriProfile = (props) => {
                   <input
                     type="date"
                     name="dob"
-                    value={profile.dob.split('T')[0] || ''}
+                    value={profile.dob ? profile.dob.split('T')[0] : ''}
                     onChange={handleChange}
                     className="w-full pl-11 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                 </div>
+              </div>
+
+              {/* City */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                  City
+                </label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                  <input
+                    type="text"
+                    name="city"
+                    value={profile.city || ''}
+                    onChange={handleChange}
+                    className={`w-full pl-11 pr-4 py-3 border rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                      errors.city 
+                        ? 'border-red-300 dark:border-red-600 focus:ring-red-500' 
+                        : 'border-gray-300 dark:border-gray-600'
+                    }`}
+                    placeholder="Enter your city"
+                  />
+                </div>
+                {errors.city && (
+                  <p className="text-red-500 dark:text-red-400 text-sm mt-2 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.city}
+                  </p>
+                )}
+              </div>
+
+              {/* Country */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                  Country
+                </label>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                  <input
+                    type="text"
+                    name="country"
+                    value={profile.country || ''}
+                    onChange={handleChange}
+                    className={`w-full pl-11 pr-4 py-3 border rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                      errors.country 
+                        ? 'border-red-300 dark:border-red-600 focus:ring-red-500' 
+                        : 'border-gray-300 dark:border-gray-600'
+                    }`}
+                    placeholder="Enter your country"
+                  />
+                </div>
+                {errors.country && (
+                  <p className="text-red-500 dark:text-red-400 text-sm mt-2 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.country}
+                  </p>
+                )}
               </div>
 
               {/* Bio */}
@@ -323,6 +499,126 @@ const ContriProfile = (props) => {
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Expertise Section */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+            <div className="flex items-center gap-6 mb-8">
+              <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                <Tag className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Expertise & Skills
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Add your areas of expertise and skills (max 10 tags)
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex gap-3">
+                <div className="relative flex-1">
+                  <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                  <input
+                    type="text"
+                    value={expertiseInput}
+                    onChange={(e) => setExpertiseInput(e.target.value)}
+                    onKeyDown={handleExpertiseKeyPress}
+                    className="w-full pl-11 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder="Enter skill or expertise (e.g., React, Python, Machine Learning)"
+                    disabled={expertise.length >= 10}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={addExpertise}
+                  disabled={!expertiseInput.trim() || expertise.includes(expertiseInput.trim()) || expertise.length >= 10}
+                  className="px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add
+                </button>
+              </div>
+
+              {/* Display expertise tags */}
+              {expertise.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {expertise.map((skill, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-2 px-3 py-1 bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-200 rounded-full text-sm border border-purple-200 dark:border-purple-700"
+                    >
+                      {skill}
+                      <button
+                        type="button"
+                        onClick={() => removeExpertise(index)}
+                        className="hover:bg-purple-200 dark:hover:bg-purple-800 rounded-full p-1 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {expertise.length >= 10 && (
+                <p className="text-amber-600 dark:text-amber-400 text-sm">
+                  Maximum of 10 expertise tags allowed
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Social Links Section */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+            <div className="flex items-center gap-6 mb-8">
+              <div className="p-3 bg-indigo-100 dark:bg-indigo-900/20 rounded-lg">
+                <ExternalLink className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Social Links
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Connect your social media profiles
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {Object.entries(links).map(([platform, url]) => {
+                const IconComponent = linkIcons[platform];
+                return (
+                  <div key={platform}>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 capitalize">
+                      {platform}
+                    </label>
+                    <div className="relative">
+                      <IconComponent className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                      <input
+                        type="url"
+                        value={url}
+                        onChange={(e) => handleLinkChange(platform, e.target.value)}
+                        className={`w-full pl-11 pr-4 py-3 border rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                          errors[`links_${platform}`] 
+                            ? 'border-red-300 dark:border-red-600 focus:ring-red-500' 
+                            : 'border-gray-300 dark:border-gray-600'
+                        }`}
+                        placeholder={`https://${platform}.com/yourprofile`}
+                      />
+                    </div>
+                    {errors[`links_${platform}`] && (
+                      <p className="text-red-500 dark:text-red-400 text-sm mt-2 flex items-center gap-1">
+                        <AlertCircle className="w-4 h-4" />
+                        {errors[`links_${platform}`]}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 

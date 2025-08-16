@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
+  Ban,
   Users,
   Eye,
   Heart,
@@ -66,6 +67,10 @@ const ContributorDashboard = () => {
   const [menuMinimize, setMenuMinimize] = useState(false);
   const [menuOption, setMenuOption] = useState("Dashboard");
   const [isAccepted, setAccecpted] = useState(false);
+  const [isBlock, setBlock] = useState(false);
+  const [status, setStatus] = useState('');
+  const [rejectReason, setRejectReason] = useState('');
+  const [isRender, setIsRender] = useState(1);
   const [refSlug, setRefslug] = useState("");
   const [statsData,setStatsData] = useState([]);
 
@@ -74,6 +79,28 @@ const ContributorDashboard = () => {
   useEffect(() => {
     const fetchStats = async()=>{
     try {
+      const response = await AxiosInstance.get('/dashboard/contri/status', {
+        headers: {
+          user_id: userData.user_id,
+        }
+      });
+
+      const status = response.data[0].status;
+      const reject = response.data[0].reject_reason?response.data[0].reject_reason:'';
+
+      setStatus(status);
+      setRejectReason(reject);
+
+      if (status == 'Approved') {
+        setAccecpted(true);
+        setBlock(false);
+      }
+      else if(status == 'Block'){
+        setBlock(true);
+        setAccecpted(true);
+      } 
+      
+      
       const response1 = await AxiosInstance.get('/dashboard/contri/stat/posts', {
         headers: {
           user_id: userData.user_id,
@@ -102,8 +129,6 @@ const ContributorDashboard = () => {
         }
       });
       setStatsData((prev)=>([...prev, {title: "Followers", value: response4.data.total_f || 0, color: "purple", icon: Users} ]));
-
-      console.log(statsData);
     } catch (error) {
       console.log(error);
       
@@ -117,20 +142,29 @@ const ContributorDashboard = () => {
           user_id: userData.user_id,
         }
       });
-
       setRecentArticles(response.data.recents);
-
-      console.log(recentArticles);
     } catch (error) {
       console.log(error); 
     }
 
   }
-
   fetchStats();
   fetchRecent();
 
-  }, [])
+  }, [isRender]);
+
+  const handleReject = async()=>{
+    try {
+      await AxiosInstance.post('/dashboard/contri/resend',{
+        cont_id: userData.user_id,
+      });
+      setIsRender(isRender+1);
+      
+    } catch (error) {
+      console.log(error);
+      
+    }
+  }
   
   const getStatusColor = (status) => {
     switch (status) {
@@ -227,19 +261,20 @@ const ContributorDashboard = () => {
   </div>
   <nav className="flex flex-col mt-4">
     {[
-      { label: "Dashboard", icon: <BiSolidDashboard size={25} /> },
-      { label: "My Articles", icon: <MdArticle size={25} /> },
-      { label: "Comments", icon: <FaComments size={25} /> },
-      { label: "My Stats", icon: <MdAnalytics size={25} /> },
-      { label: "Profile", icon: <FaUserCog size={25} /> },
-      { label: "Settings", icon: <IoSettingsSharp size={25} /> },
-      { label: "Add Article", icon: <IoIosAddCircle size={25} /> },
-    ].map(({ label, icon }) => (
+      { label: "Dashboard", icon: <BiSolidDashboard size={25} />, status: true },
+      { label: "My Articles", icon: <MdArticle size={25} />, status: isAccepted },
+      { label: "Comments", icon: <FaComments size={25} />, status: isAccepted },
+      { label: "My Stats", icon: <MdAnalytics size={25} />, status: isAccepted },
+      { label: "Profile", icon: <FaUserCog size={25} />, status: true },
+      { label: "Settings", icon: <IoSettingsSharp size={25} />, status: true },
+      { label: "Add Article", icon: <IoIosAddCircle size={25} />, status: isAccepted && !isBlock },
+    ].map(({ label, icon, status }) => (
       <button
+        disabled={!status}
         title={label}
         key={label}
         onClick={() => setMenuOption(label)}
-        className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors ${
+        className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors disabled:opacity-50 ${
           menuOption === label
             ? "bg-indigo-100 dark:bg-indigo-600 text-indigo-700 dark:text-white font-semibold"
             : "hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -285,6 +320,147 @@ const ContributorDashboard = () => {
               </div>
             </div>
           </div>
+
+          {status === 'Pending' && (
+          <div className="relative overflow-hidden rounded-xl border-2 border-amber-300 dark:border-amber-600 bg-gradient-to-br from-amber-50 to-yellow-100 dark:from-amber-900/20 dark:to-yellow-900/30 p-6 shadow-lg backdrop-blur-sm duration-300 hover:shadow-xl">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-5">
+              <div className="absolute inset-0" style={{
+                backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
+                backgroundSize: '20px 20px'
+              }}></div>
+            </div>
+            
+            {/* Animated pulse */}
+            <div className="absolute -top-1 -left-1 -right-1 -bottom-1 rounded-xl opacity-20 ">
+              <div className="w-full h-full rounded-xl bg-amber-400"></div>
+            </div>
+
+            <div className="relative flex items-start space-x-4">
+              {/* Status Icon */}
+              <div className="p-3 rounded-full bg-amber-100 dark:bg-amber-800/40 text-amber-600 dark:text-amber-400 shadow-md">
+                <Clock className="w-6 h-6" />
+              </div>
+              
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                {/* Status Badge */}
+                <div className="flex items-center space-x-2 mb-3">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-amber-100 dark:bg-amber-800/40 text-amber-600 dark:text-amber-400 shadow-sm">
+                    Pending
+                  </span>
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 rounded-full bg-amber-400 animate-bounce"></div>
+                    <div className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  </div>
+                </div>
+                
+                {/* Title */}
+                <h3 className="text-xl font-bold text-amber-800 dark:text-amber-200 mb-2">
+                  Application Under Review
+                </h3>
+                
+                {/* Message */}
+                <p className="text-amber-800 dark:text-amber-200 opacity-80 leading-relaxed mb-4">
+                  You are not approved by the admins yet. Kindly complete the profile to expedite the review process.
+                </p>
+                
+                {/* Action Button */}
+                <button onClick={()=>setMenuOption('Profile')} className="inline-flex items-center px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-md active:scale-95 bg-amber-100 dark:bg-amber-800/40 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-600">
+                  Complete Profile
+                  <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {status === 'Rejected' && (
+          <div className="relative overflow-hidden rounded-xl border-2 border-red-300 dark:border-red-600 bg-gradient-to-br from-red-50 to-rose-100 dark:from-red-900/20 dark:to-rose-900/30 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-5">
+              <div className="absolute inset-0" style={{
+                backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
+                backgroundSize: '20px 20px'
+              }}></div>
+            </div>
+
+            <div className="relative flex items-start space-x-4">
+              {/* Status Icon */}
+              <div className="p-3 rounded-full bg-red-100 dark:bg-red-800/40 text-red-600 dark:text-red-400 shadow-md">
+                <XCircle className="w-6 h-6" />
+              </div>
+              
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                {/* Status Badge */}
+                <div className="flex items-center space-x-2 mb-3">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 dark:bg-red-800/40 text-red-600 dark:text-red-400 shadow-sm">
+                    Rejected
+                  </span>
+                </div>
+                
+                {/* Title */}
+                <h3 className="text-xl font-bold text-red-800 dark:text-red-200 mb-2">
+                  Application Rejected
+                </h3>
+                
+                {/* Message */}
+                <p className="text-red-800 dark:text-red-200 opacity-80 leading-relaxed mb-4">
+                  Reject Reason: {rejectReason}
+                </p>
+                <p className="text-red-800 dark:text-red-200 opacity-80 leading-relaxed mb-4">
+                  You can resend the request after fixing the problem.
+                </p>
+
+                <button onClick={()=>handleReject()} className="bg-red-400 hover:bg-red-600 p-2 rounded-lg dark:bg-red-600 dark:hover:bg-red-800">Review Again</button>
+              
+              </div>
+            </div>
+          </div>
+        )}
+
+        {status === 'Block' && (
+          <div className="relative overflow-hidden rounded-xl border-2 border-orange-400 dark:border-orange-600 bg-gradient-to-br from-orange-50 to-red-100 dark:from-orange-900/20 dark:to-red-900/30 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-5">
+              <div className="absolute inset-0" style={{
+                backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
+                backgroundSize: '20px 20px'
+              }}></div>
+            </div>
+
+            <div className="relative flex items-start space-x-4">
+              {/* Status Icon */}
+              <div className="p-3 rounded-full bg-orange-100 dark:bg-orange-800/40 text-orange-600 dark:text-orange-400 shadow-md">
+                <Ban className="w-6 h-6" />
+              </div>
+              
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                {/* Status Badge */}
+                <div className="flex items-center space-x-2 mb-3">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-orange-100 dark:bg-orange-800/40 text-orange-600 dark:text-orange-400 shadow-sm">
+                    Blocked
+                  </span>
+                </div>
+                
+                {/* Title */}
+                <h3 className="text-xl font-bold text-orange-800 dark:text-orange-200 mb-2">
+                  Account Temporarily Suspended
+                </h3>
+                
+                {/* Message */}
+                <p className="text-orange-800 dark:text-orange-200 opacity-80 leading-relaxed mb-4">
+                  You are temporarily blocked by the admins. This action is under review and may be lifted after further evaluation.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

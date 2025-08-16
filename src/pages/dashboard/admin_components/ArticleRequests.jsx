@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Eye, FileText, Trash2, X } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, FileText, Trash2, X, StarsIcon } from 'lucide-react';
 import axios from 'axios';
 
 import PixelPenLoader from "../../../components/PixelPenLoader";
@@ -16,14 +16,10 @@ const ArticleRequests = () => {
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [isloading, setLoading] = useState(true);
+  const [isRender, setRender] = useState(1);
   const [pendingArticles, setPendingArticles] = useState([]);
   const [rejectedArticles, setRejectedArticles] = useState([]);
   const [approvedArticles, setApprovedArticles] = useState([]);
-
-  // const approvedArticles = [
-  //   { id: 4, title: 'The Future of Blockchain', category: 'DevOps', author: 'ZBH', date: '2025-05-20', views: 1243 },
-  //   { id: 5, title: 'AI in Healthcare', category: 'AI/ML', author: 'OPS', date: '2025-05-18', views: 892 },
-  // ];
 
   useEffect(() => {
     const fetchData =  async()=>{
@@ -33,7 +29,6 @@ const ArticleRequests = () => {
 
         const response2 = await AxiosInstance.get('/dashboard/admin/fetch/article/rejected');
         setRejectedArticles(response2.data.rejected);
-        console.log(response2.data.rejected);
 
         const response3 = await AxiosInstance.get('/dashboard/admin/fetch/article/published');
         setApprovedArticles(response3.data.published);
@@ -44,12 +39,65 @@ const ArticleRequests = () => {
     }
     fetchData();
     setLoading(false);
-  }, []);
+  }, [isRender]);
 
   if (isloading) return <PixelPenLoader/>
 
   const handlePreview = (slug)=>{
     window.open(`/preview/${slug}`, '_blank');
+  }
+
+  const handleView = (slug)=>{
+    window.open(`/view/${slug}`, '_blank');
+  }
+
+  const handleDelete = async(article)=>{
+    try {
+      await AxiosInstance.delete('/dashboard/admin/article/delete', {
+        data: {
+          slug: article.slug,
+          article_id: article.article_id,
+          cont_id: article.cont_id,
+          review_id: article.review_id,
+        }
+      });
+      setRender(isRender+1);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  const handleFeatured = async(slug,article_id,is_featured)=>{
+    try {
+      await AxiosInstance.post('/dashboard/admin/article/feature', {
+          slug: slug,
+          article_id: article_id,
+          is_featured: is_featured?false:true
+      });
+      setRender(isRender+1);
+    } catch (error) {
+      console.log(error)
+      
+    }
+  }
+
+  const handleApprove = async (article) => {
+    try {
+      const date = new Date().toISOString().slice(0, 19).replace('T', ' ');
+      await AxiosInstance.post('/dashboard/admin/article/approve',{
+        slug: article.slug,
+        cont_id: article.cont_id,
+        review_id: article.review_id,
+        author: article.author,
+        publish_At: date
+      });
+      setRender(isRender+1);
+
+      
+    } catch (error) {
+      console.log(error);
+      
+    }
   }
   
   const handleReject = async (article) => {
@@ -68,6 +116,7 @@ const ArticleRequests = () => {
         rejectReason: rejectReason,
         rejectAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
       });
+      setRender(isRender+1);
       
     } catch (error) {
       console.log(error);
@@ -163,7 +212,7 @@ const ArticleRequests = () => {
                           <Eye size={16} />
                           Preview
                         </button>
-                        <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-lg transition-colors">
+                        <button onClick={()=> handleApprove(article)} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-lg transition-colors">
                           <CheckCircle size={16} />
                           Approve
                         </button>
@@ -245,7 +294,7 @@ const ArticleRequests = () => {
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {approvedArticles.length > 0 ? (
                 approvedArticles.map((article) => (
-                  <tr key={article.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <tr key={article.article_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900 dark:text-white">{article.title}</div>
                     </td>
@@ -255,17 +304,18 @@ const ArticleRequests = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{article.author}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{article.date}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{new Date(article.publish_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</td>
                     <td className="px-6 py-4 text-sm text-gray-900 dark:text-white font-medium">{article.views?.toLocaleString()}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors">
+                    <td className="">
+                      <div className="flex items-center gap-1">
+                        <button title='View' onClick={()=>handleView(article.slug)} className="inline-flex items-center gap-1 px-2 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors">
                           <Eye size={14} />
-                          View
                         </button>
-                        <button className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors">
+                        <button title='Delete' onClick={()=>handleDelete(article)} className="inline-flex items-center gap-1 px-2 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors">
                           <Trash2 size={14} />
-                          Delete
+                        </button>
+                        <button title={article.is_featured?'Remove as Featured':'Set as Featured'} onClick={()=>handleFeatured(article.slug,article.article_id,article.is_featured)} className={`inline-flex items-center gap-1 px-2 py-2 text-sm font-medium text-yellow-600 ${article.is_featured?'bg-yellow-100 dark:bg-yellow-900/70':''} dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/30 rounded-md transition-colors`}>
+                          <StarsIcon size={14} />
                         </button>
                       </div>
                     </td>
