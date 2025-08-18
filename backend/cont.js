@@ -201,6 +201,25 @@ contriRouter.get('/recent', async (req, res)=>{
   }
 });
 
+contriRouter.get('/announcements', async (req, res)=>{
+
+  try {
+    const fetchinfoQuery = `SELECT id, title, content, published_at FROM announcements WHERE status='Published' && audience='Contributors' || audience='All' ORDER BY published_at`;
+    const results = await db.query(fetchinfoQuery);
+
+    const recents = results[0];
+
+    console.log(recents);
+    res.status(200).json({announce: recents});
+    
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data"});
+
+    
+  }
+});
+
 contriRouter.get('/delete', async (req, res)=>{
   const userId = req.headers['user_id'];
   const username = req.headers['username'];

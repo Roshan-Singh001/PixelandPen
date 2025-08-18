@@ -40,11 +40,13 @@ import { MdArticle, MdAnalytics, MdLogout } from "react-icons/md";
 import { IoPersonAdd, IoSettingsSharp } from "react-icons/io5";
 import { FaAnglesRight } from "react-icons/fa6";
 import { FaAnglesLeft } from "react-icons/fa6";
+import { GrAnnounce } from "react-icons/gr";
 
 import ArticleRequests from "./admin_components/ArticleRequests";
 import ContriRequest from "./admin_components/ContriRequest";
 import SiteAnalytics from "./admin_components/SiteAnalytics";
 import AdminSettings from "./admin_components/AdminSettings";
+import Announcements from "./admin_components/Annoucements";
 import { useAuth } from "../../contexts/AuthContext";
 import { ThemeProvider } from "../../contexts/ThemeContext";
 import PixelPenLoader from "../../components/PixelPenLoader";
@@ -180,6 +182,7 @@ const AdminDashboard = () => {
             { label: "Dashboard", icon: <BiSolidDashboard size={25} /> },
             { label: "Article", icon: <MdArticle size={25} /> },
             { label: "Contributor", icon: <IoPersonAdd size={25} /> },
+            { label: "Announcements", icon: <GrAnnounce size={25} /> },
             { label: "Analytics", icon: <MdAnalytics size={25} /> },
             { label: "Settings", icon: <IoSettingsSharp size={25} /> },
           ].map(({ label, icon }) => (
@@ -342,6 +345,7 @@ const AdminDashboard = () => {
 
         {menuOption === "Article" && <ArticleRequests />}
         {menuOption === "Contributor" && <ContriRequest />}
+        {menuOption === "Announcements" && <Announcements />}
         {menuOption === "Analytics" && <SiteAnalytics />}
         {menuOption === "Settings" && (
           <ThemeProvider>

@@ -3,6 +3,8 @@ import { v4 as uuidv4 } from 'uuid';
 import db from './db.js';
 const adminRouter = express.Router();
 
+// STATS
+
 adminRouter.get('/stat/posts',async (req, res) => {
   try {
     const fetchinfoQuery = `SELECT COUNT(*) AS "Total_Posts" FROM articles`;
@@ -59,6 +61,8 @@ adminRouter.get('/stat/readers',async (req, res) => {
       }
 });
 
+// RECENTS
+
 adminRouter.get('/recent/article',async (req, res) => {
     try {
         const fetchinfoQuery = `SELECT slug,title,author,status FROM review_articles LIMIT 5`;
@@ -86,6 +90,8 @@ adminRouter.get('/recent/contributor',async (req, res) => {
         res.status(500).json({ message: "Error Fetching Data"});
       }
 });
+
+// ARTICLE
 
 adminRouter.get('/fetch/article/pending',async (req, res) => {
     try {
@@ -218,6 +224,8 @@ adminRouter.delete('/article/delete', async (req,res)=>{
   }
 });
 
+// CONTRIBUTOR
+
 adminRouter.get('/fetch/cont/pending',async (req, res) => {
   try {
       const fetchinfoQuery = `SELECT cont_id, username, email, bio, profile_pic, dob, expertise, links, city, country, created_at FROM contributor WHERE status="Pending"`;
@@ -330,6 +338,92 @@ adminRouter.post('/cont/status',async (req, res) => {
       console.log(error);
       res.status(500).json({ message: "Error in status change of contributor"});
     }
+});
+
+// ANNOUNCEMENT
+
+adminRouter.get('/fetch/announcement/draft',async (req, res) => {
+  try {
+      const fetchinfoQuery = `SELECT * FROM announcements WHERE status="Draft"`;
+      const results = await db.query(fetchinfoQuery);
+  
+      const recents = results[0];
+
+      res.status(200).json({drafts: recents});
+      
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: "Error Fetching Data"});
+    }
+});
+
+adminRouter.get('/fetch/announcement/published',async (req, res) => {
+  try {
+      const fetchinfoQuery = `SELECT * FROM announcements WHERE status="Published"`;
+      const results = await db.query(fetchinfoQuery);
+  
+      const recents = results[0];
+
+      res.status(200).json({published: recents});
+      
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: "Error Fetching Data"});
+    }
+});
+
+adminRouter.post('/announcement/add',async (req, res) => {
+  const {announce} = req.body;
+  try {
+    if (announce.status == "Draft") {
+      const Query = `INSERT INTO announcements (title, content, audience, status) VALUES (?,?,?,?)`;
+      await db.query(Query,[announce.title,announce.content,announce.audience,"Draft"]);
+    }
+    else{
+      const Query = `INSERT INTO announcements (title, content, audience, status, published_at) VALUES (?,?,?,?,?)`;
+      await db.query(Query,[announce.title,announce.content,announce.audience,"Published",new Date()]);
+    }
+
+    res.status(200).json({message: 'Announcement saved Successfully'});
+      
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error in saving annoucement"});
+  }
+});
+
+adminRouter.post('/announcement/edit',async (req, res) => {
+  const {announce, announce_id} = req.body;
+  try {
+    if (announce.status == "Draft") {
+      const Query = `UPDATE announcements SET title=?, content=?, audience=? WHERE id=?`;
+      await db.query(Query,[announce.title,announce.content,announce.audience,announce_id]);
+    }
+    else{
+      const Query = `UPDATE announcements SET title=?, content=?, audience=?, status=?, published_at=? WHERE id=?`;
+      await db.query(Query,[announce.title,announce.content,announce.audience,"Published",new Date(),announce_id]);
+    }
+
+    res.status(200).json({message: 'Announcement saved Successfully'});
+      
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error in saving annoucement"});
+  }
+});
+
+adminRouter.delete('/announcement/delete',async (req, res) => {
+  const {announce_id} = req.body;
+  try {
+    const Query = `DELETE FROM announcements WHERE id=?`;
+    await db.query(Query,[announce_id]);
+    
+    res.status(200).json({message: 'Announcements deleted successfully'});
+      
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error in deleting the annoucement"});
+  }
 });
 
 

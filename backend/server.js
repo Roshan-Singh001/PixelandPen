@@ -45,7 +45,7 @@ const email_pass = process.env.EMAIL_PASS;
 
 
 
-let db;
+var db;
 const MyDbName = "Pixel&Pen";
 
 async function connectToDatabase() {
@@ -182,6 +182,18 @@ async function connectToDatabase() {
     )`;
 
     await db.execute(query_comment);
+
+    const query_announce = `CREATE TABLE IF NOT EXISTS announcements (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      content TEXT,
+      audience ENUM('All','Contributors','Readers') DEFAULT 'All',
+      status ENUM('Draft','Published') DEFAULT 'Draft',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      published_at DATETIME DEFAULT NULL
+    )`;
+
+    await db.execute(query_announce);
 
 
   } catch (error) {

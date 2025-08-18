@@ -75,6 +75,7 @@ const ContributorDashboard = () => {
   const [statsData,setStatsData] = useState([]);
 
   const [recentArticles, setRecentArticles] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
 
   useEffect(() => {
     const fetchStats = async()=>{
@@ -143,6 +144,10 @@ const ContributorDashboard = () => {
         }
       });
       setRecentArticles(response.data.recents);
+
+      const response1 = await AxiosInstance.get('/dashboard/contri/announcements');
+      setAnnouncements(response1.data.announce);
+
     } catch (error) {
       console.log(error); 
     }
@@ -183,25 +188,6 @@ const ContributorDashboard = () => {
       default: return FileText;
     }
   };
-
-  const announcements = [
-    {
-      id: 1,
-      title: "New Feature: Stats Dashboard!",
-      content: "Track your post views, likes, and more in the new contributor stats dashboard. Go check it out now!",
-      date: "May 28, 2025",
-      icon: Sparkles,
-      type: "feature"
-    },
-    {
-      id: 2,
-      title: "Maintenance Notice",
-      content: "The site will undergo maintenance on June 2nd, from 12:00 AM to 4:00 AM UTC. Expect temporary downtime.",
-      date: "May 25, 2025",
-      icon: Wrench,
-      type: "maintenance"
-    }
-  ];
 
   
   if (loading) return <PixelPenLoader/>
@@ -534,24 +520,13 @@ const ContributorDashboard = () => {
             </div>
             <div className="p-6 space-y-4">
               {announcements.map((announcement) => {
-                const Icon = announcement.icon;
+                const Icon = Sparkles;
                 return (
                   <div
                     key={announcement.id}
                     className="p-5 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                   >
                     <div className="flex items-start gap-4">
-                      <div className={`p-2 rounded-lg ${
-                        announcement.type === 'feature' 
-                          ? 'bg-blue-100 dark:bg-blue-900/20' 
-                          : 'bg-orange-100 dark:bg-orange-900/20'
-                      }`}>
-                        <Icon className={`w-5 h-5 ${
-                          announcement.type === 'feature'
-                            ? 'text-blue-600 dark:text-blue-400'
-                            : 'text-orange-600 dark:text-orange-400'
-                        }`} />
-                      </div>
                       <div className="flex-1">
                         <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-2">
                           {announcement.title}
@@ -561,7 +536,7 @@ const ContributorDashboard = () => {
                         </p>
                         <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                           <Calendar className="w-4 h-4" />
-                          Posted on {announcement.date}
+                          Posted on {new Date(announcement.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                         </div>
                       </div>
                     </div>
