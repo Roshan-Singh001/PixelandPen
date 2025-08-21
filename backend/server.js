@@ -13,6 +13,8 @@ import { fileURLToPath } from "url";
 import adminRouter from './admin.js';
 import articleRouter from './article.js';
 import contriRouter from './cont.js';
+import profileRouter from './profile.js';
+import actionRouter from "./actions.js";
 // import db from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -35,7 +37,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/dashboard/admin', adminRouter);
 app.use('/dashboard/contri', contriRouter);
+app.use('/profile', profileRouter);
 app.use('/article', articleRouter);
+app.use('/action', actionRouter);
 
 const databasePass = process.env.DATABASE_PASS;
 const db_host = process.env.DB_HOST;
@@ -50,7 +54,6 @@ const MyDbName = "Pixel&Pen";
 
 async function connectToDatabase() {
   try {
-    // First, connect to MySQL server (no database yet)
     const serverConnection = await mysql.createConnection({
       host: db_host,
       user: db_user,
@@ -104,6 +107,7 @@ async function connectToDatabase() {
     const query_contributor_table = `CREATE TABLE IF NOT EXISTS contributor (
       cont_id VARCHAR(255) PRIMARY KEY,
       username VARCHAR(100) NOT NULL,
+      slug VARCHAR(255) UNIQUE,
       email VARCHAR(100) NOT NULL UNIQUE,
       password VARCHAR(255) NOT NULL,
       bio VARCHAR(255),
@@ -127,12 +131,45 @@ async function connectToDatabase() {
       password VARCHAR(255) NOT NULL,
       bio VARCHAR(255),
       profile_pic VARCHAR(255),
-      follow JSON,
-      bookmarks JSON,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`;
-
     await db.execute(query_subscriber_table);
+
+    const query_likes_table = `CREATE TABLE IF NOT EXISTS article_likes (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      reader_id VARCHAR(255),
+      article_id VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(reader_id, article_id),
+      FOREIGN KEY (reader_id) REFERENCES reader(sub_id) ON DELETE CASCADE,
+      FOREIGN KEY (article_id) REFERENCES articles(article_id) ON DELETE CASCADE
+    )`;
+
+    await db.execute(query_likes_table);
+
+    const query_follow_table = `CREATE TABLE IF NOT EXISTS reader_follows (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      reader_id VARCHAR(255),
+      contributor_id VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(reader_id, contributor_id),
+      FOREIGN KEY (reader_id) REFERENCES reader(sub_id) ON DELETE CASCADE,
+      FOREIGN KEY (contributor_id) REFERENCES contributor(cont_id) ON DELETE CASCADE
+    )`;
+
+    await db.execute(query_follow_table);
+
+    const query_bookmark_table = `CREATE TABLE IF NOT EXISTS bookmarks (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      reader_id VARCHAR(255),
+      article_id VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(reader_id, article_id),
+      FOREIGN KEY (reader_id) REFERENCES reader(sub_id) ON DELETE CASCADE,
+      FOREIGN KEY (article_id) REFERENCES articles(article_id) ON DELETE CASCADE
+    )`;
+
+    await db.execute(query_bookmark_table);
 
     const query_articles_table = `CREATE TABLE IF NOT EXISTS articles (
       article_id VARCHAR(255) PRIMARY KEY,
@@ -393,9 +430,11 @@ app.post("/OtpVerification", async (req, res) => {
                            WHERE id = ?`;
       await db.execute(updatequery, [username,email,password,role,`${'cont_'+user_id}`]);
 
+      const slug = username.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
 
-      const finalSetContri = `INSERT INTO contributor (cont_id,username, email, password) VALUES (?,?,?,?)`;
-      await db.execute(finalSetContri, [`${'cont_'+user_id}`,username, email, password]);
+
+      const finalSetContri = `INSERT INTO contributor (cont_id,username,slug, email, password) VALUES (?,?,?,?,?)`;
+      await db.execute(finalSetContri, [`${'cont_'+user_id}`,username,slug, email, password]);
 
       const tableName = `${'cont_'+user_id}` + '_articles';
 

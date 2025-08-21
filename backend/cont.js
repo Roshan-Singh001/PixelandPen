@@ -40,7 +40,7 @@ contriRouter.get('/profile', async (req, res) => {
 
     try {
             const fetchinfoQuery = `SELECT username, bio, profile_pic, dob, expertise, links, city, country FROM contributor WHERE cont_id = ?`;
-            const results = await db.query(fetchinfoQuery,userId);
+            const results = await db.query(fetchinfoQuery,[userId]);
     
             const profileInfo = results[0];
     
@@ -57,7 +57,7 @@ contriRouter.get('/status', async (req, res) => {
 
     try {
             const fetchinfoQuery = `SELECT status, reject_reason FROM contributor WHERE cont_id = ?`;
-            const results = await db.query(fetchinfoQuery,userId);
+            const results = await db.query(fetchinfoQuery,[userId]);
     
             const status = results[0];
             console.log(status);

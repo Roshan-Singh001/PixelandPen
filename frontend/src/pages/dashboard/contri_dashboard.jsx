@@ -520,7 +520,6 @@ const ContributorDashboard = () => {
             </div>
             <div className="p-6 space-y-4">
               {announcements.map((announcement) => {
-                const Icon = Sparkles;
                 return (
                   <div
                     key={announcement.id}

@@ -24,6 +24,8 @@ const ArticlePage = () => {
   const [comment, setComment] = useState('');
   const [isNavVisible, setIsNavVisible] = useState(false);
   const [featuredImage, setFeaturedImage] = useState(null);
+  const [authorPic, setAuthorPic] = useState('');
+  const [authorName, setAuthName] = useState('Unknown');
   const [comments, setComments] = useState([
     {
       id: 1,
@@ -42,11 +44,12 @@ const ArticlePage = () => {
   ]);
 
   useEffect(() => {
-    console.log(slug);
     AxiosInstance.get(`/article/view/${slug}`)
     .then((res) => {
-      console.log("Article data:", res.data);
-      setArticle(res.data);
+      setArticle(res.data.article);
+      setFeaturedImage(res.data.article[0].thumbnail_url);
+      setAuthorPic(res.data.authPic);
+      setAuthName(res.data.authName);
       setIsExist(true);
     })
     .catch((err) => { 
@@ -55,9 +58,6 @@ const ArticlePage = () => {
     });
 
   }, [slug]);
-
-
-
 
   useEffect(() => {
     const handleScroll = () => {
@@ -69,11 +69,6 @@ const ArticlePage = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // if (!article){
-
-  //   return <div>Loading...</div>;
-  // } 
 
   if (!article) {
     return (
@@ -327,7 +322,7 @@ const ArticlePage = () => {
               onClick={scrollToTop}
               className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 truncate pr-4 flex-1 text-left"
             >
-              Building Modern Web Applications with React and Advanced State Management
+              {article[0].title}
             </button>
             <div className="flex items-center space-x-2 sm:space-x-4">
               <button 
@@ -391,7 +386,7 @@ const ArticlePage = () => {
         <article className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl dark:shadow-2xl overflow-hidden transition-all duration-300">
           {/* Hero Image */}
           <div className="relative h-64 sm:h-80 lg:h-96 bg-gradient-to-r from-blue-600 to-purple-600 overflow-hidden">
-            <div className="absolute inset-0 bg-black/20"></div>
+            <div className="absolute inset-0 bg-black/10"></div>
             <div className="">
             {featuredImage ? (
               <>
@@ -428,16 +423,24 @@ const ArticlePage = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-slate-200 dark:border-slate-700 space-y-4 sm:space-y-0">
               <div className="flex items-center space-x-3 sm:space-x-4">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
-                  <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                {authorPic==''?<User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />: 
+                  <>
+                    <img
+                    src={authorPic}
+                    alt="Author Pic"
+                    className="w-full h-full rounded-full object-cover transition-shadow"
+                    />
+                  
+                  </>}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900 dark:text-white">Roshan Singh</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Senior Frontend Developer</p>
+                  <h3 className="font-semibold text-slate-900 dark:text-white">{authorName}</h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Contributor</p>
                 </div>
               </div>
               <div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400 ml-13 sm:ml-0">
                 <Calendar className="w-4 h-4 flex-shrink-0" />
-                <span className="text-sm">November 7, 2024</span>
+                <span className="text-sm">{new Date(article[0].publish_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
               </div>
             </div>
 
@@ -451,7 +454,7 @@ const ArticlePage = () => {
                 <div className="flex items-center space-x-4 sm:space-x-6">
                   <div className="flex items-center space-x-2">
                     <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${isLiked ? 'fill-red-500 text-red-500' : 'text-slate-400'}`} />
-                    <span className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">{isLiked ? '2.4K' : '2.3K'}</span>
+                    <span className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">{article[0].likes}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />

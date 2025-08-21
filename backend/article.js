@@ -132,7 +132,7 @@ articleRouter.get('/view/:slug', async (req,res)=>{
 
     console.log("Slug: ",slug);
     try {
-        const fetchArticleQuery = 'SELECT * FROM cont_99414393_581d_4f71_bf0d_3497019b40d5_draft_articles WHERE slug = ? LIMIT 1';
+        const fetchArticleQuery = 'SELECT * FROM articles WHERE slug = ?';
         const results = await db.query(fetchArticleQuery, [slug]);
         if (results[0].length === 0) {
             return res.status(404).json({ error: 'Article not found' });
@@ -141,36 +141,22 @@ articleRouter.get('/view/:slug', async (req,res)=>{
         article.tags = JSON.parse(article.tags || '[]');
         article.category = JSON.parse(article.category || '[]');
         article.content = JSON.parse(article.content || '[]');
-        res.json(article);
+
+        console.log(article[0]);
+        console.log(article[0].cont_id);
+
+        const fetchNameQuery = `SELECT username, profile_pic FROM contributor WHERE cont_id = ?`;
+        const result2 = await db.query(fetchNameQuery,[article[0].cont_id]);
+
+        console.log(result2);
+        const userName = result2[0][0].username;
+        const userpic = result2[0][0].profile_pic;
+
+        res.json({article, authName: userName, authPic: userpic});
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Error Fetching Article"});
     }
-
-
-    // const fetchArticleQuery = 'SELECT * FROM articles WHERE slug = ? LIMIT 1';
-    // db.query(fetchArticleQuery, [slug], (err, results) => {
-    //     if (err) return res.status(500).json({ error: err.message });
-    
-    //     if (results.length === 0) {
-    //       return res.status(404).json({ error: 'Article not found' });
-    //     }
-    
-    //     const article = results[0];
-    
-    //     try {
-    //       article.tags = JSON.parse(article.tags || '[]');
-    //       article.category = JSON.parse(article.category || '[]');
-    //       article.content = JSON.parse(article.content || '[]');
-    //     } catch (err) {
-    //       return res.status(500).json({ error: 'Invalid JSON in database' });
-    //     }
-    
-    //     res.json(article);
-    // });
-
-    
-
 });
 
 articleRouter.get('/preview/:slug', async (req,res)=>{
@@ -322,7 +308,7 @@ articleRouter.get('/approve', async (req,res)=>{
     const userId = req.headers['user_id'];
 
     try {
-        const fetchArticleQuery = `SELECT slug,title,category,approve_date,views FROM ${userId+'_articles'} WHERE article_status = 'Rejected'`;
+        const fetchArticleQuery = `SELECT slug,title,category,approve_date,views FROM ${userId+'_articles'} WHERE article_status = 'Approved'`;
         const results = await db.query(fetchArticleQuery);
 
         const ApproveArticles = results[0];

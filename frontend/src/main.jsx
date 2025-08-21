@@ -5,6 +5,8 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import "./index.css";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import Navbar from "./components/Navbar.jsx";
 import PrivateRoute from "./components/PrivateRoutes.jsx";
@@ -115,7 +117,7 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/profile",
+    path: "/profile/cont/:slug",
     element: (
       <>
         <Navbar />
@@ -125,7 +127,7 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/article/:slug",
+    path: "/view/:slug",
     element: (
       <>
         <Navbar />
@@ -169,7 +171,7 @@ const router = createBrowserRouter([
     ],
   },
   {
-    element: <PrivateRoute allowedRoles={["reader"]} />,
+    element: <PrivateRoute allowedRoles={["Reader"]} />,
     children: [
       {
         path: "/dashboard/reader",
@@ -183,6 +185,18 @@ createRoot(document.getElementById("root")).render(
   // <StrictMode>
     <ThemeProvider>
       <AuthProvider>
+        <ToastContainer 
+                  position="top-right"
+                  autoClose={5000}
+                  hideProgressBar={false}
+                  newestOnTop={false}
+                  closeOnClick
+                  rtl={false}
+                  pauseOnFocusLoss
+                  draggable
+                  pauseOnHover
+                  theme="colored"
+                />
         <RouterProvider router={router} />
       </AuthProvider>
     </ThemeProvider>
