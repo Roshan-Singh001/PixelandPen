@@ -10,11 +10,11 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import LogoLight from "../assets/images/Pixel & Pen.png";
-import LogoDark from "../assets/images/Pixel & Pen(B&W).png";
+import LogoLight from "../../assets/images/Pixel & Pen.png";
+import LogoDark from "../../assets/images/Pixel & Pen(B&W).png";
 
-import PixelPenLoader from "../components/PixelPenLoader";
-import { useAuth } from "../contexts/AuthContext";
+import PixelPenLoader from "../../components/PixelPenLoader";
+import { useAuth } from "../../contexts/AuthContext";
 
 function Login_page() {
   const { loggedIn, userData, loading, login } = useAuth();
@@ -50,10 +50,10 @@ function Login_page() {
         toast.success("Login successful!");
         navigate(`/dashboard/${result.userRole.toLowerCase()}`);
       } else {
+        
         toast.error(`Error: ${result.error || "Login failed, please try again."}`);
       }
     } catch (err) {
-      console.error("Unexpected error during login form submission:", err);
       toast.error("An unexpected error occurred during login.");
     }
     setIsLoading(false);

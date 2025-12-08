@@ -21,12 +21,38 @@ actionRouter.get('/isfollow/cont/', async (req,res)=>{
 
 });
 
+actionRouter.get('/islike/article/', async (req,res)=>{
+    const userId = req.headers['user_id'];
+    const article_id = req.headers['article_id'];
+
+    try {
+        const query = `SELECT id FROM article_likes WHERE reader_id=? AND article_id=?`;
+        const [results] = await db.query(query,[userId,article_id]);
+        const isLike = results.length > 0; 
+
+        res.json({isLike});
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error Fetching Profile Info"});
+        
+    }
+
+});
+
+actionRouter.post('/like', async (req,res)=>{
+    const {article_id,user_id,like} = req.body;
+    try {
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error in Like/Unlike"});
+        
+    }
+})
+
 actionRouter.post('/follow/cont',async (req,res)=>{
     const {cont_id,user_id,follow} = req.body;
-
-    console.log(cont_id);
-    console.log(user_id);
-    console.log(follow);
 
     try {
         if (follow) {
@@ -54,6 +80,31 @@ actionRouter.post('/follow/cont',async (req,res)=>{
         
     }
 });
+
+actionRouter.post('/comment',async (req,res)=>{
+    const {article_id,article_title,userRole,user_id,content,username} = req.body;
+
+    try {
+        if (userRole == 'Admin') {
+            const query = `INSERT INTO comments (article_id, article_title, user_id,content,username, status) VALUES (?,?,?,?,?,?)`;
+            await db.query(query,[article_id,article_title,user_id,content,username,'Approved']);
+            
+        }
+        else{
+            const query = `INSERT INTO comments (article_id,article_title,user_id,content,username) VALUES (?,?,?,?,?)`;
+            await db.query(query,[article_id,article_title, user_id,content,username]);
+        }
+
+        res.json({message: "Comment Posted"});
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error while commenting"});
+        
+    }
+});
+
+
 
 
 

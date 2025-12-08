@@ -6,16 +6,21 @@ import { FaXTwitter } from "react-icons/fa6";
 import { FaFacebook } from "react-icons/fa";
 import { renderSlateToHtml } from '../utils/renderSlateToHtml';
 import { useNavigate } from 'react-router-dom';
+import {toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useAuth } from '../contexts/AuthContext';
+
+const AxiosInstance = axios.create({
+      baseURL: 'http://localhost:3000/',
+      withCredentials: true,
+      timeout: 3000,
+      headers: {'X-Custom-Header': 'foobar'}
+    });
 
 const ArticlePage = () => {
-  const AxiosInstance = axios.create({
-        baseURL: 'http://localhost:3000/',
-        withCredentials: true,
-        timeout: 3000,
-        headers: {'X-Custom-Header': 'foobar'}
-      });
   const navigate = useNavigate();
   const { slug } = useParams();
+  const { loggedIn, userData} = useAuth();
   const [isExist, setIsExist] = useState(false);
   const [article, setArticle] = useState(null);
   const [isLiked, setIsLiked] = useState(false);
@@ -26,43 +31,52 @@ const ArticlePage = () => {
   const [featuredImage, setFeaturedImage] = useState(null);
   const [authorPic, setAuthorPic] = useState('');
   const [authorName, setAuthName] = useState('Unknown');
-  const [comments, setComments] = useState([
-    {
-      id: 1,
-      author: "Alex Johnson",
-      content: "Great article! This really helped me understand the concept better.",
-      time: "2 hours ago",
-      likes: 5
-    },
-    {
-      id: 2,
-      author: "Sarah Chen",
-      content: "Thanks for sharing this. The examples are particularly useful.",
-      time: "5 hours ago",
-      likes: 3
-    }
-  ]);
+  const [comments, setComments] = useState([]);
 
   useEffect(() => {
-    AxiosInstance.get(`/article/view/${slug}`)
+    const articleInfo = ()=>{AxiosInstance.get(`/article/view/${slug}`,{
+      headers: { user_id: loggedIn ? userData.user_id : null }
+    })
     .then((res) => {
       setArticle(res.data.article);
       setFeaturedImage(res.data.article[0].thumbnail_url);
       setAuthorPic(res.data.authPic);
       setAuthName(res.data.authName);
+      setComments(res.data.comments);
+      setIsLiked(res.data.isLiked);
       setIsExist(true);
     })
     .catch((err) => { 
       console.error('Error fetching article:', err);
       navigate("/notfound");
     });
+  }
+
+  const info = async()=>{
+    if(!loggedIn){
+      toast.error(`This action needs log in`);
+      navigate("/login");
+      return;
+    }
+    if (userData.userRole != 'Contributor') {
+      try {
+        const response = await AxiosInstance.get(`/action/islike/article/`, { headers: { 'user_id': userData.user_id, 'article_id': article[0].article_id } })
+        setIsLiked(response.data.isLike);
+        
+      } catch (error) {
+        console.log(error);
+        
+      }
+    }
+  }
+  articleInfo();
+  info();
 
   }, [slug]);
 
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
-      // Show navbar when scrolled down more than 300px
       setIsNavVisible(scrollPosition > 300);
     };
 
@@ -278,24 +292,45 @@ const ArticlePage = () => {
   }
 
   const handleLike = () => {
-    setIsLiked(!isLiked);
+    try {
+      const res = AxiosInstance.post('/action/like',{
+        article_id: article[0].article_id,
+        user_id: userData.user_id,
+        like: isLiked
+      })
+      setIsLiked(!isLiked);
+    } catch (error) {
+      
+    }
   };
 
   const handleBookmark = () => {
     setIsBookmarked(!isBookmarked);
   };
 
-  const handleComment = () => {
+  const handleComment = async() => {
+    if(!loggedIn){
+      toast.error(`This action needs log in`);
+      navigate("/login");
+      return;
+    }
+
     if (comment.trim()) {
-      const newComment = {
-        id: comments.length + 1,
-        author: "You",
-        content: comment,
-        time: "Just now",
-        likes: 0
-      };
-      setComments([newComment, ...comments]);
-      setComment('');
+      try {
+        await AxiosInstance.post(`/action/comment/`, {
+          article_id: article[0].article_id,
+          article_title: article[0].title,
+          user_id: userData.user_id,
+          userRole: userData.userRole,
+          content: comment,
+          username: userData.userName
+        });
+        setComment('');
+      } catch (error) {
+        console.log(error);
+        toast.error(`Cannot comment yet`);
+      }
+      
     }
   };
 
@@ -513,18 +548,12 @@ const ArticlePage = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 mb-2">
-                        <h4 className="font-semibold text-slate-900 dark:text-white text-sm sm:text-base">{comment.author}</h4>
-                        <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{comment.time}</span>
+                        <h4 className="font-semibold text-slate-900 dark:text-white text-sm sm:text-base">{comment.username}</h4>
+                        <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{new Date(comment.created_at).toLocaleDateString('en-US', {year: 'numeric',month: 'short',day: 'numeric',hour: '2-digit',minute: '2-digit'})}</span>
                       </div>
                       <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-sm sm:text-base">{comment.content}</p>
                       <div className="flex items-center space-x-4 mt-2 sm:mt-3">
-                        <button className="flex items-center space-x-1 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                          <Heart className="w-3 h-3 sm:w-4 sm:h-4" />
-                          <span className="text-xs sm:text-sm">{comment.likes}</span>
-                        </button>
-                        <button className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-xs sm:text-sm">
-                          Reply
-                        </button>
+                        
                       </div>
                     </div>
                   </div>

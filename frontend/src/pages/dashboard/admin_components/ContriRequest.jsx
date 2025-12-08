@@ -3,6 +3,7 @@ import axios from 'axios';
 import { UserPlus, XCircle, CheckCircle, Eye, X, User, Calendar, Mail, FileText, Shield, ShieldOff, MapPin, Award, Github, Linkedin, Twitter, Facebook, Trash2 } from 'lucide-react';
 import { FaXTwitter  } from 'react-icons/fa6';
 import { FaGithub, FaLinkedin, FaFacebook   } from "react-icons/fa";
+import userSimbol from '../../../assets/images/userSimbol.png';
 
 import PixelPenLoader from '../../../components/PixelPenLoader';
 
@@ -188,7 +189,7 @@ const ContriRequest = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4 flex-1">
                         <img 
-                          src={contributor.profile_pic} 
+                          src={contributor.profile_pic || userSimbol} 
                           alt={contributor.username}
                           className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
                         />
@@ -263,7 +264,7 @@ const ContriRequest = () => {
                   <div key={contributor.cont_id} className="p-6">
                     <div className="flex items-center gap-4 mb-3">
                       <img 
-                        src={contributor.profile_pic} 
+                        src={contributor.profile_pic || userSimbol} 
                         alt={contributor.username}
                         className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
                       />
@@ -322,7 +323,7 @@ const ContriRequest = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <img 
-                            src={contributor.profile_pic} 
+                            src={contributor.profile_pic || userSimbol} 
                             alt={contributor.username}
                             className="w-8 h-8 rounded-full object-cover"
                           />
@@ -391,7 +392,7 @@ const ContriRequest = () => {
               {/* Profile Header */}
               <div className="flex items-start gap-6 mb-6">
                 <img 
-                  src={selectedContributor.profile_pic} 
+                  src={selectedContributor.profile_pic || userSimbol} 
                   alt={selectedContributor.username}
                   className="w-24 h-24 rounded-full object-cover border-4 border-gray-200 dark:border-gray-600"
                 />

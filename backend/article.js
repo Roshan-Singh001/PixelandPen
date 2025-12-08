@@ -129,6 +129,7 @@ articleRouter.post('/send', async(req, res) => {
   
 articleRouter.get('/view/:slug', async (req,res)=>{
     const { slug } = req.params;
+    const userId = req.headers['user_id'];
 
     console.log("Slug: ",slug);
     try {
@@ -142,17 +143,26 @@ articleRouter.get('/view/:slug', async (req,res)=>{
         article.category = JSON.parse(article.category || '[]');
         article.content = JSON.parse(article.content || '[]');
 
-        console.log(article[0]);
-        console.log(article[0].cont_id);
-
         const fetchNameQuery = `SELECT username, profile_pic FROM contributor WHERE cont_id = ?`;
         const result2 = await db.query(fetchNameQuery,[article[0].cont_id]);
 
-        console.log(result2);
         const userName = result2[0][0].username;
         const userpic = result2[0][0].profile_pic;
 
-        res.json({article, authName: userName, authPic: userpic});
+        const fetchCommentsQuery = `SELECT id,user_id, username, content, created_at FROM comments WHERE article_id = ? AND status = 'Approved'`;
+        const result3 = await db.query(fetchCommentsQuery,[article[0].article_id]);
+        const comments = result3[0];
+
+        if (userId) {
+            const query = `SELECT CASE WHEN EXISTS (SELECT 1 FROM article_likes WHERE reader_id=? AND article_id=?) THEN 1 ELSE 0 END AS isLike`;
+            
+            const [likeResults] = await db.query(query,[userId,article[0].article_id]);
+            const isLiked = likeResults[0].isLike === 1;
+
+            return res.json({article, authName: userName, authPic: userpic, comments: comments, isLiked: isLiked});
+        }
+
+        res.json({article, authName: userName, authPic: userpic, comments: comments});
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Error Fetching Article"});

@@ -35,7 +35,7 @@ import {
   FaUserPlus,
   FaBars,
 } from "react-icons/fa";
-import { BiSolidDashboard } from "react-icons/bi";
+import { BiComment, BiSolidDashboard } from "react-icons/bi";
 import { MdArticle, MdAnalytics, MdLogout } from "react-icons/md";
 import { IoPersonAdd, IoSettingsSharp } from "react-icons/io5";
 import { FaAnglesRight } from "react-icons/fa6";
@@ -47,6 +47,7 @@ import ContriRequest from "./admin_components/ContriRequest";
 import SiteAnalytics from "./admin_components/SiteAnalytics";
 import AdminSettings from "./admin_components/AdminSettings";
 import Announcements from "./admin_components/Annoucements";
+import CommentsManage from "./admin_components/CommentsManage";
 import { useAuth } from "../../contexts/AuthContext";
 import { ThemeProvider } from "../../contexts/ThemeContext";
 import PixelPenLoader from "../../components/PixelPenLoader";
@@ -136,6 +137,7 @@ const AdminDashboard = () => {
               >
               <FaBars />
       </button>
+      
 
     {menuOpen && (
         <div
@@ -164,14 +166,14 @@ const AdminDashboard = () => {
           {menuMinimize ? (
             <button
               onClick={(e) => setMenuMinimize(false)}
-              className="p-2 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-600"
+              className="p-2 rounded-full max-[700px]:hidden hover:bg-indigo-100 dark:hover:bg-indigo-600"
             >
               <FaAnglesRight size={20} className="text-black dark:text-white" />
             </button>
           ) : (
             <button
               onClick={(e) => setMenuMinimize(true)}
-              className="p-2 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-600"
+              className="p-2 rounded-full max-[700px]:hidden hover:bg-indigo-100 dark:hover:bg-indigo-600"
             >
               <FaAnglesLeft size={20} className="text-black dark:text-white" />
             </button>
@@ -183,6 +185,7 @@ const AdminDashboard = () => {
             { label: "Article", icon: <MdArticle size={25} /> },
             { label: "Contributor", icon: <IoPersonAdd size={25} /> },
             { label: "Announcements", icon: <GrAnnounce size={25} /> },
+            { label: "Comments", icon: <BiComment size={25} /> },
             { label: "Analytics", icon: <MdAnalytics size={25} /> },
             { label: "Settings", icon: <IoSettingsSharp size={25} /> },
           ].map(({ label, icon }) => (
@@ -197,7 +200,7 @@ const AdminDashboard = () => {
               }`}
             >
               {icon}
-              {menuMinimize == false && <span>{label}</span>}
+              {menuMinimize == false && <span className="max-[700px]:hidden">{label}</span>}
             </button>
           ))}
           <button
@@ -213,6 +216,12 @@ const AdminDashboard = () => {
 
       {/* Main Content */}
       <main className="flex-1 px-5 py-2 h-screen overflow-y-auto">
+        <div className="min-[700px]:hidden flex justify-center mb-4">
+          <h2 className="inline text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+              Admin Panel
+          </h2>
+        </div>
+        
 
         {menuOption === "Dashboard" && (
           <div>
@@ -346,6 +355,7 @@ const AdminDashboard = () => {
         {menuOption === "Article" && <ArticleRequests />}
         {menuOption === "Contributor" && <ContriRequest />}
         {menuOption === "Announcements" && <Announcements />}
+        {menuOption === "Comments" && <CommentsManage />}
         {menuOption === "Analytics" && <SiteAnalytics />}
         {menuOption === "Settings" && (
           <ThemeProvider>

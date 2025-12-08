@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, User, Calendar, Clock, Eye, Heart, BookmarkPlus, Share2, Star, TrendingUp, Award, Zap } from 'lucide-react';
+import axios from "axios";
+
+const AxiosInstance = axios.create({
+  baseURL: "http://localhost:3000/",
+  timeout: 10000,
+  headers: { "X-Custom-Header": "foobar" },
+});
+
 
 // Enhanced Hero Slider component
 const HeroSlider = () => {
@@ -53,7 +61,7 @@ const HeroSlider = () => {
   };
 
   return (
-    <div 
+    <div
       className="relative h-[50vh] sm:h-[60vh] lg:h-[70vh] rounded-2xl sm:rounded-3xl overflow-hidden group shadow-2xl"
       onMouseEnter={() => setIsAutoPlay(false)}
       onMouseLeave={() => setIsAutoPlay(true)}
@@ -80,11 +88,11 @@ const HeroSlider = () => {
               {slides[currentSlide].category}
             </span>
           </div>
-          
+
           <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white mb-3 sm:mb-4 leading-tight">
             {slides[currentSlide].title}
           </h2>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 sm:space-x-3">
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
@@ -128,17 +136,17 @@ const HeroSlider = () => {
 const LatestPostsSlider = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-  
+
   const posts = [
     {
       title: "Machine Learning Algorithms: A Comprehensive Guide",
@@ -201,7 +209,7 @@ const LatestPostsSlider = () => {
   return (
     <div className="relative">
       <div className="">
-        <div 
+        <div
           className="flex overflow-x-hidden py-4 transition-transform duration-500 ease-in-out"
           style={{ transform: `translateX(-${currentIndex * itemWidth}%)` }}
         >
@@ -243,7 +251,7 @@ const LatestPostsSlider = () => {
           ))}
         </div>
       </div>
-      
+
       <button
         onClick={prevSlide}
         className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-2 sm:-translate-x-4 bg-white dark:bg-slate-800 shadow-lg rounded-full p-2 sm:p-3 hover:shadow-xl transition-all duration-200"
@@ -392,7 +400,7 @@ const HomePage = () => {
 
         {/* Latest Posts Slider */}
         <section className="mb-8 sm:mb-12 lg:mb-16">
-          <SectionHeader 
+          <SectionHeader
             icon={Clock}
             title="Latest Posts"
             subtitle="Stay updated with our newest articles and insights"
@@ -403,7 +411,7 @@ const HomePage = () => {
 
         {/* Categories Section */}
         <section className="mb-8 sm:mb-12 lg:mb-16">
-          <SectionHeader 
+          <SectionHeader
             icon={Star}
             title="Explore Categories"
             subtitle="Discover content across various topics and interests"
@@ -416,13 +424,13 @@ const HomePage = () => {
           </div>
         </section>
 
-        
+
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-12 lg:mb-16">
           {/* Most Viewed Articles */}
           <div className="lg:col-span-1">
-            <SectionHeader 
+            <SectionHeader
               icon={TrendingUp}
               title="Most Viewed"
               subtitle="Popular articles this week"
@@ -437,7 +445,7 @@ const HomePage = () => {
 
           {/* Featured Articles */}
           <div className="lg:col-span-1">
-            <SectionHeader 
+            <SectionHeader
               icon={Award}
               title="Featured"
               subtitle="Editor's choice articles"
@@ -452,7 +460,7 @@ const HomePage = () => {
 
           {/* Top Contributors */}
           <div className="lg:col-span-1">
-            <SectionHeader 
+            <SectionHeader
               icon={Zap}
               title="Top Contributors"
               subtitle="Most followed writers"

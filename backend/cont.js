@@ -220,6 +220,39 @@ contriRouter.get('/announcements', async (req, res)=>{
   }
 });
 
+contriRouter.get('/fetch/comments', async (req, res)=>{
+  const cont_id = req.headers['cont_id'];
+
+  try {
+    const fetchinfoQuery = `SELECT 
+    comments.id, 
+    comments.article_id, 
+    comments.article_title, 
+    comments.user_id, 
+    comments.username, 
+    comments.content, 
+    comments.created_at, 
+    articles.slug
+FROM comments
+JOIN articles ON comments.article_id = articles.article_id
+WHERE comments.status = 'Approved' AND articles.cont_id=?`;
+    const results = await db.query(fetchinfoQuery,[cont_id]);
+
+    console.log(results);
+
+    const recents = results[0];
+
+    console.log(recents);
+    res.status(200).json({comments: recents});
+    
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data"});
+
+    
+  }
+});
+
 contriRouter.get('/delete', async (req, res)=>{
   const userId = req.headers['user_id'];
   const username = req.headers['username'];

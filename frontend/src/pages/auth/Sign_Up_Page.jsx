@@ -11,7 +11,7 @@ import { FaApple } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import LogoDark from "../assets/images/Pixel & Pen(B&W).png";
+import LogoDark from "../../assets/images/Pixel & Pen(B&W).png";
 
 function Sign_Up_Page() {
   const navigate = useNavigate();

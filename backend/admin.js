@@ -426,6 +426,96 @@ adminRouter.delete('/announcement/delete',async (req, res) => {
   }
 });
 
+// COMMENTS
+
+adminRouter.get('/fetch/comments/approved',async (req, res) => {
+  try {
+      const fetchinfoQuery = `SELECT 
+    comments.id, 
+    comments.article_id, 
+    comments.article_title, 
+    comments.user_id, 
+    comments.username, 
+    comments.content, 
+    comments.created_at, 
+    articles.slug
+FROM comments
+JOIN articles ON comments.article_id = articles.article_id
+WHERE comments.status = 'Approved';
+`;
+      const results = await db.query(fetchinfoQuery);
+  
+      const recents = results[0];
+
+      res.status(200).json({approved: recents});
+      
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: "Error Fetching Data"});
+    }
+});
+
+adminRouter.get('/fetch/comments/pending',async (req, res) => {
+  try {
+      const fetchinfoQuery = `SELECT * FROM comments WHERE status="Pending"`;
+      const results = await db.query(fetchinfoQuery);
+  
+      const recents = results[0];
+
+      res.status(200).json({pending: recents});
+      
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: "Error Fetching Data"});
+    }
+});
+
+adminRouter.get('/fetch/comments/deleted',async (req, res) => {
+  try {
+      const fetchinfoQuery = `SELECT * FROM comments WHERE status="Deleted"`;
+      const results = await db.query(fetchinfoQuery);
+  
+      const recents = results[0];
+
+      res.status(200).json({deleted: recents});
+      
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: "Error Fetching Data"});
+    }
+});
+
+adminRouter.post('/comment/status',async (req, res) => {
+  const {id, status} = req.body;
+  try {
+    const Query = `UPDATE comments SET status=? WHERE id=?`;
+    await db.query(Query,[status,id]);
+
+    res.status(200).json({message: 'Comments Status Changed'});
+      
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error in changing the status of the comment"});
+  }
+});
+
+adminRouter.delete('/comment/delete', async(req,res)=>{
+  const {id} = req.body;
+  try {
+    const Query = `DELETE FROM comments WHERE id=?`;
+    await db.query(Query,[id]);
+
+    res.status(200).json({message: 'Comment deleted permanently'});    
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error while deleting comment"});
+    
+  }
+
+});
+
+
+
 
   
 export default adminRouter;

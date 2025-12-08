@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { FaXTwitter  } from 'react-icons/fa6';
 import { FaGithub, FaLinkedin, FaFacebook   } from "react-icons/fa";
-import { ToastContainer, toast } from "react-toastify";
+import {toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import PixelPenLoader from '../components/PixelPenLoader';
@@ -47,10 +47,13 @@ const ProfilePage = () => {
         setMostLikedArticles(response1.data.likeArticles);
   
         if (userData.userRole === 'Reader') {
+          let user_id = userData.user_id;
+          let cont_id = response1.data.profileInfo.cont_id;
           try {
             const response2 = await AxiosInstance.get(`/action/isfollow/cont/`, {
-                cont_id: response1.data.profileInfo.cont_id,
-                user_id: userData.user_id
+                headers: {cont_id: cont_id,
+                user_id: user_id
+              }
             });
             setIsFollowing(response2.data.isFollow);
           } catch (error) {

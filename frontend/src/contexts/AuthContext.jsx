@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { ToastContainer, toast } from "react-toastify";
 import axios from "axios";
 
 const AuthContext = createContext();
@@ -71,7 +72,6 @@ export const AuthProvider = ({ children }) => {
         throw new Error("No token received");
       }
     } catch (error) {
-      console.error("Login failed:", error);
       localStorage.removeItem("authToken");
       return { success: false, error: error.response?.data?.message || "Login failed" };
     } finally {

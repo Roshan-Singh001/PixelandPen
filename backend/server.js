@@ -94,7 +94,7 @@ async function connectToDatabase() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`;
     await db.execute(query_user_table);
-
+    
     const query_admin_table = `CREATE TABLE IF NOT EXISTS admin (
       admin_id VARCHAR(255) PRIMARY KEY,
       username VARCHAR(100) NOT NULL,
@@ -135,6 +135,25 @@ async function connectToDatabase() {
     )`;
     await db.execute(query_subscriber_table);
 
+    const query_articles_table = `CREATE TABLE IF NOT EXISTS articles (
+      article_id VARCHAR(255) PRIMARY KEY,
+      slug VARCHAR(255) UNIQUE,
+      title VARCHAR(255) NOT NULL,
+      category JSON NOT NULL,
+      description VARCHAR(200),
+      content JSON NOT NULL,
+      tags JSON,
+      thumbnail_url VARCHAR(255),
+      author VARCHAR(255) NOT NULL,
+      cont_id VARCHAR(255) NOT NULL,
+      views INT DEFAULT 0,
+      likes INT DEFAULT 0,
+      is_featured BOOLEAN DEFAULT FALSE,
+      publish_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`;
+
+    await db.execute(query_articles_table);
+
     const query_likes_table = `CREATE TABLE IF NOT EXISTS article_likes (
       id INT AUTO_INCREMENT PRIMARY KEY,
       reader_id VARCHAR(255),
@@ -171,24 +190,7 @@ async function connectToDatabase() {
 
     await db.execute(query_bookmark_table);
 
-    const query_articles_table = `CREATE TABLE IF NOT EXISTS articles (
-      article_id VARCHAR(255) PRIMARY KEY,
-      slug VARCHAR(255) UNIQUE,
-      title VARCHAR(255) NOT NULL,
-      category JSON NOT NULL,
-      description VARCHAR(200),
-      content JSON NOT NULL,
-      tags JSON,
-      thumbnail_url VARCHAR(255),
-      author VARCHAR(255) NOT NULL,
-      cont_id VARCHAR(255) NOT NULL,
-      views INT DEFAULT 0,
-      likes INT DEFAULT 0,
-      is_featured BOOLEAN DEFAULT FALSE,
-      publish_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`;
-
-    await db.execute(query_articles_table);
+    
 
     const query_review_article = `CREATE TABLE IF NOT EXISTS review_articles (
       review_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -209,7 +211,9 @@ async function connectToDatabase() {
     const query_comment = `CREATE TABLE IF NOT EXISTS comments (
       id INT AUTO_INCREMENT PRIMARY KEY,
       article_id VARCHAR(255) NOT NULL,
+      article_title VARCHAR(255),
       user_id VARCHAR(255),
+      username VARCHAR(255),
       content TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       status ENUM('Pending', 'Approved', 'Deleted') DEFAULT 'Pending',

@@ -19,9 +19,9 @@ import Category from "./pages/Category";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Footer from "./components/Footer.jsx";
-import Login_page from "./pages/Login_page.jsx";
-import Sign_Up_Page from "./pages/Sign_Up_Page.jsx";
-import OtpVerification from "./pages/OtpVerification.jsx";
+import Login_page from "./pages/auth/Login_page.jsx";
+import Sign_Up_Page from "./pages/auth/Sign_Up_Page.jsx";
+import OtpVerification from "./pages/auth/OtpVerification.jsx";
 import Error404 from "./pages/Error404.jsx";
 import Admin from "./pages/dashboard/admin_dashboard.jsx";
 import Contributor from "./pages/dashboard/contri_dashboard.jsx";
@@ -184,7 +184,6 @@ const router = createBrowserRouter([
 createRoot(document.getElementById("root")).render(
   // <StrictMode>
     <ThemeProvider>
-      <AuthProvider>
         <ToastContainer 
                   position="top-right"
                   autoClose={5000}
@@ -197,6 +196,7 @@ createRoot(document.getElementById("root")).render(
                   pauseOnHover
                   theme="colored"
                 />
+      <AuthProvider>
         <RouterProvider router={router} />
       </AuthProvider>
     </ThemeProvider>
