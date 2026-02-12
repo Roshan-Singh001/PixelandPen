@@ -5,6 +5,8 @@ import { IoBookOutline } from "react-icons/io5";
 import { RiUserCommunityLine } from "react-icons/ri";
 import { TbUsersGroup } from "react-icons/tb";
 
+import Grainient from "./components/Grainient";
+
 // Components
 import Footer from "./components/Footer";
 import PixelPenLoader from "./components/PixelPenLoader";
@@ -84,8 +86,34 @@ const PixelAndPenHomepage = () => {
       <div className="min-h-screen background-colors transition-colors duration-200">
 
         {/* Hero Section */}
-        <header className="animated-gradient bg-gradient-to-r  from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700 text-white py-20">
-          <div className="container mx-auto text-center px-4">
+          <div style={{ width: '100%', height: '60vh', position: 'absolute' }}>
+            <Grainient
+              color1="#0000a0"
+              color2="#5227FF"
+              color3="#B19EEF"
+              timeSpeed={0.8}
+              colorBalance={0}
+              warpStrength={1}
+              warpFrequency={5}
+              warpSpeed={2}
+              warpAmplitude={50}
+              blendAngle={0}
+              blendSoftness={0.05}
+              rotationAmount={500}
+              noiseScale={2}
+              grainAmount={0.1}
+              grainScale={2}
+              grainAnimated={false}
+              contrast={1.5}
+              gamma={1}
+              saturation={1}
+              centerX={0}
+              centerY={0}
+              zoom={0.9}
+            />
+          </div>
+        <header className=" text-white py-20">
+          <div className="container mx-auto text-center px-4 relative z-10">
             <h1 className="text-5xl font-bold mb-4">Pixel and Pen</h1>
             <p className="text-2xl mb-8">A Space for Readers and Writers</p>
             <div className="space-x-4">

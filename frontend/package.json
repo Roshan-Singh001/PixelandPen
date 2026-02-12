@@ -1,7 +1,7 @@
 {
   "name": "pixelandpen",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -29,6 +29,7 @@
     "multer": "^2.0.2",
     "mysql2": "^3.14.1",
     "nodemailer": "^6.10.1",
+    "ogl": "^1.0.11",
     "pinata": "^2.4.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

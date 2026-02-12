@@ -32,7 +32,7 @@ function Sign_Up_Page() {
   const [isUserExist, setisUserExist] = useState(null);
 
   const AxiosInstance = axios.create({
-    baseURL: "http://localhost:3000/",
+    baseURL: import.meta.env.VITE_API_URL,
     timeout: 10000,
     headers: { "X-Custom-Header": "foobar" },
   });

@@ -5,7 +5,7 @@ import axios from 'axios';
 import PixelPenLoader from "../../../components/PixelPenLoader";
 
 const AxiosInstance = axios.create({
-  baseURL: "http://localhost:3000/",
+  baseURL: import.meta.env.VITE_API_URL,
   timeout: 30000,
   headers: { "X-Custom-Header": "foobar" },
   withCredentials: true,

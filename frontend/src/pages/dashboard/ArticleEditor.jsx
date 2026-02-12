@@ -56,7 +56,7 @@ const ArticleEditor = (props) => {
   const [isRightSideBar, setIsRightSideBar] = useState(true);
   const LIST_TYPES = ['numbered-list', 'bulleted-list'];
   const AxiosInstance = axios.create({
-      baseURL: 'http://localhost:3000/',
+      baseURL: import.meta.env.VITE_API_URL,
       withCredentials: true,
       timeout: 3000,
       headers: {'X-Custom-Header': 'foobar'}

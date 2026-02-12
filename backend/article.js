@@ -159,10 +159,10 @@ articleRouter.get('/view/:slug', async (req,res)=>{
             const [likeResults] = await db.query(query,[userId,article[0].article_id]);
             const isLiked = likeResults[0].isLike === 1;
 
-            return res.json({article, authName: userName, authPic: userpic, comments: comments, isLiked: isLiked});
+            return res.json({article, authName: userName, authPic: userpic, comments: comments, isLiked: isLiked, likes_count: article.likes});
         }
 
-        res.json({article, authName: userName, authPic: userpic, comments: comments});
+        res.json({article, authName: userName, authPic: userpic, comments: comments, likes_count: article.likes});
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Error Fetching Article"});

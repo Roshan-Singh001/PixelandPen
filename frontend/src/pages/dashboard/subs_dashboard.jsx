@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-import { 
-  LayoutDashboard, 
-  FileText, 
-  MessageCircle, 
-  BarChart3, 
-  UserCog, 
-  Settings, 
-  Plus, 
-  LogOut,
-  ChevronLeft,
+import { LayoutDashboard, FileText, MessageCircle, BarChart3, UserCog, Settings, Plus, LogOut, ChevronLeft,
   ChevronRight,
   Menu,
   Ban,
@@ -42,19 +33,22 @@ import { IoPersonAdd, IoSettingsSharp } from "react-icons/io5";
 import { FaAnglesRight } from "react-icons/fa6";
 import { FaAnglesLeft } from "react-icons/fa6";
 import { IoIosAddCircle } from "react-icons/io";
+import { FaBookBookmark } from "react-icons/fa6";
+import { FaBookReader } from "react-icons/fa";
 
+import Grainient from "../../components/Grainient";
 import PixelPenLoader from "../../components/PixelPenLoader";
-import MyArticles from "./contri_components/MyArticles";
-import MyComments from "./contri_components/MyComments";
-import MyAnalytics from "./contri_components/MyAnalytics";
-import ContriSettings from "./contri_components/ContriSettings";
-import ContriProfile from "./contri_components/ContriProfile";
-import ArticleEditor from "./ArticleEditor";
+import Likes from "./subs_components/Likes";
+import Bookmarks from "./subs_components/Bookmarks";
+import Comments from "./subs_components/comments";
+import SubsProfile from "./subs_components/SubsProfile";
+import SubsSettings from "./subs_components/SubsSettings";
+
 import { useAuth } from "../../contexts/AuthContext";
 import { ThemeProvider } from "../../contexts/ThemeContext";
 
 const AxiosInstance = axios.create({
-  baseURL: "http://localhost:3000/",
+  baseURL: import.meta.env.VITE_API_URL,
   timeout: 30000,
   headers: { "X-Custom-Header": "foobar" },
   withCredentials: true,
@@ -170,26 +164,7 @@ const ReaderDashboard = () => {
       
     }
   }
-  
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Approved': return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20';
-      case 'Pending': return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20';
-      case 'Rejected': return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
-      default: return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/20';
-    }
-  };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'approved': return CheckCircle;
-      case 'pending': return Clock;
-      case 'rejected': return XCircle;
-      default: return FileText;
-    }
-  };
-
-  
   if (loading) return <PixelPenLoader/>
 
   if (!loggedIn) return navigate("/login");
@@ -226,7 +201,7 @@ const ReaderDashboard = () => {
   <div className="flex justify-evenly gap-2">
     {menuMinimize == false && (
       <h2 className="inline text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-        Contributor Panel
+        Reader Panel
       </h2>
     )}
     {menuMinimize ? (
@@ -250,7 +225,7 @@ const ReaderDashboard = () => {
       { label: "Dashboard", icon: <BiSolidDashboard size={25} />},
       { label: "Likes", icon: <MdArticle size={25} />},
       { label: "Comments", icon: <FaComments size={25} />},
-      { label: "Bookmarks", icon: <MdAnalytics size={25} />},
+      { label: "Bookmarks", icon: <FaBookBookmark  size={25} />},
       { label: "Profile", icon: <FaUserCog size={25} />},
       { label: "Settings", icon: <IoSettingsSharp size={25} />},
     ].map(({ label, icon}) => (
@@ -285,19 +260,45 @@ const ReaderDashboard = () => {
         {menuOption === "Dashboard" && (
           <div className="space-y-8">
           {/* Welcome Section */}
-          <div className="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl p-8 text-white shadow-xl">
-            <div className="flex items-center justify-between">
+          <div className="relative overflow-hidden rounded-2xl  text-white shadow-xl">
+            <div style={{ width: '100%', height: '60vh', position: 'absolute' }}>
+            <Grainient
+              color1="#0080ff"
+              color2="#5227FF"
+              color3="#B19EEF"
+              timeSpeed={0.8}
+              colorBalance={0}
+              warpStrength={1}
+              warpFrequency={5}
+              warpSpeed={2}
+              warpAmplitude={50}
+              blendAngle={0}
+              blendSoftness={0.05}
+              rotationAmount={500}
+              noiseScale={2}
+              grainAmount={0.1}
+              grainScale={2}
+              grainAnimated={false}
+              contrast={1.5}
+              gamma={1}
+              saturation={1}
+              centerX={0}
+              centerY={0}
+              zoom={0.9}
+            />
+          </div>
+            <div className="relative z-10 p-8 flex items-center justify-between">
               <div>
                 <h1 className="text-4xl font-bold mb-2">
                   Welcome back, {userData.userName}! 👋
                 </h1>
                 <p className="text-blue-100 text-lg">
-                  Ready to create amazing content today?
+                  Ready to read amazing content today?
                 </p>
               </div>
               <div className="hidden md:block">
                 <div className="w-32 h-32 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
-                  <TrendingUp className="w-16 h-16 text-white" />
+                  <FaBookReader className="w-16 h-16 text-white" />
                 </div>
               </div>
             </div>
@@ -356,60 +357,25 @@ const ReaderDashboard = () => {
                   <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
                     <XCircle className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                   </div>
-                  <p className="text-gray-500 dark:text-gray-400 text-lg">No Articles</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-lg">No Articles Read</p>
                 </div>
               
               </>)}
             </div>
           </div>
-
-          {/* Announcements */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                <Megaphone className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                Announcements
-              </h2>
-            </div>
-            <div className="p-6 space-y-4">
-              {announcements.map((announcement) => {
-                return (
-                  <div
-                    key={announcement.id}
-                    className="p-5 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-2">
-                          {announcement.title}
-                        </h3>
-                        <p className="text-gray-700 dark:text-gray-300 mb-3">
-                          {announcement.content}
-                        </p>
-                        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                          <Calendar className="w-4 h-4" />
-                          Posted on {new Date(announcement.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </div>
         )}
 
-        {menuOption === "My Articles" && <MyArticles userdata={userData} setMenuOption={setMenuOption} setRefslug={setRefslug} />}
-        {menuOption === "Comments" && <MyComments />}
-        {menuOption === "My Stats" && <MyAnalytics />}
-        {menuOption === "Profile" && <ContriProfile userdata={userData} />}
+        {menuOption === "Likes" && <Likes />}
+        {menuOption === "Comments" && <Comments />}
+        {menuOption === "Bookmarks" && <Bookmarks />}
+        {menuOption === "Stats" && <Bookmarks />}
+        {menuOption === "Profile" && <SubsProfile userdata={userData} />}
         {menuOption === "Settings" && (
           <ThemeProvider>
-            <ContriSettings />
+            <SubsSettings />
           </ThemeProvider>
         )}
-        {menuOption === "Add Article" && <ArticleEditor userdata={userData} refSlug={refSlug} />}
       </main>
     </div>
   );

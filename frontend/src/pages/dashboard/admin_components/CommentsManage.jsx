@@ -4,7 +4,7 @@ import { Check,User, X, Trash2, MessageCircle, Clock, CheckCircle, AlertCircle, 
 import PixelPenLoader from "../../../components/PixelPenLoader";
 
 const AxiosInstance = axios.create({
-  baseURL: 'http://localhost:3000/',
+  baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
   timeout: 3000,
   headers: {'X-Custom-Header': 'foobar'}

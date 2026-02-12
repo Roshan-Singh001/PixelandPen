@@ -13,7 +13,7 @@ function OtpVerification() {
   const [success, setSuccess] = useState(false);
   const [timer, setTimer] = useState(600); // 10 minutes in seconds
   const AxiosInstance = axios.create({
-    baseURL: 'http://localhost:3000/',
+    baseURL: import.meta.env.VITE_API_URL,
     timeout: 3000,
     headers: {'X-Custom-Header': 'foobar'}
   });

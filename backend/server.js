@@ -50,7 +50,7 @@ const email_pass = process.env.EMAIL_PASS;
 
 
 var db;
-const MyDbName = "Pixel&Pen";
+const MyDbName = "Pixel_and_Pen";
 
 async function connectToDatabase() {
   try {

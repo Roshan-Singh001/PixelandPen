@@ -126,14 +126,7 @@ const Navbar = () => {
             </ul>
 
             <ul className="lg:flex space-x-5 p-2 items-center">
-              <div className="flex justify-center items-center space-x-1 rounded-lg text-black bg-gray-200 p-2">
-                <IoIosSearch className="w-10 h-6" />
-                <input
-                  type="search"
-                  placeholder="Enter text to search"
-                  className="border-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none text-base w-full bg-transparent outline-none"
-                ></input>
-              </div>
+              
               {loggedIn ? (
                 <div className="relative inline-block text-left">
                   {/* Dropdown Button */}
@@ -227,14 +220,7 @@ const Navbar = () => {
           </ul>
 
           <ul className="lg:flex lg:space-x-10 flex flex-col p-2 border-t-2 border-gray-200 dark:border-gray-700">
-            <div className="flex justify-center items-center space-x-1 rounded-lg text-black bg-gray-200 p-2">
-              <IoIosSearch className="w-10 h-6" />
-              <input
-                type="search"
-                placeholder="Enter text to search"
-                className="text-base w-full bg-transparent outline-none"
-              ></input>
-            </div>
+            
             <div
               className="my-4 flex items-center"
               style={{ marginTop: "10px" }}
