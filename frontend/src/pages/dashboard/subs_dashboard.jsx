@@ -40,7 +40,7 @@ import Grainient from "../../components/Grainient";
 import PixelPenLoader from "../../components/PixelPenLoader";
 import Likes from "./subs_components/Likes";
 import Bookmarks from "./subs_components/Bookmarks";
-import Comments from "./subs_components/comments";
+import Comments from "./subs_components/Comments";
 import SubsProfile from "./subs_components/SubsProfile";
 import SubsSettings from "./subs_components/SubsSettings";
 

@@ -9,10 +9,14 @@ dotenv.config({
   path: path.resolve(__dirname, ".env"),
 });
 
-const databasePass = process.env.DATABASE_PASS;
-const db_host = process.env.DB_HOST;
-const db_user = process.env.DB_USER;
-const MyDbName = "Pixel_and_Pen";
+const db_host = process.env.DB_HOST || "localhost";
+const db_user = process.env.MYSQL_USER || process.env.DB_USER || "root";
+const databasePass =
+  process.env.MYSQL_PASSWORD ||
+  process.env.MYSQL_ROOT_PASSWORD ||
+  process.env.DATABASE_PASS ||
+  "";
+const MyDbName = process.env.MYSQL_DATABASE || "Pixel_and_Pen";
 
 const pool = mysql.createPool({
     host: db_host,

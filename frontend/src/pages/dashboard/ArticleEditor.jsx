@@ -146,7 +146,7 @@ const ArticleEditor = (props) => {
       currentSlug,
       title,
       description,
-      currentSlug,
+     
       categories,
       tags, 
       featuredImage, 
