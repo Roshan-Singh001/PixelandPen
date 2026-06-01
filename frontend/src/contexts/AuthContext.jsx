@@ -16,20 +16,9 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem("authToken");
-
-      if (!token) {
-        setLoggedIn(false);
-        setLoading(false);
-        return;
-      }
 
       try {
-          const response = await AxiosInstance.get("/auth/profile", {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          const response = await AxiosInstance.get("/auth/profile");
       
           const { username, role, id } = response.data;
           setUserData({ userName: username, userRole: role, user_id: id });
@@ -57,13 +46,10 @@ export const AuthProvider = ({ children }) => {
       });
 
       const result = response.data;
-      if (result.token) {
-        localStorage.setItem("authToken", result.token);
-        const profileResponse = await AxiosInstance.get("/auth/profile", {
-          headers: {
-            Authorization: `Bearer ${result.token}`,
-          },
-        });
+      console.log("Login response:", result);
+
+      if (result?.user_id) {
+        const profileResponse = await AxiosInstance.get("/auth/profile");
         const { username: profileUsername, role: profileRole, id: profileId } = profileResponse.data;
         setUserData({ userName: profileUsername, userRole: profileRole, user_id: profileId });
         setLoggedIn(true);
@@ -72,7 +58,8 @@ export const AuthProvider = ({ children }) => {
         throw new Error("No token received");
       }
     } catch (error) {
-      localStorage.removeItem("authToken");
+      console.error("Login failed:", error);
+      await logout();
       return { success: false, error: error.response?.data?.message || "Login failed" };
     } finally {
       setLoading(false);

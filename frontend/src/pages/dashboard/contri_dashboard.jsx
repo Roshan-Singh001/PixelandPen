@@ -511,7 +511,7 @@ const ContributorDashboard = () => {
           </div>
 
           {/* Announcements */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+          {announcements.length > 0 && <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
                 <Megaphone className="w-6 h-6 text-orange-600 dark:text-orange-400" />
@@ -543,7 +543,8 @@ const ContributorDashboard = () => {
                 );
               })}
             </div>
-          </div>
+          </div>}
+
         </div>
         )}
 

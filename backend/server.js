@@ -551,16 +551,16 @@ app.post("/validate", async (req, res) => {
         { expiresIn: "1h" }
       );
 
-      // Set token in cookie properly:
+      console.log("Generated JWT token:", token);
+
       res.cookie("token", token, {
         httpOnly: true,
-        secure: false, // set true if using HTTPS in production
+        secure: false,
         sameSite: "lax",
         maxAge: 3600000,
       });
 
-      // Send token in response JSON as well
-      res.status(200).json({ message: "Login successful",user_id: user_id, role: role, token });
+      res.status(200).json({ message: "Login successful",user_id: user_id, role: role});
     } else {
       res.status(401).json({ message: "Incorrect password." });
     }
@@ -571,8 +571,9 @@ app.post("/validate", async (req, res) => {
 });
 
 function verifyToken(req, res, next) {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
+  // const authHeader = req.headers["authorization"];
+  // const token = authHeader && authHeader.split(" ")[1];
+  const token = req.cookies.token;
   console.log("token is :", token);
 
   if (!token) {
