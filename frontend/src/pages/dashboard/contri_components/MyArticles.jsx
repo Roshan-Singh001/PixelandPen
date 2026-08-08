@@ -23,11 +23,7 @@ const MyArticles = (props) => {
 
   useEffect(() => {
     try {
-      AxiosInstance.get('/article/draft', {
-        headers:{
-          user_id: props.userdata.user_id,
-        }
-      })
+      AxiosInstance.get('/dashboard/contri/article/fetch/draft')
       .then((res)=>{
         setDraftArticles(res.data);
       })
@@ -35,11 +31,7 @@ const MyArticles = (props) => {
         console.log(err);
       });
 
-      AxiosInstance.get('/article/pending', {
-        headers:{
-          user_id: props.userdata.user_id,
-        }
-      })
+      AxiosInstance.get('/dashboard/contri/article/fetch/pending')
       .then((res)=>{
         setPendingArticles(res.data);
       })
@@ -47,11 +39,7 @@ const MyArticles = (props) => {
         console.log(err);
       });
 
-      AxiosInstance.get('/article/reject', {
-        headers:{
-          user_id: props.userdata.user_id,
-        }
-      })
+      AxiosInstance.get('/dashboard/contri/article/fetch/reject')
       .then((res)=>{
         setRejectedArticles(res.data);
       })
@@ -59,11 +47,7 @@ const MyArticles = (props) => {
         console.log(err);
       });
 
-      AxiosInstance.get('/article/approve', {
-        headers:{
-          user_id: props.userdata.user_id,
-        }
-      })
+      AxiosInstance.get('/dashboard/contri/article/fetch/approve')
       .then((res)=>{
         setApprovedArticles(res.data);
       })
@@ -83,10 +67,6 @@ const MyArticles = (props) => {
     return <PixelPenLoader/>
     
   }
-
-  
-
-  
 
   const handleEdit = (slug)=>{
     props.setRefslug(slug);

@@ -7,21 +7,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pixel & Pen</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Anek+Devanagari:wght@100..800&display=swap');
-    a span{
+    @import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,500&family=Inter:wght@400;500;600;700;800&display=swap');
+
+    html { scroll-behavior: smooth; }
+    /* a span {
       cursor: pointer;
       color: rgb(0, 145, 255);
-    }
+    } */
 
     @keyframes article_page_gradient {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
+      0% {
+        background-position: 200% 0;
+      }
+
+      100% {
+        background-position: -200% 0;
+      }
     }
 
     .article_load_gradient {
       animation: article_page_gradient 2s ease-in-out infinite;
     }
-    
+
     @keyframes gradientAnimation {
       0% {
         background-position: 0% 50%;
@@ -39,6 +46,51 @@
     .animated-gradient {
       background-size: 200% 200%;
       animation: gradientAnimation 3s ease-in-out infinite;
+    }
+
+    @keyframes pp-float {
+
+      0%,
+      100% {
+        transform: translateY(0) rotate(-2deg);
+      }
+
+      50% {
+        transform: translateY(-14px) rotate(1deg);
+      }
+    }
+
+    .pp-float {
+      animation: pp-float 6s ease-in-out infinite;
+    }
+
+    .pp-pixel-grid {
+      background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
+      background-size: 22px 22px;
+    }
+
+    /* button:focus-visible,
+    a:focus-visible,
+    [contenteditable]:focus-visible {
+      outline: 2px solid #F97316;
+      outline-offset: 2px;
+      border-radius: 4px;
+    } */
+
+    .dark button:focus-visible,
+    .dark a:focus-visible,
+    .dark [contenteditable]:focus-visible {
+      outline-color: #FF8A3D;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .pp-float {
+        animation: none;
+      }
+
+      html {
+        scroll-behavior: auto;
+      }
     }
   </style>
 </head>

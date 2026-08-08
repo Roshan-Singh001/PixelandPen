@@ -139,7 +139,7 @@ async function connectToDatabase() {
       article_id VARCHAR(255) PRIMARY KEY,
       slug VARCHAR(255) UNIQUE,
       title VARCHAR(255) NOT NULL,
-      category JSON NOT NULL,
+      category_id INT NOT NULL,
       description VARCHAR(200),
       content JSON NOT NULL,
       tags JSON,
@@ -149,7 +149,9 @@ async function connectToDatabase() {
       views INT DEFAULT 0,
       likes INT DEFAULT 0,
       is_featured BOOLEAN DEFAULT FALSE,
-      publish_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      publish_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+      FOREIGN KEY (category_id) REFERENCES categories(id)
     )`;
 
     await db.execute(query_articles_table);
@@ -235,6 +237,15 @@ async function connectToDatabase() {
     )`;
 
     await db.execute(query_announce);
+
+    const query_category = `CREATE TABLE IF NOT EXISTS categories (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`;
+
+    await db.execute(query_category);
 
 
   } catch (error) {

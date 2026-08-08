@@ -1,274 +1,256 @@
-import React from "react";
-import { GiCoffeeCup } from "react-icons/gi";
+import React, { useState, useEffect } from "react";
 import { IoMdPerson } from "react-icons/io";
-import { FcGoogle } from "react-icons/fc";
-import { useNavigate } from "react-router-dom";
-import { BiLogoFacebookCircle } from "react-icons/bi";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { FaApple } from "react-icons/fa";
-import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import LogoLight from "../../assets/images/Pixel & Pen.png";
 import LogoDark from "../../assets/images/Pixel & Pen(B&W).png";
-
 import PixelPenLoader from "../../components/PixelPenLoader";
 import { useAuth } from "../../contexts/AuthContext";
 
-function Login_page() {
+const inputBase =
+  "w-full px-3 py-2.5 text-sm bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-slate-600 rounded focus:outline-none focus:border-[#1E3A5F] dark:focus:border-blue-400 focus:ring-2 focus:ring-[#1E3A5F]/10 dark:focus:ring-blue-400/10 placeholder-gray-400 dark:placeholder-slate-500 transition duration-150";
+
+const FieldLabel = ({ children }) => (
+  <label className="block mb-1.5 text-[11px] font-semibold tracking-widest uppercase text-gray-700 dark:text-gray-300">
+    {children}
+  </label>
+);
+
+const EyeButton = ({ show, onToggle }) => (
+  <button
+    type="button"
+    onClick={onToggle}
+    aria-label={show ? "Hide password" : "Show password"}
+    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors duration-150"
+  >
+    {show ? <FaEyeSlash size={15} /> : <FaEye size={15} />}
+  </button>
+);
+
+const FEATURES = [
+  { n: "01", title: "Manage your content",  desc: "Access BlogFlow and all your drafts, posts, and analytics." },
+  { n: "02", title: "Collaborate with teams", desc: "Work alongside contributors and admins in one place." },
+  { n: "03", title: "Publish anywhere",      desc: "Distribute content across platforms without leaving the ecosystem." },
+];
+
+function Login_Page() {
   const { loggedIn, userData, loading, login } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setshowPassword] = useState(false);
-  const [role, setRole] = useState("");
-  const [form, setform] = useState({ username: "", pass: "", loginAs: "" });
+  const [isLoading, setIsLoading]   = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [form, setForm] = useState({ username: "", pass: "", loginAs: "" });
   const navigate = useNavigate();
+
+  /* redirect if already logged in */
   useEffect(() => {
-    console.log(loggedIn, userData);
     if (loggedIn && !loading && userData?.userRole) {
-      console.log("hello");
       navigate(`/dashboard/${userData.userRole.toLowerCase()}`);
     }
   }, [loggedIn, loading, userData, navigate]);
-  
-
-  const showPasswordToggle = () => {
-    setshowPassword((prevState) => !prevState);
-  };
 
   function handleChange(e) {
-    setform({ ...form, [e.target.name]: e.target.value });
+    setForm(f => ({ ...f, [e.target.name]: e.target.value }));
   }
 
-  async function handleFormValidation(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+    if (!form.loginAs) { toast.error("Select a role to continue."); return; }
     setIsLoading(true);
     try {
       const result = await login(form.username, form.pass, form.loginAs);
-
       if (result.success) {
-        toast.success("Login successful!");
+        toast.success("Welcome back!");
         navigate(`/dashboard/${result.userRole.toLowerCase()}`);
       } else {
-        
-        toast.error(`Error: ${result.error || "Login failed, please try again."}`);
+        toast.error(result.error || "Login failed — check your credentials.");
       }
-    } catch (err) {
-      toast.error("An unexpected error occurred during login.");
+    } catch {
+      toast.error("An unexpected error occurred.");
     }
     setIsLoading(false);
   }
 
-  if (isLoading || loading) {
-    return <PixelPenLoader/>
-    
-  }
-
-  if (loggedIn && userData?.userRole) {
-    return null; 
-}
+  if (isLoading || loading) return <PixelPenLoader />;
+  if (loggedIn && userData?.userRole) return null;
 
   return (
-    <>
-      <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4 transition-all duration-300">
-        <div className="w-full max-w-6xl mx-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden backdrop-blur-lg border border-white/20 dark:border-gray-700/50 transition-all duration-300">
-            <div className="flex flex-col lg:flex-row min-h-[85vh]">
-              {/* Left Side - Hero Section */}
-              <div className="lg:w-2/5 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 dark:from-blue-700 dark:via-purple-700 dark:to-indigo-800 relative overflow-hidden">
-                {/* Animated background elements */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-600/20 animate-pulse"></div>
-                <div className="absolute top-10 right-10 w-32 h-32 bg-white/10 rounded-full blur-xl animate-bounce"></div>
-                <div className="absolute bottom-10 left-10 w-24 h-24 bg-purple-400/20 rounded-full blur-lg animate-pulse"></div>
-                
-                <div className="relative z-10 h-full flex flex-col justify-center items-center p-8 text-center">
-                  {/* Logo Section */}
-                  <div className="mb-8 transform hover:scale-105 transition-transform duration-300">
-                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                      <img 
-                        src={LogoDark} 
-                        alt="WebsiteLogo" 
-                        className="max-w-[150px] h-auto filter brightness-0 invert"
-                      />
-                    </div>
-                  </div>
+    <div className="min-h-screen flex flex-col bg-[#FAFAF8] dark:bg-slate-900 font-[Inter,system-ui,sans-serif] antialiased">
 
-                  {/* Quote Section */}
-                  <div className="mb-12 max-w-sm">
-                    <blockquote className="text-white/90 font-medium text-lg leading-relaxed italic">
-                      "A pixel paints, a pen writes—together, they build worlds."
-                    </blockquote>
-                  </div>
 
-                  {/* Coffee Icon */}
-                  <div className="flex flex-col items-center space-y-3">
-                    <div className="bg-white/10 backdrop-blur-sm rounded-full p-4 border border-white/20 transform hover:scale-110 transition-all duration-300">
-                      <GiCoffeeCup size={48} className="text-white animate-pulse" />
-                    </div>
-                    <p className="text-white/80 font-medium text-lg">Welcome Back</p>
-                  </div>
-                </div>
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-8">
+        <div className="w-full max-w-5xl border border-gray-200 dark:border-slate-700 grid grid-cols-1 lg:grid-cols-[2fr_3fr] bg-white dark:bg-slate-800 shadow-sm">
+
+          {/* ── Left panel ──────────────────────────────────────────────── */}
+          <div className="relative flex flex-col justify-between bg-[#1E3A5F] p-10 lg:p-12 overflow-hidden">
+
+
+            <div className="relative z-10">
+              {/* Logo */}
+              <div className="mb-10">
+                <img
+                  src={LogoDark}
+                  alt="Pixel & Pen"
+                  className="h-7 brightness-0 invert opacity-90"
+                />
               </div>
 
-              {/* Right Side - Form Section */}
-              <div className="lg:w-3/5 p-8 lg:p-12 bg-white dark:bg-gray-800 transition-colors duration-300">
-                <div className="max-w-md mx-auto">
-                  {/* Header */}
-                  <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent mb-2">
-                      Welcome Back
-                    </h1>
-                    <p className="text-gray-600 dark:text-gray-400">Sign in to your account</p>
+              {/* Headline */}
+              <div className="mb-10">
+                <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-3">
+                  Welcome back
+                </p>
+                <h2 className="font-[Newsreader,Georgia,serif] text-[clamp(24px,2.5vw,34px)] font-medium leading-[1.15] tracking-tight text-white">
+                  Your content,{" "}
+                  <em className="text-[#FBBF24]" style={{ fontStyle: "italic" }}>waiting for you.</em>
+                </h2>
+              </div>
+
+              {/* Feature list */}
+              <div className="flex flex-col">
+                {FEATURES.map(({ n, title, desc }, i) => (
+                  <div key={n} className="flex gap-4">
+                    <div className="flex flex-col items-center pt-1">
+                      <span className="w-2 h-2 rounded-full bg-[#F59E0B] flex-shrink-0" />
+                      {i < FEATURES.length - 1 && (
+                        <span className="w-px flex-1 bg-white/10 my-1.5" />
+                      )}
+                    </div>
+                    <div className={i < FEATURES.length - 1 ? "pb-5" : ""}>
+                      <p className="text-[10px] font-semibold tracking-[0.14em] uppercase text-[#FBBF24] mb-0.5">{n}</p>
+                      <p className="text-sm font-medium text-white mb-0.5">{title}</p>
+                      <p className="text-xs text-white/45 leading-relaxed">{desc}</p>
+                    </div>
                   </div>
-
-                  {/* Form */}
-                  <form onSubmit={handleFormValidation} className="space-y-6">
-                    {/* Role Selection */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Sign in as
-                      </label>
-                      <div className="relative">
-                        <select
-                          name="loginAs"
-                          value={form.loginAs}
-                          onChange={(e) => {
-                            handleChange(e);
-                            setRole(e.target.value);
-                          }}
-                          className={`w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none transition-all duration-300 ${
-                            form.loginAs === "" ? "text-gray-400 dark:text-gray-500" : ""
-                          }`}
-                        >
-                          <option value="" hidden>
-                            Select your role...
-                          </option>
-                          <option value="Admin">Admin</option>
-                          <option value="Contributor">Contributor</option>
-                          <option value="Reader">Reader</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Username Input */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Username
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          required
-                          minLength={4}
-                          className="w-full px-4 py-3 pl-12 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none transition-all duration-300 placeholder-gray-400 dark:placeholder-gray-500"
-                          onChange={handleChange}
-                          name="username"
-                          value={form.username}
-                          placeholder="Enter your username"
-                        />
-                        <IoMdPerson className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
-                      </div>
-                    </div>
-
-                    {/* Password Input */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Password
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          required
-                          minLength={4}
-                          onChange={handleChange}
-                          name="pass"
-                          value={form.pass}
-                          className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none transition-all duration-300 placeholder-gray-400 dark:placeholder-gray-500"
-                          placeholder="Enter your password"
-                        />
-                        <button
-                          type="button"
-                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
-                          onClick={showPasswordToggle}
-                        >
-                          {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Forgot Password Link */}
-                    <div className="text-right">
-                      <a href="#" className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200">
-                        Forgot password?
-                      </a>
-                    </div>
-
-                    {/* Submit Button */}
-                    <button
-                      type="submit"
-                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 dark:from-blue-500 dark:to-purple-500 dark:hover:from-blue-600 dark:hover:to-purple-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
-                    >
-                      Sign In
-                    </button>
-                  </form>
-
-                  {/* Divider */}
-                  {/* <div className="relative my-8">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                      <span className="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                        Or continue with
-                      </span>
-                    </div>
-                  </div> */}
-
-                  {/* Social Sign In */}
-                  {/* <div className="flex justify-center space-x-4 mb-8">
-                    <button className="w-12 h-12 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-110">
-                      <FcGoogle size={24} />
-                    </button>
-                    <button className="w-12 h-12 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-110">
-                      <BiLogoFacebookCircle size={24} className="text-blue-600" />
-                    </button>
-                    <button className="w-12 h-12 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-110">
-                      <FaApple size={24} className="text-gray-800 dark:text-gray-200" />
-                    </button>
-                  </div> */}
-
-                  {/* Register Link */}
-                  <div className="text-center">
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Don't have an account?{" "}
-                      <Link
-                        to="/register"
-                        className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200"
-                      >
-                        Register here
-                      </Link>
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
+
+            {/* Quote */}
+            <div className="relative z-10 pt-8 border-t border-white/10">
+              <blockquote className="font-[Newsreader,Georgia,serif] text-sm italic text-white/45 leading-relaxed">
+                "A pixel paints, a pen writes — together, they build worlds."
+              </blockquote>
+            </div>
           </div>
+
+          {/* ── Right panel — form ──────────────────────────────────────── */}
+          <div className="p-8 sm:p-12 bg-white dark:bg-slate-800">
+            <div className="max-w-md mx-auto">
+
+              {/* Header */}
+              <div className="mb-8">
+                <h1 className="font-[Newsreader,Georgia,serif] text-[clamp(24px,2.5vw,32px)] font-medium tracking-tight leading-tight text-gray-900 dark:text-gray-50 mb-2">
+                  Sign in to your account
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  No account yet?{" "}
+                  <Link
+                    to="/register"
+                    className="font-medium text-[#1E3A5F] dark:text-blue-400 underline underline-offset-2 hover:opacity-75 transition-opacity"
+                  >
+                    Register here
+                  </Link>
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+
+                {/* Role */}
+                <div>
+                  <FieldLabel>Sign in as</FieldLabel>
+                  <div className="relative">
+                    <select
+                      name="loginAs"
+                      value={form.loginAs}
+                      onChange={handleChange}
+                      className={`${inputBase} appearance-none pr-8 ${!form.loginAs ? "text-gray-400 dark:text-slate-500" : ""}`}
+                    >
+                      <option value="" disabled hidden>Select a role</option>
+                      <option value="Admin">Admin</option>
+                      <option value="Contributor">Contributor</option>
+                      <option value="Reader">Reader</option>
+                    </select>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-[10px]">▾</span>
+                  </div>
+                </div>
+
+                {/* Username */}
+                <div>
+                  <FieldLabel>Username</FieldLabel>
+                  <div className="relative">
+                    <IoMdPerson className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" size={16} />
+                    <input
+                      type="text"
+                      name="username"
+                      value={form.username}
+                      onChange={handleChange}
+                      required
+                      minLength={4}
+                      placeholder="Enter your username"
+                      className={`${inputBase} pl-9`}
+                    />
+                  </div>
+                </div>
+
+                {/* Password */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <FieldLabel>Password</FieldLabel>
+                    <a
+                      href="#"
+                      className="text-[11px] font-medium text-[#1E3A5F] dark:text-blue-400 hover:opacity-75 transition-opacity"
+                    >
+                      Forgot password?
+                    </a>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="pass"
+                      value={form.pass}
+                      onChange={handleChange}
+                      required
+                      minLength={4}
+                      placeholder="Enter your password"
+                      className={`${inputBase} pr-10`}
+                    />
+                    <EyeButton show={showPassword} onToggle={() => setShowPassword(p => !p)} />
+                  </div>
+                </div>
+
+                {/* Submit */}
+                <button
+                  type="submit"
+                  className="w-full mt-1 py-3 px-6 bg-[#1E3A5F] hover:bg-[#162d4a] dark:bg-blue-500 dark:hover:bg-blue-600 text-white text-xs font-semibold tracking-widest uppercase rounded transition-all duration-150 hover:-translate-y-px active:translate-y-0"
+                >
+                  Sign in
+                </button>
+              </form>
+
+              {/* Terms */}
+              <p className="mt-6 text-xs text-center text-gray-400 dark:text-slate-500 leading-relaxed">
+                By signing in you agree to our{" "}
+                <Link to="/terms"   className="text-[#1E3A5F] dark:text-blue-400 hover:underline">Terms</Link>
+                {" "}and{" "}
+                <Link to="/privacy" className="text-[#1E3A5F] dark:text-blue-400 hover:underline">Privacy Policy</Link>.
+              </p>
+
+            </div>
+          </div>
+
         </div>
-        <ToastContainer 
-          position="top-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="colored"
-        />
       </main>
-    </>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={4000}
+        hideProgressBar
+        closeOnClick
+        pauseOnHover
+        theme="light"
+      />
+    </div>
   );
 }
 
-export default Login_page;
+export default Login_Page;

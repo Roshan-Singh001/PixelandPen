@@ -21,7 +21,7 @@ import {
 import { GoSidebarExpand, GoSidebarCollapse } from "react-icons/go";
 import { CiSaveDown2 } from "react-icons/ci";
 import { VscOpenPreview } from "react-icons/vsc";
-import { IoMdLink, IoMdUndo, IoMdRedo, IoMdSend  } from "react-icons/io";
+import { IoMdLink, IoMdUndo, IoMdRedo, IoMdSend } from "react-icons/io";
 import { HiNumberedList } from "react-icons/hi2";
 import { MdFormatListBulleted } from "react-icons/md";
 import { FaQuoteLeft, FaRegImage } from "react-icons/fa6";
@@ -56,13 +56,13 @@ const ArticleEditor = (props) => {
   const [isRightSideBar, setIsRightSideBar] = useState(true);
   const LIST_TYPES = ['numbered-list', 'bulleted-list'];
   const AxiosInstance = axios.create({
-      baseURL: import.meta.env.VITE_API_URL,
-      withCredentials: true,
-      timeout: 3000,
-      headers: {'X-Custom-Header': 'foobar'}
-    });
-    
-    //Side Bar (Right)
+    baseURL: import.meta.env.VITE_API_URL,
+    withCredentials: true,
+    timeout: 3000,
+    headers: { 'X-Custom-Header': 'foobar' }
+  });
+  const [allCategories, setAllCategories] = useState([]);
+
   const [featuredImage, setFeaturedImage] = useState(null);
   const [description, setDescription] = useState('');
   const [categories, setCategories] = useState([]);
@@ -74,6 +74,7 @@ const ArticleEditor = (props) => {
   const [inSaveProgress, setSaveInProgress] = useState(false);
   const [isSave, setIsSave] = useState(false);
   const [isSend, setIsSend] = useState(false);
+
   const [isContentDirty, setIsContentDirty] = useState(false);
   const [isDescriptionDirty, setIsDescriptionDirty] = useState(false);
   const [isTitleDirty, setIsTitleDirty] = useState(false);
@@ -84,55 +85,61 @@ const ArticleEditor = (props) => {
   useEffect(() => {
     if (props.refSlug != "") {
       try {
-        AxiosInstance.get('/article/fetch',{
-          headers:{
-            user_id: props.userdata.user_id,
+        AxiosInstance.get('/dashboard/contri/article/fetch', {
+          headers: {
             slug: props.refSlug,
           }
         })
-        .then((res)=>{
-          console.log(res.data);
+          .then((res) => {
+            console.log(res.data);
 
-          setTitle(res.data[0].title);
-          setCategories(res.data[0].category);
-          setDescription(res.data[0].description);
-          setSlug(res.data[0].slug);
-          setValue(res.data[0].content);
-          setTags(res.data[0].tags);
-          setFeaturedImage(res.data[0].thumbnail_url);
+            setTitle(res.data[0].title);
+            setCategories(res.data[0].category);
+            setDescription(res.data[0].description);
+            setSlug(res.data[0].slug);
+            setValue(res.data[0].content);
+            setTags(res.data[0].tags);
+            setFeaturedImage(res.data[0].thumbnail_url);
 
-          setIsSave(true);
-          setEditorKey(prev => prev + 1);
-          setIsArticleNew(false);
-        })
-        .catch((err)=>{
-          console.log(err);
-        });
-        
+            setIsSave(true);
+            setEditorKey(prev => prev + 1);
+            setIsArticleNew(false);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+
       } catch (error) {
         console.log(error);
-        
       }
     }
+    const fetchCategories = async () => {
+      try {
+        const res = await AxiosInstance.get('/article/fetch/categories');
+        setAllCategories(res.data);
+      } catch (error) {
+        console.log(error);
+
+      }
+    }
+
+    fetchCategories();
     setIsLoading(false);
   }, []);
 
-
-  const allCategories = ['News', 'Health', 'Technology', 'Education', 'Politics'];
-
-  const generateSlug = (title)=>{
-      return title
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9\s-]/g, '')   
-        .replace(/\s+/g, '-')           
-        .replace(/-+/g, '-');           
+  const generateSlug = (title) => {
+    return title
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
   }
 
 
 
   // SAVE DRAFT
-  const handleSave = async ()=>{
+  const handleSave = async () => {
     setInProgress(true);
     let prevSlug = slug;
     let currentSlug = slug;
@@ -148,14 +155,14 @@ const ArticleEditor = (props) => {
       description,
       currentSlug,
       categories,
-      tags, 
-      featuredImage, 
+      tags,
+      featuredImage,
       content: value,
     };
 
     try {
       if (isArticleNew) {
-        
+
         const response = await AxiosInstance.post("/article/save/new", {
           user_id: props.userdata.user_id,
           article: JSON.stringify(article),
@@ -171,7 +178,7 @@ const ArticleEditor = (props) => {
         setIsThumbImageDirty(false);
         setIsTitleDirty(false);
       }
-      else{
+      else {
         const response = await AxiosInstance.post("/article/save/edit", {
           prevSlug: prevSlug,
           user_id: props.userdata.user_id,
@@ -187,33 +194,32 @@ const ArticleEditor = (props) => {
         setIsThumbImageDirty(false);
         setIsTitleDirty(false);
       }
-      
+
     } catch (error) {
       console.log(error);
     }
     setInProgress(false);
   }
 
-  const handlePreview = ()=>{
+  const handlePreview = () => {
     window.open(`/preview/${slug}`, '_blank');
   }
 
-  const handleSend = async()=>{
+  const handleSend = async () => {
     setSaveInProgress(true);
-    console.log("Hello");
     try {
       const response = await AxiosInstance.post("/article/send", {
         slug: slug,
-        title:title,
+        title: title,
         cont_id: props.userdata.user_id,
         author: props.userdata.userName,
       });
       console.log(response);
 
-      
+
     } catch (error) {
       console.log(error);
-      
+
     }
     setSaveInProgress(false);
     setIsSend(true);
@@ -224,12 +230,12 @@ const ArticleEditor = (props) => {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const res = await axios.post("http://localhost:3000/article/uploads/featuredimage", formData, {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/dashboard/contributor/article/uploads/featuredimage`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-  
+
       setFeaturedImage(res.data.imageUrl);
       setIsSave(false);
       setIsThumbImageDirty(true);
@@ -240,7 +246,7 @@ const ArticleEditor = (props) => {
 
   function getTextLength(nodes) {
     let length = 0;
-  
+
     for (const node of nodes) {
       if (Text.isText(node)) {
         length += node.text.length;
@@ -248,7 +254,7 @@ const ArticleEditor = (props) => {
         length += getTextLength(node.children);
       }
     }
-  
+
     return length;
   }
 
@@ -293,7 +299,7 @@ const ArticleEditor = (props) => {
   const canUndo = (editor) => {
     return editor.history.undos.length > 0;
   };
-  
+
   const canRedo = (editor) => {
     return editor.history.redos.length > 0;
   };
@@ -309,6 +315,10 @@ const ArticleEditor = (props) => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isContentDirty]);
 
+  useEffect(() => {
+    document.title = 'Article Editor · Pixel & Pen';
+  }, []);
+
   // Render elements
   const renderElement = useCallback((props) => {
     const alignment = {
@@ -323,31 +333,31 @@ const ArticleEditor = (props) => {
       case 'code':
         return <CodeElement {...props} alignment={alignment} />
       case 'heading-one':
-        return <HeadingOneElement {...props} alignment={alignment}/>
+        return <HeadingOneElement {...props} alignment={alignment} />
       case 'heading-two':
-        return <HeadingTwoElement {...props} alignment={alignment}/>
+        return <HeadingTwoElement {...props} alignment={alignment} />
       case 'heading-three':
-        return <HeadingThreeElement {...props} alignment={alignment}/>
+        return <HeadingThreeElement {...props} alignment={alignment} />
       case 'heading-four':
-        return <HeadingFourElement {...props} alignment={alignment}/>
+        return <HeadingFourElement {...props} alignment={alignment} />
       case 'heading-five':
-        return <HeadingFiveElement {...props} alignment={alignment}/>
+        return <HeadingFiveElement {...props} alignment={alignment} />
       case 'heading-six':
-        return <HeadingSixElement {...props} alignment={alignment}/>
+        return <HeadingSixElement {...props} alignment={alignment} />
       case 'block-quote':
-        return <BlockQuoteElement {...props} alignment={alignment}/>
+        return <BlockQuoteElement {...props} alignment={alignment} />
       case 'bulleted-list':
-        return <BulletListElement {...props}/>
+        return <BulletListElement {...props} />
       case 'numbered-list':
-        return <NumberListElement {...props}/>
+        return <NumberListElement {...props} />
       case 'link':
-        return <LinkElement {...props} alignment={alignment}/>
+        return <LinkElement {...props} alignment={alignment} />
       case 'list-item':
-        return <ListItemElement {...props}/>
+        return <ListItemElement {...props} />
       case 'image':
-        return <ImageElement {...props} alignment={alignment}/>
+        return <ImageElement {...props} alignment={alignment} />
       case 'youtube':
-        return <YoutubeElement {...props} alignment={alignment}/>
+        return <YoutubeElement {...props} alignment={alignment} />
       case 'paragraph':
       default:
         return <DefaultElement {...props} alignment={alignment} />;
@@ -367,8 +377,8 @@ const ArticleEditor = (props) => {
     const [codeBlock] = Editor.nodes(editor, {
       match: n => SlateElement.isElement(n) && n.type === 'code',
     });
-    
-    if (codeBlock) return;    
+
+    if (codeBlock) return;
 
     const isActive = isMarkActive(editor, format);
     if (isActive) {
@@ -392,12 +402,12 @@ const ArticleEditor = (props) => {
     const [codeBlock] = Editor.nodes(editor, {
       match: n => SlateElement.isElement(n) && n.type === 'code',
     });
-  
+
     if (codeBlock && format !== 'code') {
 
       Transforms.setNodes(editor, { type: 'paragraph' });
     }
-  
+
     Transforms.unwrapNodes(editor, {
       match: n =>
         !Editor.isEditor(n) &&
@@ -405,14 +415,14 @@ const ArticleEditor = (props) => {
         LIST_TYPES.includes(n.type),
       split: true,
     });
-  
+
     Transforms.setNodes(
       editor,
       { type: isActive ? 'paragraph' : isList ? 'list-item' : format },
-      {align: 'left'},
+      { align: 'left' },
       { match: n => SlateElement.isElement(n), split: true }
     );
-  
+
     if (!isActive && isList) {
       Transforms.wrapNodes(editor, {
         type: format,
@@ -423,7 +433,7 @@ const ArticleEditor = (props) => {
 
   const isAlignActive = (editor, format) => {
     const [match] = Editor.nodes(editor, {
-      match: n =>{ 
+      match: n => {
         return !Editor.isEditor(n) && SlateElement.isElement(n) && n.align === format
       },
       mode: 'lowest',
@@ -436,14 +446,14 @@ const ArticleEditor = (props) => {
     Transforms.setNodes(
       editor,
       { align: format },
-      { match: n => Editor.isBlock(editor, n), mode: 'lowest'}
+      { match: n => Editor.isBlock(editor, n), mode: 'lowest' }
     );
 
   };
 
-  const handleCanBeSave = ()=>{
-    if(title.length <= 5) return true;
-    else if(getTextLength(value) == 0) return true;
+  const handleCanBeSave = () => {
+    if (title.length <= 5) return true;
+    else if (getTextLength(value) == 0) return true;
 
     console.log(!(
       isTitleDirty ||
@@ -470,13 +480,13 @@ const ArticleEditor = (props) => {
     if (!url) return;
     const { selection } = editor;
     const isCollapsed = selection && Range.isCollapsed(selection);
-  
+
     const link = {
       type: 'link',
       url,
       children: isCollapsed ? [{ text: url }] : [],
     };
-  
+
     if (isCollapsed) {
       Transforms.insertNodes(editor, link);
     } else {
@@ -484,7 +494,7 @@ const ArticleEditor = (props) => {
       Transforms.collapse(editor, { edge: 'end' });
     }
   };
-  
+
   const isLinkActive = (editor) => {
     const [link] = Editor.nodes(editor, {
       match: n => !Editor.isEditor(n) && SlateElement.isElement(n) && n.type === 'link',
@@ -492,13 +502,13 @@ const ArticleEditor = (props) => {
     console.log(link);
     return !!link;
   };
-  
+
   const unwrapLink = (editor) => {
     Transforms.unwrapNodes(editor, {
       match: n => !Editor.isEditor(n) && SlateElement.isElement(n) && n.type === 'link',
     });
   };
-  
+
   const toggleLink = (editor, url) => {
     if (isLinkActive(editor)) {
       unwrapLink(editor);
@@ -519,17 +529,17 @@ const ArticleEditor = (props) => {
   };
 
   //Embed Youtube
-  
-  const convertYouTubeUrl = (url)=>{
+
+  const convertYouTubeUrl = (url) => {
     try {
       const parsed = new URL(url);
-  
+
       // Case 1: youtu.be short URL
       if (parsed.hostname === 'youtu.be') {
         const videoId = parsed.pathname.replace('/', '');
         return `https://www.youtube.com/embed/${videoId}`;
       }
-  
+
       // Case 2: www.youtube.com/watch?v=...
       if (parsed.hostname.includes('youtube.com')) {
         const videoId = parsed.searchParams.get('v');
@@ -537,7 +547,7 @@ const ArticleEditor = (props) => {
           return `https://www.youtube.com/embed/${videoId}`;
         }
       }
-  
+
       return null;
     } catch (err) {
       return null;
@@ -565,250 +575,262 @@ const ArticleEditor = (props) => {
     setValue(newValue);
     setIsContentDirty(true);
     setIsSave(false);
-    
+
   }, []);
 
   if (isLoading) {
-    return <PixelPenLoader/>
+    return <PixelPenLoader />
   }
 
-  return (<>
-    <nav className='flex justify-between items-center gap-2 p-2 rounded-lg bg-white dark:bg-gray-800'>
-      <div className='flex gap-2'>
-      <button
-        onMouseDown={event => {
-          event.preventDefault();
-          HistoryEditor.undo(editor);
-        }}
-        disabled={!canUndo(editor)}
-        className="py-2 px-[0.7rem] rounded disabled:opacity-60 bg-gray-300 dark:bg-gray-700 dark:hover:bg-blue-600 hover:bg-blue-600 hover:text-white"
-        title='Undo'
-      >
-        <IoMdUndo />
-      </button>
+  console.log(allCategories)
 
-      <button
-        onMouseDown={event => {
-          event.preventDefault();
-          HistoryEditor.redo(editor);
-        }}
-        disabled={!canRedo(editor)}
-        className="py-2 px-[0.7rem] rounded disabled:opacity-60 bg-gray-300 dark:bg-gray-700 dark:hover:bg-blue-600 hover:bg-blue-600 hover:text-white"
-        title='Redo'
-      >
-        <IoMdRedo />
-      </button>
-      
+  return (
+    <div className="min-h-screen bg-[#FAFAF8] dark:bg-[#0B1220] text-[#1F2937] dark:text-[#F8FAFC] transition-colors duration-300 p-4 sm:p-6 lg:p-8">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-['Newsreader'] font-black tracking-tight">Article Editor</h1>
+        <p className="mt-1 text-sm text-[#6B7280] dark:text-[#AAB4C5]">
+          {isArticleNew ? 'Draft a new article for Pixel & Pen.' : `Editing “${title || 'Untitled article'}”`}
+        </p>
+      </div>
+
+    <nav className='flex flex-wrap justify-between items-center gap-2 p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#162033] border border-[#E5E7EB] dark:border-[#243247] shadow-sm'>
+      <div className='flex gap-2'>
+        <button
+          onMouseDown={event => {
+            event.preventDefault();
+            HistoryEditor.undo(editor);
+          }}
+          disabled={!canUndo(editor)}
+          className="py-2 px-3 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed bg-[#FAFAF8] dark:bg-[#0B1220] text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F] dark:hover:bg-[#4F8EF7] hover:text-white transition-colors"
+          title='Undo'
+        >
+          <IoMdUndo />
+        </button>
+
+        <button
+          onMouseDown={event => {
+            event.preventDefault();
+            HistoryEditor.redo(editor);
+          }}
+          disabled={!canRedo(editor)}
+          className="py-2 px-3 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed bg-[#FAFAF8] dark:bg-[#0B1220] text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F] dark:hover:bg-[#4F8EF7] hover:text-white transition-colors"
+          title='Redo'
+        >
+          <IoMdRedo />
+        </button>
+
       </div>
       <div className='flex gap-2'>
-      <button onClick={handlePreview} title='Preview' disabled={!isSave} className='py-1 px-[0.7rem] rounded disabled:opacity-60  text-[1.2rem] dark:hover:bg-blue-600 hover:bg-blue-600 hover:text-white'><VscOpenPreview /></button>
-      <button onClick={e=>{setIsRightSideBar(!isRightSideBar)}} title={isRightSideBar?'Sidebar Collapse': 'Sidebar Expand'} className={`py-1 px-[0.7rem] rounded disabled:opacity-60  text-[1.2rem] ${isRightSideBar?'dark:bg-blue-600 bg-blue-600 text-white':'dark:hover:bg-blue-600 hover:bg-blue-600 hover:text-white'}`}>
-        {isRightSideBar? <GoSidebarCollapse />: <GoSidebarExpand/>}
-      </button>
-      <button title='Save Draft' onClick={handleSave} disabled={handleCanBeSave()} className={`flex justify-center items-center gap-2 py-2 px-[0.7rem] rounded disabled:opacity-60  text-[1rem] bg-teal-600 dark:hover:bg-teal-800 hover:bg-teal-800 text-white`}>
-        {inProgress? <PixelPenLoaderSmall/>:<> 
-          <span>Save</span>
-          <CiSaveDown2  /> 
-        </>}
-        
-      </button>
-      <button title={isSend?'Article is sended For review':'Send for Review'} onClick={handleSend} disabled={!isSave || isSend} className='flex justify-center items-center gap-2 py-2 px-[0.7rem] rounded disabled:opacity-60  text-[1rem] bg-rose-600 dark:hover:bg-rose-800 hover:bg-rose-800 text-white'>
-        {inSaveProgress? <PixelPenLoaderSmall/>:<>
-          <span>Send</span> 
-          <IoMdSend/> 
-        </>}
-      </button>
+        <button onClick={handlePreview} title='Preview' disabled={!isSave} className='py-2 px-3 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed text-lg text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F] dark:hover:bg-[#4F8EF7] hover:text-white transition-colors'><VscOpenPreview /></button>
+        <button onClick={e => { setIsRightSideBar(!isRightSideBar) }} title={isRightSideBar ? 'Sidebar Collapse' : 'Sidebar Expand'} className={`py-2 px-3 rounded-lg text-lg transition-colors ${isRightSideBar ? 'bg-[#1E3A5F] dark:bg-[#4F8EF7] text-white' : 'text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F] dark:hover:bg-[#4F8EF7] hover:text-white'}`}>
+          {isRightSideBar ? <GoSidebarCollapse /> : <GoSidebarExpand />}
+        </button>
+        <button title='Save Draft' onClick={handleSave} disabled={handleCanBeSave()} className={`flex justify-center items-center gap-2 py-2 px-4 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed text-sm font-semibold border border-[#E5E7EB] dark:border-[#243247] text-[#1F2937] dark:text-[#F8FAFC] hover:border-[#1E3A5F] dark:hover:border-[#4F8EF7] transition-colors`}>
+          {inProgress ? <PixelPenLoaderSmall /> : <>
+            <span>Save</span>
+            <CiSaveDown2 />
+          </>}
+
+        </button>
+        <button title={isSend ? 'Article is sended For review' : 'Send for Review'} onClick={handleSend} disabled={!isSave || isSend} className='flex justify-center items-center gap-2 py-2 px-4 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed text-sm font-semibold text-white bg-gradient-to-r from-[#1E3A5F] to-[#F97316] dark:from-[#4F8EF7] dark:to-[#FF8A3D] hover:opacity-90 transition-opacity'>
+          {inSaveProgress ? <PixelPenLoaderSmall /> : <>
+            <span>Send</span>
+            <IoMdSend />
+          </>}
+        </button>
 
       </div>
     </nav>
 
-    <div className='mt-2 flex flex-auto max-[1000px]:flex-wrap gap-2'>
-    <div className={`w-full ${isRightSideBar && 'max-w-[54rem]'} p-4  bg-white dark:bg-gray-800 rounded-2xl shadow-md dark:shadow-lg transition-colors`}>
-      <div className="mb-4">
-        <input value={title} onChange={e=>{setTitle(e.target.value); setIsTitleDirty(true);}} className='text-3xl border-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none bg-transparent w-full font-bold text-gray-800 dark:text-gray-100 mb-2' type="text" placeholder='Add title' />
-      </div>
-      <div>
-      <Slate  key={editorKey}  editor={editor} initialValue={value} onChange={handleChange}>
-        <Toolbar toggleMark={toggleMark} toggleBlock={toggleBlock} isBlockActive={isBlockActive} toggleAlignment={toggleAlignment} toggleLink={toggleLink} isLinkActive={isLinkActive} unwrapLink={unwrapLink} insertImage={insertImage} embedYoutube={embedYoutube} isAlignActive={isAlignActive}/>
-        <div className="h-[50vh] overflow-auto mt-4 border border-gray-300 dark:border-gray-700 rounded-lg p-3 min-h-[300px]">
-          <Editable
-            renderElement={renderElement}
-            renderLeaf={renderLeaf}
-            placeholder="Write your article..."
-            className="prose dark:prose-invert max-w-none outline-none min-h-[280px]"
-            onKeyDown={(event) => {
-              for (const hotkey in HOTKEYS) {
-                if (isHotkey(hotkey, event)) {
-                  event.preventDefault();
-                  toggleMark(editor, HOTKEYS[hotkey]);
-                  return;
-                }
-              }
-              const [match] = Editor.nodes(editor, {
-                match: n => SlateElement.isElement(n) && n.type === 'code',
-              });
-          
-              if (match) {
-                if (event.key === 'Enter') {
-                  if (event.shiftKey || event.ctrlKey) {
-                    event.preventDefault();
-                    Transforms.insertNodes(editor, {
-                      type: 'paragraph',
-                      children: [{ text: '' }],
-                    });
-                    return;
-                  }
-              
-                  event.preventDefault();
-                  Transforms.insertText(editor, '\n');
-                  return;
-                }
-              }
-            }}
-          />
+    <div className='mt-4 flex flex-col lg:flex-row gap-4'>
+      <div className={`w-full ${isRightSideBar ? 'lg:max-w-[54rem]' : ''} p-4 sm:p-6 bg-white dark:bg-[#162033] border border-[#E5E7EB] dark:border-[#243247] rounded-2xl shadow-sm transition-colors`}>
+        <div className="mb-4">
+          <input value={title} onChange={e => { setTitle(e.target.value); setIsTitleDirty(true); }} className="text-2xl sm:text-3xl font-['Newsreader'] border-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none bg-transparent w-full font-semibold text-[#1F2937] dark:text-[#F8FAFC] placeholder-[#6B7280] dark:placeholder-[#AAB4C5] mb-2" type="text" placeholder='Add title' />
         </div>
-        
-        
-      </Slate>
-      </div>
-        <div className="mt-4 flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
+        <div>
+          <Slate key={editorKey} editor={editor} initialValue={value} onChange={handleChange}>
+            <Toolbar toggleMark={toggleMark} toggleBlock={toggleBlock} isBlockActive={isBlockActive} toggleAlignment={toggleAlignment} toggleLink={toggleLink} isLinkActive={isLinkActive} unwrapLink={unwrapLink} insertImage={insertImage} embedYoutube={embedYoutube} isAlignActive={isAlignActive} />
+            <div className="h-[45vh] sm:h-[50vh] overflow-auto mt-4 border border-[#E5E7EB] dark:border-[#243247] rounded-xl p-3 sm:p-4 min-h-[240px] sm:min-h-[300px] bg-[#FAFAF8]/40 dark:bg-[#0B1220]/40">
+              <Editable
+                renderElement={renderElement}
+                renderLeaf={renderLeaf}
+                placeholder="Write your article..."
+                className="prose dark:prose-invert max-w-none outline-none min-h-[220px] sm:min-h-[280px]"
+                onKeyDown={(event) => {
+                  for (const hotkey in HOTKEYS) {
+                    if (isHotkey(hotkey, event)) {
+                      event.preventDefault();
+                      toggleMark(editor, HOTKEYS[hotkey]);
+                      return;
+                    }
+                  }
+                  const [match] = Editor.nodes(editor, {
+                    match: n => SlateElement.isElement(n) && n.type === 'code',
+                  });
+
+                  if (match) {
+                    if (event.key === 'Enter') {
+                      if (event.shiftKey || event.ctrlKey) {
+                        event.preventDefault();
+                        Transforms.insertNodes(editor, {
+                          type: 'paragraph',
+                          children: [{ text: '' }],
+                        });
+                        return;
+                      }
+
+                      event.preventDefault();
+                      Transforms.insertText(editor, '\n');
+                      return;
+                    }
+                  }
+                }}
+              />
+            </div>
+
+
+          </Slate>
+        </div>
+        <div className="mt-4 flex flex-wrap justify-between items-center gap-2 text-sm text-[#6B7280] dark:text-[#AAB4C5]">
           <div>
             Characters: {getTextLength(value)}
           </div>
           <div>
             {(!isSave && isContentDirty) && (
-              <span className="text-orange-500">
+              <span className="text-[#D97706] dark:text-[#F59E0B] font-medium">
                 • Unsaved changes
               </span>
             )}
           </div>
         </div>
-    </div>
-    
-    {isRightSideBar && <aside className="w-full h-[86vh] shadow md:w-[25rem] p-4 bg-white dark:bg-gray-800 rounded-2xl border-gray-300 dark:border-gray-700 space-y-6 overflow-y-auto">
-      <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Post Settings</h2>
-
-      {/* Featured Image */}
-      <div>
-        <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Set Featured Image</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleImageChange}
-          className="block w-full text-sm text-gray-900 dark:text-gray-100 file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:bg-blue-50 dark:file:bg-gray-700 file:text-blue-700 dark:file:text-gray-200 hover:file:bg-blue-100 dark:hover:file:bg-gray-600"
-        />
-        {featuredImage && (
-          <img src={featuredImage} alt="Featured" className="mt-3 w-full rounded shadow-md" />
-        )}
       </div>
 
-      {/* Description */}
-      <div>
-        <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-          Description (160 characters)
-        </label>
-        <textarea
-          maxLength={160}
-          rows={3}
-          value={description}
-          onChange={(e) => {setDescription(e.target.value); setIsDescriptionDirty(true)}}
-          className="w-full focus:outline-none focus:ring-0 focus:shadow-none p-2 rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-600"
-          placeholder="Short description of the post..."
-        />
-        <p className="text-sm text-right text-gray-500 dark:text-gray-400">{description.length}/160</p>
-      </div>
+      {isRightSideBar && <aside className="w-full h-auto  lg:w-[25rem] shrink-0 p-4 sm:p-6 bg-white dark:bg-[#162033] rounded-2xl border border-[#E5E7EB] dark:border-[#243247] shadow-sm space-y-6 lg:overflow-y-auto">
+        <h2 className="text-lg sm:text-xl font-['Newsreader'] font-semibold text-[#1F2937] dark:text-[#F8FAFC]">Post Settings</h2>
 
-      {/* Categories */}
-      <div>
-        <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Select Categories</label>
-        <div className="space-y-2">
-          {allCategories.map((cat) => (
-            <label key={cat} className="flex items-center space-x-2 text-gray-700 dark:text-gray-200">
-              <input
-                type="checkbox"
-                checked={categories.includes(cat)}
-                onChange={() => toggleCategory(cat)}
-                className="rounded-2xl focus:outline-none focus:ring-0 focus:shadow-none bg-gray-300 dark:bg-slate-500 text-blue-600 dark:text-blue-400"
-              />
-              <span>{cat}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Tags */}
-      <div>
-      <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-        Tags (max 10)
-      </label>
-
-      <div className="flex flex-wrap items-center gap-2 p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
-        {tags.map((tag, index) => (
-          <div
-            key={index}
-            className="flex items-center bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100 px-2 py-1 rounded-full text-sm"
-          >
-            <span className="mr-2">{tag}</span>
-            <button
-              type="button"
-              onClick={() => removeTag(index)}
-              className="focus:outline-none text-xs hover:text-red-500 dark:hover:text-red-400"
-            >
-              &times;
-            </button>
-          </div>
-        ))}
-
-        {tags.length < 10 && (
+        {/* Featured Image */}
+        <div>
+          <label className="block mb-2 text-sm font-medium text-[#1F2937] dark:text-[#F8FAFC]">Set Featured Image</label>
           <input
-            type="text"
-            value={inputTag}
-            onChange={(e) => setInputTag(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type and press Enter"
-            className="flex-1 border-none focus:border-none ring-0 focus:ring-0 focus:shadow-none min-w-[150px] p-1 focus:outline-none bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="block w-full text-sm text-[#1F2937] dark:text-[#F8FAFC] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#1E3A5F]/10 dark:file:bg-[#4F8EF7]/10 file:text-[#1E3A5F] dark:file:text-[#4F8EF7] hover:file:bg-[#1E3A5F]/20 dark:hover:file:bg-[#4F8EF7]/20 file:transition-colors"
           />
-        )}
-      </div>
+          {featuredImage && (
+            <img src={featuredImage} alt="Featured" className="mt-3 w-full rounded-xl shadow-sm border border-[#E5E7EB] dark:border-[#243247]" />
+          )}
+        </div>
 
-      {error && (
-        <p className="text-red-500 text-sm mt-1">{error}</p>
-      )}
+        {/* Description */}
+        <div>
+          <label className="block mb-2 text-sm font-medium text-[#1F2937] dark:text-[#F8FAFC]">
+            Description (160 characters)
+          </label>
+          <textarea
+            maxLength={160}
+            rows={3}
+            value={description}
+            onChange={(e) => { setDescription(e.target.value); setIsDescriptionDirty(true) }}
+            className="w-full focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/30 dark:focus:ring-[#4F8EF7]/30 p-2.5 rounded-lg bg-[#FAFAF8] dark:bg-[#0B1220] text-[#1F2937] dark:text-[#F8FAFC] border border-[#E5E7EB] dark:border-[#243247] transition-shadow"
+            placeholder="Short description of the post..."
+          />
+          <p className="text-xs text-right text-[#6B7280] dark:text-[#AAB4C5] mt-1">{description.length}/160</p>
+        </div>
 
-      </div>
-    </aside>}
+        {/* Categories */}
+        <div>
+          <label className="block mb-2 text-sm font-medium text-[#1F2937] dark:text-[#F8FAFC]">Select Categories</label>
+          <div className="space-y-2">
+            {allCategories != null && allCategories.map((cat) => (
+              <label key={cat.id} className="flex items-center gap-2 text-sm text-[#1F2937] dark:text-[#F8FAFC] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={categories.includes(cat.id)}
+                  disabled={
+                    categories.length > 0 && !categories.includes(cat.id)
+                  }
+                  onChange={() => toggleCategory(cat.id)}
+                  className="h-4 w-4 rounded accent-[#1E3A5F] dark:accent-[#4F8EF7] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                />
+                <span>{cat.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Tags */}
+        <div>
+          <label className="block mb-2 text-sm font-medium text-[#1F2937] dark:text-[#F8FAFC]">
+            Tags (max 10)
+          </label>
+
+          <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-[#E5E7EB] dark:border-[#243247] bg-[#FAFAF8] dark:bg-[#0B1220]">
+            {tags.map((tag, index) => (
+              <div
+                key={index}
+                className="flex items-center bg-[#F59E0B]/10 text-[#D97706] dark:bg-[#F6B93B]/15 dark:text-[#F6B93B] px-2.5 py-1 rounded-full text-sm"
+              >
+                <span className="mr-2">{tag}</span>
+                <button
+                  type="button"
+                  onClick={() => removeTag(index)}
+                  className="focus:outline-none text-sm ml-2 hover:text-[#DC2626] dark:hover:text-[#EF4444] transition-colors"
+                >
+                  &times;
+                </button>
+              </div>
+            ))}
+
+            {tags.length < 10 && (
+              <input
+                type="text"
+                value={inputTag}
+                onChange={(e) => setInputTag(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Type and press Enter"
+                className="flex-1 border-none focus:border-none ring-0 focus:ring-0 focus:shadow-none min-w-[150px] p-1 focus:outline-none bg-transparent text-[#1F2937] dark:text-[#F8FAFC] placeholder-[#6B7280] dark:placeholder-[#AAB4C5]"
+              />
+            )}
+          </div>
+
+          {error && (
+            <p className="text-[#DC2626] dark:text-[#EF4444] text-sm mt-1">{error}</p>
+          )}
+
+        </div>
+      </aside>}
     </div>
-
-    </>
+    </div>
   );
 };
 
-const Toolbar = ({ toggleMark, toggleBlock, isBlockActive, toggleAlignment, isAlignActive,toggleLink, isLinkActive ,unwrapLink, insertImage, embedYoutube }) => {
+const Toolbar = ({ toggleMark, toggleBlock, isBlockActive, toggleAlignment, isAlignActive, toggleLink, isLinkActive, unwrapLink, insertImage, embedYoutube }) => {
   const editor = useSlate();
   const [open, setOpen] = useState(false);
-  
+
   return (
-    <div className="flex gap-2 items-center border-b pb-2 dark:border-gray-700">
-      
-      <ToolbarButton 
-        icon={<MdFormatBold />} 
-        format="bold" 
-        editor={editor} 
-        toggleMark={toggleMark} 
+    <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto overflow-y-visible pb-2 border-b border-[#E5E7EB] dark:border-[#243247] [scrollbar-width:thin]">
+
+      <ToolbarButton
+        icon={<MdFormatBold />}
+        format="bold"
+        editor={editor}
+        toggleMark={toggleMark}
         title="Bold (Ctrl+B)"
       />
-      <ToolbarButton 
-        icon={<MdFormatItalic />} 
-        format="italic" 
-        editor={editor} 
-        toggleMark={toggleMark} 
+      <ToolbarButton
+        icon={<MdFormatItalic />}
+        format="italic"
+        editor={editor}
+        toggleMark={toggleMark}
         title="Italic (Ctrl+I)"
       />
-      <ToolbarButton 
-        icon={<MdFormatUnderlined />} 
-        format="underline" 
-        editor={editor} 
-        toggleMark={toggleMark} 
+      <ToolbarButton
+        icon={<MdFormatUnderlined />}
+        format="underline"
+        editor={editor}
+        toggleMark={toggleMark}
         title="Underline (Ctrl+U)"
       />
       {/* <ToolbarButton 
@@ -820,188 +842,185 @@ const Toolbar = ({ toggleMark, toggleBlock, isBlockActive, toggleAlignment, isAl
       /> */}
 
       <BlockButton
-         icon={<MdCode />}
-         format="code"
-         editor={editor}
-         toggleBlock={toggleBlock}
-         isBlockActive={isBlockActive}
-         title="Code"
+        icon={<MdCode />}
+        format="code"
+        editor={editor}
+        toggleBlock={toggleBlock}
+        isBlockActive={isBlockActive}
+        title="Code"
       />
 
       <button
         title='Align Left'
-        className={`p-2 rounded-md transition-colors text-lg ${
-          isAlignActive(editor,'left')
-          ? 'bg-blue-600 text-white'
-          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+        className={`shrink-0 p-2 rounded-md transition-colors text-lg ${isAlignActive(editor, 'left')
+          ? 'bg-[#1E3A5F] dark:bg-[#4F8EF7] text-white'
+          : 'text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F]/10 dark:hover:bg-[#4F8EF7]/10'
           }`}
-          onMouseDown={e => {
-            e.preventDefault();
-            toggleAlignment(editor, 'left');
-          }}
-        >
-          <FaAlignLeft />
+        onMouseDown={e => {
+          e.preventDefault();
+          toggleAlignment(editor, 'left');
+        }}
+      >
+        <FaAlignLeft />
       </button>
 
       <button
         title='Align Center'
-        className={`p-2 rounded-md transition-colors text-lg ${
-          isAlignActive(editor,'center')
-          ? 'bg-blue-600 text-white'
-          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+        className={`shrink-0 p-2 rounded-md transition-colors text-lg ${isAlignActive(editor, 'center')
+          ? 'bg-[#1E3A5F] dark:bg-[#4F8EF7] text-white'
+          : 'text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F]/10 dark:hover:bg-[#4F8EF7]/10'
           }`}
-          onMouseDown={e => {
-            e.preventDefault();
-            toggleAlignment(editor, 'center');
-          }}
-        >
-          <FaAlignCenter/>
-      </button>
-      
-    <div className="relative bg-transparent inline-block text-left">
-      <button title='Heading' onClick={() => setOpen(!open)} className="inline-flex justify-center items-center px-2 py-2  rounded-md shadow-sm bg-transparent text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700">
-        <LuHeading /> 
-        <FaCaretDown className="ml-2 h-4 w-4" />
+        onMouseDown={e => {
+          e.preventDefault();
+          toggleAlignment(editor, 'center');
+        }}
+      >
+        <FaAlignCenter />
       </button>
 
-      {open && (
-        <div
-          className="absolute px-2 py-2 z-10 mt-2 rounded-md shadow-xl dark:bg-slate-800 bg-white"
-          onMouseLeave={() => setOpen(false)}
-        >
-          <div className="py-1 flex flex-col">
-            <BlockButton
-              icon={<LuHeading1 />}
-              format="heading-one"
-              editor={editor}
-              toggleBlock={toggleBlock}
-              isBlockActive={isBlockActive}
-              title="Heading 1"
-            />
-            <BlockButton
-              icon={<LuHeading2 />}
-              format="heading-two"
-              editor={editor}
-              toggleBlock={toggleBlock}
-              isBlockActive={isBlockActive}
-              title="Heading 2"
-            />
-            <BlockButton
-              icon={<LuHeading3 />}
-              format="heading-three"
-              editor={editor}
-              toggleBlock={toggleBlock}
-              isBlockActive={isBlockActive}
-              title="Heading 3"
-            />
-            <BlockButton
-              icon={<LuHeading4 />}
-              format="heading-four"
-              editor={editor}
-              toggleBlock={toggleBlock}
-              isBlockActive={isBlockActive}
-              title="Heading 4"
-            />
-            <BlockButton
-              icon={<LuHeading5 />}
-              format="heading-five"
-              editor={editor}
-              toggleBlock={toggleBlock}
-              isBlockActive={isBlockActive}
-              title="Heading 5"
-            />
-            <BlockButton
-              icon={<LuHeading6 />}
-              format="heading-six"
-              editor={editor}
-              toggleBlock={toggleBlock}
-              isBlockActive={isBlockActive}
-              title="Heading 6"
-            />
+      <div className="relative bg-transparent inline-block text-left">
+        <button title='Heading' onClick={() => setOpen(!open)} className="shrink-0 inline-flex justify-center items-center px-2 py-2 rounded-md text-sm font-medium text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F]/10 dark:hover:bg-[#4F8EF7]/10 transition-colors">
+          <LuHeading />
+          <FaCaretDown className="ml-2 h-4 w-4" />
+        </button>
+
+        {open && (
+          <div
+            className="absolute left-0 px-2 py-2 z-20 mt-2 rounded-lg shadow-lg border border-[#E5E7EB] dark:border-[#243247] bg-white dark:bg-[#162033] max-h-72 overflow-y-auto"
+            onMouseLeave={() => setOpen(false)}
+          >
+            <div className="py-1 flex flex-col">
+              <BlockButton
+                icon={<LuHeading1 />}
+                format="heading-one"
+                editor={editor}
+                toggleBlock={toggleBlock}
+                isBlockActive={isBlockActive}
+                title="Heading 1"
+              />
+              <BlockButton
+                icon={<LuHeading2 />}
+                format="heading-two"
+                editor={editor}
+                toggleBlock={toggleBlock}
+                isBlockActive={isBlockActive}
+                title="Heading 2"
+              />
+              <BlockButton
+                icon={<LuHeading3 />}
+                format="heading-three"
+                editor={editor}
+                toggleBlock={toggleBlock}
+                isBlockActive={isBlockActive}
+                title="Heading 3"
+              />
+              <BlockButton
+                icon={<LuHeading4 />}
+                format="heading-four"
+                editor={editor}
+                toggleBlock={toggleBlock}
+                isBlockActive={isBlockActive}
+                title="Heading 4"
+              />
+              <BlockButton
+                icon={<LuHeading5 />}
+                format="heading-five"
+                editor={editor}
+                toggleBlock={toggleBlock}
+                isBlockActive={isBlockActive}
+                title="Heading 5"
+              />
+              <BlockButton
+                icon={<LuHeading6 />}
+                format="heading-six"
+                editor={editor}
+                toggleBlock={toggleBlock}
+                isBlockActive={isBlockActive}
+                title="Heading 6"
+              />
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
 
-    <BlockButton
-      icon={<FaQuoteLeft />}
-      format="block-quote"
-      editor={editor}
-      toggleBlock={toggleBlock}
-      isBlockActive={isBlockActive}
-      title="Block Quote"
-    />
+      <BlockButton
+        icon={<FaQuoteLeft />}
+        format="block-quote"
+        editor={editor}
+        toggleBlock={toggleBlock}
+        isBlockActive={isBlockActive}
+        title="Block Quote"
+      />
 
-    <BlockButton
-      icon={<MdFormatListBulleted />}
-      format="bulleted-list"
-      editor={editor}
-      toggleBlock={toggleBlock}
-      isBlockActive={isBlockActive}
-      title="Bullet List"
-    />
+      <BlockButton
+        icon={<MdFormatListBulleted />}
+        format="bulleted-list"
+        editor={editor}
+        toggleBlock={toggleBlock}
+        isBlockActive={isBlockActive}
+        title="Bullet List"
+      />
 
-    <BlockButton
-      icon={<HiNumberedList />}
-      format="numbered-list"
-      editor={editor}
-      toggleBlock={toggleBlock}
-      isBlockActive={isBlockActive}
-      title="Numbered List"
-    />
+      <BlockButton
+        icon={<HiNumberedList />}
+        format="numbered-list"
+        editor={editor}
+        toggleBlock={toggleBlock}
+        isBlockActive={isBlockActive}
+        title="Numbered List"
+      />
 
-    <button
-      onMouseDown={event => {
-        if (isLinkActive(editor)) {
-          unwrapLink(editor);
-          return;
-        }
-        event.preventDefault();
-        const url = window.prompt('Enter URL:');
-        if (!url) return;
-        toggleLink(editor, url);
-      }} className={`p-2 rounded-md transition-colors text-lg ${ isLinkActive(editor) ? 'bg-blue-600 text-white ' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 ' }`} >
+      <button
+        onMouseDown={event => {
+          if (isLinkActive(editor)) {
+            unwrapLink(editor);
+            return;
+          }
+          event.preventDefault();
+          const url = window.prompt('Enter URL:');
+          if (!url) return;
+          toggleLink(editor, url);
+        }} className={`shrink-0 p-2 rounded-md transition-colors text-lg ${isLinkActive(editor) ? 'bg-[#1E3A5F] dark:bg-[#4F8EF7] text-white' : 'text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F]/10 dark:hover:bg-[#4F8EF7]/10'}`} >
         <IoMdLink />
-    </button>
+      </button>
 
-    <button
-      onMouseDown={event => {
-        event.preventDefault();
-        const url = window.prompt('Enter image URL:');
-        if (!url) return;
-        insertImage(editor, url);
-      }}
-      className="p-2 rounded-md transition-colors text-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 "
-    >
-      <FaRegImage />
-    </button>
+      <button
+        onMouseDown={event => {
+          event.preventDefault();
+          const url = window.prompt('Enter image URL:');
+          if (!url) return;
+          insertImage(editor, url);
+        }}
+        className="shrink-0 p-2 rounded-md transition-colors text-lg text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F]/10 dark:hover:bg-[#4F8EF7]/10"
+      >
+        <FaRegImage />
+      </button>
 
-    <button
-      onMouseDown={event => {
-        event.preventDefault();
-        const url = window.prompt('Enter youtube URL:');
-        if (!url) return;
-        embedYoutube(editor, url);
-      }}
-      className="p-2 rounded-md transition-colors text-lg text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 "
-    >
-      <FaYoutube />
-    </button>
+      <button
+        onMouseDown={event => {
+          event.preventDefault();
+          const url = window.prompt('Enter youtube URL:');
+          if (!url) return;
+          embedYoutube(editor, url);
+        }}
+        className="shrink-0 p-2 rounded-md transition-colors text-lg text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F]/10 dark:hover:bg-[#4F8EF7]/10"
+      >
+        <FaYoutube />
+      </button>
     </div>
   );
 };
 
 const ToolbarButton = ({ icon, format, editor, toggleMark, title }) => {
   const isActive = Editor.marks(editor)?.[format];
-  
+
   return (
     <button
       title={title}
-      className={`p-2 rounded-md transition-colors text-lg ${
-        isActive
-          ? 'bg-blue-600 text-white'
-          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-      }`}
+      className={`shrink-0 p-2 rounded-md transition-colors text-lg ${isActive
+        ? 'bg-[#1E3A5F] dark:bg-[#4F8EF7] text-white'
+        : 'text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F]/10 dark:hover:bg-[#4F8EF7]/10'
+        }`}
       onMouseDown={(event) => {
         event.preventDefault();
         toggleMark(editor, format);
@@ -1012,7 +1031,7 @@ const ToolbarButton = ({ icon, format, editor, toggleMark, title }) => {
   );
 };
 
-const BlockButton = ({ icon, format, editor, toggleBlock, isBlockActive,title }) => {
+const BlockButton = ({ icon, format, editor, toggleBlock, isBlockActive, title }) => {
   const active = isBlockActive(editor, format);
 
   return (
@@ -1022,9 +1041,8 @@ const BlockButton = ({ icon, format, editor, toggleBlock, isBlockActive,title })
         event.preventDefault();
         toggleBlock(editor, format);
       }}
-      className={`p-2 rounded-md transition-colors text-lg ${
-        active ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-      }`}
+      className={`shrink-0 p-2 rounded-md transition-colors text-lg ${active ? 'bg-[#1E3A5F] dark:bg-[#4F8EF7] text-white' : 'text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F]/10 dark:hover:bg-[#4F8EF7]/10'
+        }`}
     >
       {icon}
     </button>
@@ -1039,14 +1057,14 @@ const CodeElement = ({ attributes, children, alignment }) => (
   </pre>
 );
 
-const DefaultElement = ({ attributes, children, alignment}) => (
-  <p {...attributes} className={`${alignment} text-gray-800 dark:text-gray-100 mb-2`}>
+const DefaultElement = ({ attributes, children, alignment }) => (
+  <p {...attributes} className={`${alignment} text-[#1F2937] dark:text-[#F8FAFC] mb-2`}>
     {children}
   </p>
 );
 
 const LinkElement = (props) => (
-  <a {...props.attributes}  href={props.element.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+  <a {...props.attributes} href={props.element.url} target="_blank" rel="noopener noreferrer" className="text-[#1E3A5F] dark:text-[#4F8EF7] underline underline-offset-2 hover:text-[#F97316] dark:hover:text-[#FF8A3D] transition-colors">
     {props.children}
   </a>
 );
@@ -1062,58 +1080,58 @@ const YoutubeElement = (props) => (
   </div>
 );
 
-const HeadingOneElement = ({ attributes, children, alignment}) => (
-  <h1 {...attributes} className={`${alignment} text-[2.3rem] font-bold text-gray-800 dark:text-gray-100 mb-2`}>
+const HeadingOneElement = ({ attributes, children, alignment }) => (
+  <h1 {...attributes} className={`${alignment} text-[2.3rem] font-['Newsreader'] font-bold text-[#1F2937] dark:text-[#F8FAFC] mb-2`}>
     {children}
   </h1>
 );
 
 const HeadingTwoElement = ({ attributes, children, style }) => (
-  <h2 {...attributes} style={style} className="text-[2rem] font-bold text-gray-800 dark:text-gray-100 mb-2">
+  <h2 {...attributes} style={style} className="text-[2rem] font-['Newsreader'] font-bold text-[#1F2937] dark:text-[#F8FAFC] mb-2">
     {children}
   </h2>
 );
 const HeadingThreeElement = ({ attributes, children, style }) => (
-  <h3 {...attributes} style={style} className="text-[1.7rem] font-bold text-gray-800 dark:text-gray-100 mb-2">
+  <h3 {...attributes} style={style} className="text-[1.7rem] font-['Newsreader'] font-bold text-[#1F2937] dark:text-[#F8FAFC] mb-2">
     {children}
   </h3>
 );
 const HeadingFourElement = ({ attributes, children, style }) => (
-  <h4 {...attributes} style={style} className="text-[1.4rem] font-bold text-gray-800 dark:text-gray-100 mb-2">
+  <h4 {...attributes} style={style} className="text-[1.4rem] font-['Newsreader'] font-bold text-[#1F2937] dark:text-[#F8FAFC] mb-2">
     {children}
   </h4>
 );
 const HeadingFiveElement = ({ attributes, children, style }) => (
-  <h5 {...attributes} style={style} className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+  <h5 {...attributes} style={style} className="text-xl font-['Newsreader'] font-bold text-[#1F2937] dark:text-[#F8FAFC] mb-2">
     {children}
   </h5>
 );
 const HeadingSixElement = ({ attributes, children, style }) => (
-  <h6 {...attributes} style={style} className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">
+  <h6 {...attributes} style={style} className="text-lg font-['Newsreader'] font-bold text-[#1F2937] dark:text-[#F8FAFC] mb-2">
     {children}
   </h6>
 );
 
 const BlockQuoteElement = ({ attributes, children }) => (
-  <blockquote {...attributes} className="border-l-4 pl-4 italic text-gray-600 dark:text-gray-300 mb-2">
+  <blockquote {...attributes} className="border-l-4 border-[#F97316] dark:border-[#FF8A3D] pl-4 italic text-[#6B7280] dark:text-[#AAB4C5] mb-2">
     {children}
   </blockquote>
 );
 
 const BulletListElement = ({ attributes, children }) => (
-  <ul {...attributes} className="list-disc pl-6 text-gray-800 dark:text-gray-100 mb-2">
+  <ul {...attributes} className="list-disc pl-6 text-[#1F2937] dark:text-[#F8FAFC] mb-2">
     {children}
   </ul>
 );
 
 const NumberListElement = ({ attributes, children }) => (
-  <ol {...attributes} className="list-decimal pl-6 text-gray-800 dark:text-gray-100 mb-2">
+  <ol {...attributes} className="list-decimal pl-6 text-[#1F2937] dark:text-[#F8FAFC] mb-2">
     {children}
   </ol>
 );
 
 const ListItemElement = ({ attributes, children }) => (
-  <li {...attributes} className=" text-gray-800 dark:text-gray-100 mb-2">
+  <li {...attributes} className="text-[#1F2937] dark:text-[#F8FAFC] mb-2">
     {children}
   </li>
 );
@@ -1122,11 +1140,11 @@ const Leaf = ({ attributes, children, leaf }) => {
   if (leaf.bold) {
     children = <strong>{children}</strong>;
   }
-  
+
   if (leaf.italic) {
     children = <em>{children}</em>;
   }
-  
+
   if (leaf.underline) {
     children = <u>{children}</u>;
   }

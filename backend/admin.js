@@ -1,7 +1,11 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import db from './db.js';
+import { authMiddleware, authorizeAdmin } from './middleware.js';
 const adminRouter = express.Router();
+
+adminRouter.use(authMiddleware);
+adminRouter.use(authorizeAdmin);
 
 // STATS
 
@@ -60,6 +64,14 @@ adminRouter.get('/stat/readers',async (req, res) => {
         res.status(500).json({ message: "Error Fetching Data"});
       }
 });
+
+adminRouter.get('/stat/category/highest', async (req, res) =>{
+  try {
+    
+  } catch (error) {
+    
+  }
+})
 
 // RECENTS
 
@@ -123,7 +135,7 @@ adminRouter.get('/fetch/article/rejected',async (req, res) => {
 
 adminRouter.get('/fetch/article/published',async (req, res) => {
     try {
-        const fetchinfoQuery = `SELECT article_id,slug,title,category,author,cont_id,views,is_featured,publish_at FROM articles`;
+        const fetchinfoQuery = `SELECT a.article_id, a.slug, a.title, c.name as category, a.author, a.cont_id, a.views, a.is_featured, a.publish_at FROM articles a LEFT JOIN categories c ON a.category_id = c.id WHERE a.publish_at IS NOT NULL`;
         const results = await db.query(fetchinfoQuery);
     
         const recents = results[0];
@@ -513,6 +525,48 @@ adminRouter.delete('/comment/delete', async(req,res)=>{
   }
 
 });
+
+// CATEGORY
+
+adminRouter.get('/fetch/category', async (req, res) => {
+  try {
+    const fetchinfoQuery = `SELECT * FROM categories`;
+    const results = await db.query(fetchinfoQuery);
+    res.status(200).json({ categories: results[0] });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Categories" });
+  }
+})
+
+adminRouter.post('/category/add', async (req, res) => {
+  const { name, description } = req.body;
+
+  try {
+    const insertQuery = `INSERT INTO categories (name, description) VALUES (?, ?)`;
+    await db.query(insertQuery, [name, description]);
+
+    res.status(200).json({ message: "Category added successfully" });
+  } catch (error) {
+
+    console.log(error);
+    res.status(500).json({ message: "Error adding category" });
+  }
+})
+
+adminRouter.post('/category/edit', async (req, res) => {
+  const { id, name, description } = req.body;
+
+  try {
+    const updateQuery = `UPDATE categories SET description = ?, name = ? WHERE id = ?`;
+    await db.query(updateQuery, [description, name, id]);
+
+    res.status(200).json({ message: "Category updated successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error updating category" });
+  }
+})
 
 
 

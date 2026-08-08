@@ -1,302 +1,280 @@
-import React, { useState, useEffect } from "react";
-import { Link, Navigate } from "react-router-dom";
-import axios from "axios";
+import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 
-// Images and Icons
+// Images
 import LogoLight from "../assets/images/Pixel & Pen.png";
 import LogoDark from "../assets/images/Pixel & Pen(B&W).png";
-import MoonIcon from "../assets/images/moon-svgrepo-com.svg";
-import SunIcon from "../assets/images/light-mode-svgrepo-com.svg";
-import LanguageIcon from "../assets/images/language-svgrepo-com.svg";
-import { IoIosSearch } from "react-icons/io";
-import { FaChevronDown } from "react-icons/fa";
+
+// Icons — swapped to a single consistent set (Feather via react-icons)
+import {
+  FiMenu,
+  FiX,
+  FiChevronDown,
+  FiMoon,
+  FiSun,
+  FiGlobe,
+  FiLogOut,
+  FiUser,
+  FiGrid,
+} from "react-icons/fi";
+
+
+const NAV_LINKS = [
+  { label: "Home", to: "/" },
+  { label: "Blog", to: "/blog" },
+  { label: "Categories", to: "/category" },
+  { label: "About us", to: "/about" },
+  { label: "Contact us", to: "/contact" },
+];
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false); // account dropdown
+  const [mobileOpen, setMobileOpen] = useState(false); // mobile sheet
   const { isDarkMode, toggleDark } = useTheme();
-  const [Sidebar, setSidebar] = useState(false);
   const { loggedIn, logout, userData } = useAuth();
-  const toggleSidebar = () => {
-    setSidebar(!Sidebar);
-  };
+  const menuRef = useRef(null);
 
+  // Close the account dropdown when clicking outside it
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Lock body scroll while the mobile sheet is open
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
 
   return (
-    <>
-      <div className="dark:bg-gray-900 transition-colors duration-200">
-        <nav className="flex justify-between border-gray-200 dark:border-gray-700 p-2 lg:items-center bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-          <div className="main-logo">
-            <img
-              className="drop-shadow w-[15rem]"
-              src={isDarkMode ? LogoDark : LogoLight}
-              alt="Logo"
-            />
-          </div>
+    <header
+      className="sticky top-0 z-50 w-full border-b backdrop-blur-md
+        bg-[#FAFAF8]/90 border-[#E5E7EB]
+        dark:bg-[#0B1220]/90 dark:border-[#243247]
+        font-['Inter',sans-serif]"
+    >
+      <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        {/* Logo — left */}
+        <Link to="/" className="flex shrink-0 items-center gap-2" onClick={() => setMobileOpen(false)}>
+          <img
+            className="h-8 w-auto sm:h-9"
+            src={isDarkMode ? LogoDark : LogoLight}
+            alt="Pixel & Pen"
+          />
+        </Link>
 
-          <div
-            className={`lg:hidden cursor-pointer p-2 ${
-              Sidebar ? "hidden" : "flex items-center"
-            }`}
-            onClick={toggleSidebar}
+        {/* Nav links — true center, classic SaaS layout */}
+        <ul className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 lg:flex">
+          {NAV_LINKS.map((link) => (
+            <li key={link.to}>
+              <Link
+                to={link.to}
+                className="group relative px-4 py-2 text-[15px] font-medium tracking-tight
+                  text-[#1F2937] transition-colors duration-200
+                  hover:text-[#1E3A5F]
+                  dark:text-[#F8FAFC] dark:hover:text-[#4F8EF7]"
+              >
+                {link.label}
+                <span
+                  className="pointer-events-none absolute inset-x-4 -bottom-0.5 h-[2px] scale-x-0
+                    rounded-full bg-gradient-to-r from-[#F59E0B] to-[#F97316] transition-transform
+                    duration-200 ease-out group-hover:scale-x-100
+                    dark:from-[#F6B93B] dark:to-[#FF8A3D]"
+                />
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        {/* Right cluster — actions */}
+        <div className="hidden items-center gap-2 lg:flex">
+          <button
+            aria-label="Change language"
+            className="rounded-full p-2 text-[#6B7280] transition-colors duration-200
+              hover:bg-[#1E3A5F]/5 hover:text-[#1E3A5F]
+              dark:text-[#AAB4C5] dark:hover:bg-white/5 dark:hover:text-[#4F8EF7]"
           >
-            <svg
-              className="w-16 text-gray-900 dark:text-white"
-              width="24px"
-              height="24px"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M4 6H20M4 12H20M4 18H20"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
+            <FiGlobe className="h-5 w-5" />
+          </button>
 
-          <div
-            className={`lg:hidden cursor-pointer p-2 ${
-              Sidebar ? "flex items-center" : "hidden"
-            }`}
-            onClick={toggleSidebar}
+          <button
+            aria-label="Toggle dark mode"
+            onClick={toggleDark}
+            className="rounded-full p-2 text-[#6B7280] transition-colors duration-200
+              hover:bg-[#1E3A5F]/5 hover:text-[#1E3A5F]
+              dark:text-[#AAB4C5] dark:hover:bg-white/5 dark:hover:text-[#F6B93B]"
           >
-            <svg
-              className="text-gray-900 dark:text-white"
-              width="27px"
-              height="27px"
-              viewBox="-0.5 -0.5 25 25"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M6.96967 16.4697C6.67678 16.7626 6.67678 17.2374 6.96967 17.5303C7.26256 17.8232 7.73744 17.8232 8.03033 17.5303L6.96967 16.4697ZM13.0303 12.5303C13.3232 12.2374 13.3232 11.7626 13.0303 11.4697C12.7374 11.1768 12.2626 11.1768 11.9697 11.4697L13.0303 12.5303ZM11.9697 11.4697C11.6768 11.7626 11.6768 12.2374 11.9697 12.5303C12.2626 12.8232 12.7374 12.8232 13.0303 12.5303L11.9697 11.4697ZM18.0303 7.53033C18.3232 7.23744 18.3232 6.76256 18.0303 6.46967C17.7374 6.17678 17.2626 6.17678 16.9697 6.46967L18.0303 7.53033ZM13.0303 11.4697C12.7374 11.1768 12.2626 11.1768 11.9697 11.4697C11.6768 11.7626 11.6768 12.2374 11.9697 12.5303L13.0303 11.4697ZM16.9697 17.5303C17.2626 17.8232 17.7374 17.8232 18.0303 17.5303C18.3232 17.2374 18.3232 16.7626 18.0303 16.4697L16.9697 17.5303ZM11.9697 12.5303C12.2626 12.8232 12.7374 12.8232 13.0303 12.5303C13.3232 12.2374 13.3232 11.7626 13.0303 11.4697L11.9697 12.5303ZM8.03033 6.46967C7.73744 6.17678 7.26256 6.17678 6.96967 6.46967C6.67678 6.76256 6.67678 7.23744 6.96967 7.53033L8.03033 6.46967ZM8.03033 17.5303L13.0303 12.5303L11.9697 11.4697L6.96967 16.4697L8.03033 17.5303ZM13.0303 12.5303L18.0303 7.53033L16.9697 6.46967L11.9697 11.4697L13.0303 12.5303ZM11.9697 12.5303L16.9697 17.5303L18.0303 16.4697L13.0303 11.4697L11.9697 12.5303ZM13.0303 11.4697L8.03033 6.46967L6.96967 7.53033L11.9697 12.5303L13.0303 11.4697Z"
-                fill="currentColor"
-              />
-            </svg>
-          </div>
+            {isDarkMode ? <FiSun className="h-5 w-5" /> : <FiMoon className="h-5 w-5" />}
+          </button>
 
-          <div className="menu lg:flex hidden lg:items-center">
-            <ul className="lg:flex dark:text-gray-200">
-              <li>
-                <Link
-                  className="p-3 rounded-md hover:text-blue-800 dark:hover:bg-gray-700 dark:hover:text-white hover:bg-gray-100 focus:bg-gray-200 dark:focus:bg-gray-600 transition-colors duration-200"
-                  to="/"
-                >
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className="p-3 rounded-md hover:text-blue-800 dark:hover:bg-gray-700 dark:hover:text-white hover:bg-gray-100 focus:bg-gray-200 dark:focus:bg-gray-600 transition-colors duration-200"
-                  to="/blog"
-                >
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className="p-3 rounded-md hover:text-blue-800 dark:hover:bg-gray-700 dark:hover:text-white hover:bg-gray-100 focus:bg-gray-200 dark:focus:bg-gray-600 transition-colors duration-200"
-                  to="/category"
-                >
-                  Categories
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className="p-3 rounded-md hover:text-blue-800 dark:hover:bg-gray-700 dark:hover:text-white hover:bg-gray-100 focus:bg-gray-200 dark:focus:bg-gray-600 transition-colors duration-200"
-                  to="/about"
-                >
-                  About us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className="p-3 rounded-md hover:text-blue-800 dark:hover:bg-gray-700 dark:hover:text-white hover:bg-gray-100 focus:bg-gray-200 dark:focus:bg-gray-600 transition-colors duration-200"
-                  to="/contact"
-                >
-                  Contact us
-                </Link>
-              </li>
-            </ul>
+          <span className="mx-1 h-6 w-px bg-[#E5E7EB] dark:bg-[#243247]" />
 
-            <ul className="lg:flex space-x-5 p-2 items-center">
-              
-              {loggedIn ? (
-                <div className="relative inline-block text-left">
-                  {/* Dropdown Button */}
-                  <button
-                    onClick={() => setIsOpen(!isOpen)}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white font-medium rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+          {loggedIn ? (
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                className="flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium
+                  transition-colors duration-200
+                  border-[#E5E7EB] bg-white text-[#1F2937] hover:border-[#1E3A5F]/30
+                  dark:border-[#243247] dark:bg-[#162033] dark:text-[#F8FAFC] dark:hover:border-[#4F8EF7]/40"
+              >
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1E3A5F] text-xs font-semibold text-white dark:bg-[#4F8EF7] dark:text-[#0B1220]">
+                  {(userData?.name || "U").charAt(0).toUpperCase()}
+                </span>
+                Account
+                <FiChevronDown
+                  className={`h-4 w-4 text-[#6B7280] transition-transform duration-200 dark:text-[#AAB4C5] ${
+                    menuOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {menuOpen && (
+                <div
+                  className="absolute right-0 mt-2 w-52 overflow-hidden rounded-xl border shadow-lg
+                    border-[#E5E7EB] bg-white
+                    dark:border-[#243247] dark:bg-[#162033]"
+                >
+                  <Link
+                    to={`/dashboard/${userData?.userRole}`}
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#1F2937] transition-colors
+                      hover:bg-[#1E3A5F]/5 dark:text-[#F8FAFC] dark:hover:bg-white/5"
                   >
-                    Menu
-                    <FaChevronDown
-                      className={`transition-transform duration-200 ${
-                        isOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-
-                  {isOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-20">
-                      <Link
-                        to={`/dashboard/${userData.userRole}`}
-                        className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
-                      >
-                        Dashboard
-                      </Link>
-                      <Link
-                        to="/profile"
-                        className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
-                      >
-                        Profile
-                      </Link>
-                      <button
-                        onClick={logout}
-                        className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-600 dark:text-red-400"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <Link to="/login">
-                  <button className="p-2 bg-blue-500 rounded-md text-white hover:bg-blue-600 transition-colors duration-200">
-                    Login
-                  </button>
-                </Link>
-              )}
-              <button
-                className={`moon-btn p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 ${
-                  isDarkMode ? "hidden" : ""
-                }`}
-                onClick={toggleDark}
-              >
-                <img className="w-6 h-6" src={MoonIcon} alt="dark-mode" />
-              </button>
-
-              <button
-                className={`sun-btn p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 ${
-                  isDarkMode ? "" : "hidden"
-                }`}
-                onClick={toggleDark}
-              >
-                <img className="w-6 h-6" src={SunIcon} alt="sun" />
-              </button>
-              <button className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
-                <img className="w-6 h-6" src={LanguageIcon} alt="language" />
-              </button>
-            </ul>
-          </div>
-        </nav>
-
-        <div
-          className={`portrait-menu border-b-2 border-gray-200 dark:border-gray-700 lg:hidden my-1 bg-white dark:bg-gray-900 ${
-            Sidebar ? "" : "hidden"
-          }`}
-        >
-          <ul className="flex flex-col w-full p-0 m-0 list-none dark:text-gray-200">
-            <li className="hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-blue-800 dark:hover:text-white mx-3 my-1 rounded-sm p-1 transition-colors duration-200">
-              <Link to="/">Home</Link>
-            </li>
-            <li className="hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-blue-800 dark:hover:text-white mx-3 my-1 rounded-sm p-1 transition-colors duration-200">
-              <Link to="/blog">Blog</Link>
-            </li>
-            <li className="hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-blue-800 dark:hover:text-white mx-3 my-1 rounded-sm p-1 transition-colors duration-200">
-              <Link to="/category">Categories</Link>
-            </li>
-            <li className="hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-blue-800 dark:hover:text-white mx-3 my-1 rounded-sm p-1 transition-colors duration-200">
-              <Link to="/about">About us</Link>
-            </li>
-            <li className="hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-blue-800 dark:hover:text-white mx-3 my-1 rounded-sm p-1 transition-colors duration-200">
-              <Link to="/contact">Contact us</Link>
-            </li>
-          </ul>
-
-          <ul className="lg:flex lg:space-x-10 flex flex-col p-2 border-t-2 border-gray-200 dark:border-gray-700">
-            
-            <div
-              className="my-4 flex items-center"
-              style={{ marginTop: "10px" }}
-            >
-              <button
-                className={`moon-btn p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 ${
-                  isDarkMode ? "hidden" : ""
-                }`}
-                onClick={toggleDark}
-              >
-                <img className="w-6 h-6" src={MoonIcon} alt="dark-mode" />
-              </button>
-
-              <button
-                className={`sun-btn p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 ${
-                  isDarkMode ? "" : "hidden"
-                }`}
-                onClick={toggleDark}
-              >
-                <img className="w-6 h-6" src={SunIcon} alt="light-mode" />
-              </button>
-
-              <button className="lang-btn mx-3 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
-                <img className="w-6 h-6" src={LanguageIcon} alt="language" />
-              </button>
-
-              {loggedIn ? (
-                <div className="relative inline-block text-left">
-                  {/* Dropdown Button */}
-                  <button
-                    onClick={() => setIsOpen(!isOpen)}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white font-medium rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                    <FiGrid className="h-4 w-4 text-[#6B7280] dark:text-[#AAB4C5]" />
+                    Dashboard
+                  </Link>
+                  <Link
+                    to="/profile"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#1F2937] transition-colors
+                      hover:bg-[#1E3A5F]/5 dark:text-[#F8FAFC] dark:hover:bg-white/5"
                   >
-                    Menu
-                    <FaChevronDown
-                      className={`transition-transform duration-200 ${
-                        isOpen ? "rotate-180" : ""
-                      }`}
-                    />
+                    <FiUser className="h-4 w-4 text-[#6B7280] dark:text-[#AAB4C5]" />
+                    Profile
+                  </Link>
+                  <div className="h-px bg-[#E5E7EB] dark:bg-[#243247]" />
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      logout();
+                    }}
+                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm text-[#DC2626]
+                      transition-colors hover:bg-[#DC2626]/5 dark:text-[#EF4444] dark:hover:bg-[#EF4444]/10"
+                  >
+                    <FiLogOut className="h-4 w-4" />
+                    Logout
                   </button>
-
-                  {isOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-20">
-                      <Link
-                        to={`/dashboard/${userData.userRole}`}
-                        className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
-                      >
-                        Dashboard
-                      </Link>
-                      <Link
-                        to="/profile"
-                        className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
-                      >
-                        Profile
-                      </Link>
-                      <button
-                        onClick={logout}
-                        className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-700 dark:text-red-400"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  )}
                 </div>
-              ) : (
-                <Link to="/login">
-                  <button className="p-2 bg-blue-500 rounded-md text-white hover:bg-blue-600 transition-colors duration-200">
-                    Login
-                  </button>
-                </Link>
               )}
             </div>
-          </ul>
+          ) : (
+            <Link to="/login">
+              <button
+                className="rounded-md px-5 py-2 text-sm font-semibold text-white shadow-sm
+                  transition-colors duration-200
+                  bg-[#1E3A5F] hover:bg-[#16304f]
+                  dark:bg-[#4F8EF7] dark:text-[#0B1220] dark:hover:bg-[#3f7de0]"
+              >
+                Log in
+              </button>
+            </Link>
+          )}
+        </div>
+
+        {/* Mobile trigger */}
+        <button
+          aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          onClick={() => setMobileOpen((v) => !v)}
+          className="flex items-center justify-center rounded-md p-2 text-[#1F2937]
+            hover:bg-[#1E3A5F]/5 dark:text-[#F8FAFC] dark:hover:bg-white/5 lg:hidden"
+        >
+          {mobileOpen ? <FiX className="h-6 w-6" /> : <FiMenu className="h-6 w-6" />}
+        </button>
+      </nav>
+
+      {/* Mobile sheet */}
+      <div
+        className={`overflow-hidden border-t transition-[max-height] duration-300 ease-in-out lg:hidden
+          border-[#E5E7EB] bg-[#FAFAF8] dark:border-[#243247] dark:bg-[#0B1220]
+          ${mobileOpen ? "max-h-[26rem]" : "max-h-0"}`}
+      >
+        <ul className="flex flex-col px-4 py-2">
+          {NAV_LINKS.map((link) => (
+            <li key={link.to}>
+              <Link
+                to={link.to}
+                onClick={() => setMobileOpen(false)}
+                className="block rounded-md px-3 py-3 text-[15px] font-medium text-[#1F2937]
+                  transition-colors hover:bg-[#1E3A5F]/5 hover:text-[#1E3A5F]
+                  dark:text-[#F8FAFC] dark:hover:bg-white/5 dark:hover:text-[#4F8EF7]"
+              >
+                {link.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        <div className="flex items-center justify-between border-t px-4 py-3 border-[#E5E7EB] dark:border-[#243247]">
+          <div className="flex items-center gap-1">
+            <button
+              aria-label="Toggle dark mode"
+              onClick={toggleDark}
+              className="rounded-full p-2 text-[#6B7280] hover:bg-[#1E3A5F]/5 dark:text-[#AAB4C5] dark:hover:bg-white/5"
+            >
+              {isDarkMode ? <FiSun className="h-5 w-5" /> : <FiMoon className="h-5 w-5" />}
+            </button>
+            <button
+              aria-label="Change language"
+              className="rounded-full p-2 text-[#6B7280] hover:bg-[#1E3A5F]/5 dark:text-[#AAB4C5] dark:hover:bg-white/5"
+            >
+              <FiGlobe className="h-5 w-5" />
+            </button>
+          </div>
+
+          {loggedIn ? (
+            <div className="flex items-center gap-2">
+              <Link
+                to={`/dashboard/${userData?.userRole}`}
+                onClick={() => setMobileOpen(false)}
+                className="rounded-full border px-3.5 py-1.5 text-sm font-medium text-[#1F2937]
+                  border-[#E5E7EB] dark:border-[#243247] dark:text-[#F8FAFC]"
+              >
+                Dashboard
+              </Link>
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  logout();
+                }}
+                className="rounded-full px-3.5 py-1.5 text-sm font-medium text-[#DC2626] dark:text-[#EF4444]"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <Link to="/login" onClick={() => setMobileOpen(false)}>
+              <button
+                className="rounded-full px-5 py-2 text-sm font-semibold text-white
+                  bg-[#1E3A5F] dark:bg-[#4F8EF7] dark:text-[#0B1220]"
+              >
+                Log in
+              </button>
+            </Link>
+          )}
         </div>
       </div>
-    </>
+    </header>
   );
 };
 

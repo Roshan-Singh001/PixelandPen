@@ -1,77 +1,144 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { UserPlus, XCircle, CheckCircle, Eye, X, User, Calendar, Mail, FileText, Shield, ShieldOff, MapPin, Award, Github, Linkedin, Twitter, Facebook, Trash2 } from 'lucide-react';
-import { FaXTwitter  } from 'react-icons/fa6';
-import { FaGithub, FaLinkedin, FaFacebook   } from "react-icons/fa";
+import {
+  UserPlus, XCircle, CheckCircle, Eye, X, User, Calendar,
+  Mail, Shield, ShieldOff, MapPin, Trash2,
+} from 'lucide-react';
+import { FaXTwitter } from 'react-icons/fa6';
+import { FaGithub, FaLinkedin, FaFacebook } from 'react-icons/fa';
 import userSimbol from '../../../assets/images/userSimbol.png';
-
 import PixelPenLoader from '../../../components/PixelPenLoader';
 
-const AxiosInstance = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
-    withCredentials: true,
-    timeout: 3000,
-    headers: {'X-Custom-Header': 'foobar'}
-  });
+const API = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true,
+  timeout: 10000,
+});
 
+/* ─── Shared bits ─────────────────────────────────────────────────────────── */
+const StatusPill = ({ label, count, tone }) => {
+  const tones = {
+    amber: "bg-[#F59E0B]/10 dark:bg-[#F59E0B]/15 text-[#D97706] dark:text-[#F59E0B]",
+    green: "bg-[#16A34A]/10 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E]",
+    red: "bg-[#DC2626]/10 dark:bg-[#EF4444]/15 text-[#DC2626] dark:text-[#EF4444]",
+  };
+  return (
+    <span className={`inline-flex items-center gap-2 px-3 py-1 text-sm font-semibold rounded ${tones[tone]}`}>
+      <span className="w-1.5 h-1.5 rounded-full bg-current" />
+      {label} ({count})
+    </span>
+  );
+};
+
+const StatCard = ({ label, value, Icon, tone }) => {
+  const tones = {
+    amber: { bg: "bg-[#F59E0B]/10 dark:bg-[#F59E0B]/15", val: "text-[#D97706] dark:text-[#F59E0B]" },
+    green: { bg: "bg-[#16A34A]/10 dark:bg-[#22C55E]/15", val: "text-[#16A34A] dark:text-[#22C55E]" },
+    red: { bg: "bg-[#DC2626]/10 dark:bg-[#EF4444]/15", val: "text-[#DC2626] dark:text-[#EF4444]" },
+  };
+  const t = tones[tone];
+  return (
+    <div className="bg-white dark:bg-[#162033] p-6 flex items-center justify-between">
+      <div>
+        <p className="text-[11px] font-semibold tracking-widest uppercase text-[#6B7280] dark:text-[#AAB4C5] mb-1">{label}</p>
+        <p className={`text-3xl font-semibold ${t.val}`}>{value}</p>
+      </div>
+      <div className={`p-3 rounded ${t.bg}`}>
+        <Icon className={`w-5 h-5 ${t.val}`} />
+      </div>
+    </div>
+  );
+};
+
+const SectionHeader = ({ title, badge }) => (
+  <div className="flex flex-wrap items-center gap-3 mb-4">
+    <h2 className="text-xl font-semibold text-[#1F2937] dark:text-[#F8FAFC]">{title}</h2>
+    {badge}
+  </div>
+);
+
+const EmptyState = ({ Icon, label }) => (
+  <div className="py-14 text-center">
+    <div className="w-12 h-12 bg-[#FAFAF8] dark:bg-white/5 rounded flex items-center justify-center mx-auto mb-3">
+      <Icon className="w-6 h-6 text-[#6B7280] dark:text-[#AAB4C5]" />
+    </div>
+    <p className="text-sm text-[#6B7280] dark:text-[#AAB4C5]">{label}</p>
+  </div>
+);
+
+const fmtDate = (d) =>
+  new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+/* ─── Main ────────────────────────────────────────────────────────────────── */
 const ContriRequest = () => {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedContributor, setSelectedContributor] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
-  const [isRender, setIsRender] = useState(1);
-  const [isloading, setIsloading] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [actionId, setActionId] = useState(null); // BUG FIX: per-row pending state instead of nothing
+
   const [pendingContributors, setPendingContributors] = useState([]);
   const [approvedContributors, setApprovedContributors] = useState([]);
   const [rejectedContributors, setRejectedContributors] = useState([]);
 
+  // BUG FIX: original code set isLoading(true) then immediately called an async
+  // function without awaiting it, then set isLoading(false) synchronously right after —
+  // meaning the loader basically never showed and state updates raced.
   useEffect(() => {
-    setIsloading(true);
-    const fetchData = async()=>{
+    let cancelled = false;
+    const fetchData = async () => {
+      setIsLoading(true);
       try {
-        const response1 = await AxiosInstance.get('/dashboard/admin/fetch/cont/pending');
-        setPendingContributors(response1.data.pending);
-        
-        const response2 = await AxiosInstance.get('/dashboard/admin/fetch/cont/approved');
-        setApprovedContributors(response2.data.approved);
-      
-        const response3 = await AxiosInstance.get('/dashboard/admin/fetch/cont/rejected');
-        setRejectedContributors(response3.data.rejected);
-        
-      } 
-      catch (error) {
-        console.log(error);
-        
+        const [p, a, r] = await Promise.all([
+          API.get('/dashboard/admin/fetch/cont/pending'),
+          API.get('/dashboard/admin/fetch/cont/approved'),
+          API.get('/dashboard/admin/fetch/cont/rejected'),
+        ]);
+        if (cancelled) return;
+        setPendingContributors(p.data.pending ?? []);
+        setApprovedContributors(a.data.approved ?? []);
+        setRejectedContributors(r.data.rejected ?? []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
-    }
+    };
     fetchData();
-    setIsloading(false);
-  }, [isRender]);
+    return () => { cancelled = true; };
+  }, [refreshKey]);
 
-  const handleApprove = async(cont_id) =>{
-    try {
-      await AxiosInstance.post('/dashboard/admin/cont/approve',{
-        cont_id: cont_id
-      });
-      setIsRender(isRender+1);
-    } catch (error) {
-      console.log(error); 
-    }
-  }
+  const refresh = () => setRefreshKey(k => k + 1);
 
-  const handleDelete = async(cont_id) =>{
+  const handleApprove = async (cont_id) => {
+    setActionId(cont_id);
     try {
-      await AxiosInstance.post('/dashboard/admin/cont/delete',{
-        cont_id: cont_id
-      });
-      setIsRender(isRender+1);
-    } catch (error) {
-      console.log(error); 
+      await API.post('/dashboard/admin/cont/approve', { cont_id });
+      refresh();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setActionId(null);
     }
-  }
+  };
+
+  const handleDelete = async (cont_id) => {
+    setActionId(cont_id);
+    try {
+      await API.post('/dashboard/admin/cont/delete', { cont_id });
+      refresh();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setActionId(null);
+    }
+  };
 
   const handleReject = (contributor) => {
     setSelectedContributor(contributor);
+    setRejectReason('');
     setShowRejectModal(true);
   };
 
@@ -80,340 +147,307 @@ const ContriRequest = () => {
     setShowDetailModal(true);
   };
 
-  const confirmReject = async() => {
-    console.log(`Rejecting contributor: ${selectedContributor.name} with reason: ${rejectReason}`);
-
+  const confirmReject = async () => {
+    if (!rejectReason.trim() || !selectedContributor) return; // BUG FIX: guard against empty submit
     try {
-      await AxiosInstance.post('/dashboard/admin/cont/reject',{
+      await API.post('/dashboard/admin/cont/reject', {
         cont_id: selectedContributor.cont_id,
-        reject_reason: rejectReason
+        reject_reason: rejectReason,
       });
-      setIsRender(isRender+1);
-      
-    } catch (error) {
-      console.log(error);
+      refresh();
+    } catch (err) {
+      console.error(err);
     }
-
     setShowRejectModal(false);
     setRejectReason('');
     setSelectedContributor(null);
   };
 
-  const toggleUserStatus = async(userId, currentStatus) => {
-    console.log(`Toggling status for user ${userId} from ${currentStatus}`);
+  const toggleUserStatus = async (cont_id, currentStatus) => {
+    setActionId(cont_id);
     try {
-      await AxiosInstance.post('/dashboard/admin/cont/status',{
-        cont_id: userId,
-        set_status: currentStatus=='Approved'?'Block':'Approved'
+      await API.post('/dashboard/admin/cont/status', {
+        cont_id,
+        set_status: currentStatus === 'Approved' ? 'Block' : 'Approved',
       });
-      setIsRender(isRender+1);
-    } catch (error) {
-      console.log(error);
-      
+      refresh();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setActionId(null);
     }
   };
 
-  const StatusBadge = ({ status, count }) => (
-    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-purple-500/10 to-pink-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
-      <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-      {status} ({count})
-    </div>
-  );
-
-  if (isloading) return <> <PixelPenLoader/> </>
+  if (isLoading) return <PixelPenLoader />;
 
   return (
-    <div className="min-h-screen p-2">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent mb-2">
-            Contributor Management
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-lg">Manage contributor applications and memberships</p>
-        </div>
+    <div className="font-['Inter',sans-serif]">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-extrabold text-[#1F2937] dark:text-[#F8FAFC] mb-1">
+          Contributor Management
+        </h1>
+        <p className="text-[#6B7280] dark:text-[#AAB4C5]">
+          Manage contributor applications and memberships
+        </p>
+      </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pending</p>
-                <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{pendingContributors.length}</p>
-              </div>
-              <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-full">
-                <User className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active</p>
-                <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-                  {approvedContributors.length}
-                </p>
-              </div>
-              <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
-                <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Rejected</p>
-                <p className="text-3xl font-bold text-red-600 dark:text-red-400">{rejectedContributors.length}</p>
-              </div>
-              <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
-                <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Stat cards */}
+      <div className="mb-8 grid grid-cols-1 divide-y divide-[#E5E7EB] overflow-hidden rounded-xl border border-[#E5E7EB] bg-white sm:grid-cols-3 sm:divide-x sm:divide-y-0 dark:divide-[#243247] dark:border-[#243247] dark:bg-[#162033]">
+        <StatCard label="Pending" value={pendingContributors.length} Icon={User} tone="amber" />
+        <StatCard label="Active" value={approvedContributors.length} Icon={CheckCircle} tone="green" />
+        <StatCard label="Rejected" value={rejectedContributors.length} Icon={XCircle} tone="red" />
+      </div>
 
-        {/* Pending Contributors */}
-        <section className="mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Pending Applications</h2>
-            <StatusBadge status="Awaiting Review" count={pendingContributors.length} />
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-auto">
-            {pendingContributors.length > 0 ? (
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                {pendingContributors.map((contributor) => (
-                  <div key={contributor.cont_id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 flex-1">
-                        <img 
-                          src={contributor.profile_pic || userSimbol} 
+      {/* Pending applications */}
+      <section className="mb-8">
+        <SectionHeader
+          title="Pending Applications"
+          badge={<StatusPill label="Awaiting review" count={pendingContributors.length} tone="amber" />}
+        />
+        <div className="bg-white dark:bg-[#162033] border border-[#E5E7EB] dark:border-[#243247]">
+          {pendingContributors.length > 0 ? (
+            <div className="divide-y divide-[#E5E7EB] dark:divide-[#243247]">
+              {pendingContributors.map((contributor) => {
+                const busy = actionId === contributor.cont_id;
+                return (
+                  <div key={contributor.cont_id} className="p-5 hover:bg-[#1E3A5F]/[0.03] dark:hover:bg-white/[0.03] transition-colors duration-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                        <img
+                          src={contributor.profile_pic || userSimbol}
                           alt={contributor.username}
-                          className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
+                          className="w-11 h-11 rounded-full object-cover border border-[#E5E7EB] dark:border-[#243247] flex-shrink-0"
                         />
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{contributor.username}</h3>
-                          <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-2">
-                            <span className="flex items-center gap-1">
-                              <Mail size={14} />
-                              {contributor.email}
+                        <div className="min-w-0">
+                          <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F8FAFC] mb-1 truncate">
+                            {contributor.username}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#6B7280] dark:text-[#AAB4C5] mb-2">
+                            <span className="flex items-center gap-1 min-w-0">
+                              <Mail size={12} className="flex-shrink-0" />
+                              <span className="truncate">{contributor.email}</span>
                             </span>
-                            <span>•</span>
-                            <span>Applied {new Date(contributor.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                            <span>Applied {fmtDate(contributor.created_at)}</span>
                           </div>
-                          <div className="flex flex-wrap gap-1">
-                            {contributor.expertise?.slice(0, 3).map((skill) => (
-                              <span key={skill} className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs rounded-full">
-                                {skill}
-                              </span>
-                            ))}
-                            {contributor.expertise?.length > 3 && (
-                              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs rounded-full">
-                                +{contributor.expertise.length - 3} more
-                              </span>
-                            )}
-                          </div>
+                          {contributor.expertise?.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {contributor.expertise.slice(0, 3).map((skill) => (
+                                <span key={skill} className="px-2 py-0.5 bg-[#1E3A5F]/10 text-[#1E3A5F] dark:bg-[#4F8EF7]/15 dark:text-[#4F8EF7] text-[11px] rounded">
+                                  {skill}
+                                </span>
+                              ))}
+                              {contributor.expertise.length > 3 && (
+                                <span className="px-2 py-0.5 bg-[#E5E7EB]/60 dark:bg-white/5 text-[#6B7280] dark:text-[#AAB4C5] text-[11px] rounded">
+                                  +{contributor.expertise.length - 3} more
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 ml-4">
-                        <button 
+
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
                           onClick={() => handleViewDetails(contributor)}
-                          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#1E3A5F] dark:text-[#4F8EF7] bg-[#1E3A5F]/10 dark:bg-[#4F8EF7]/10 hover:bg-[#1E3A5F]/15 dark:hover:bg-[#4F8EF7]/20 rounded transition-colors"
                         >
-                          <Eye size={16} />
-                          Details
+                          <Eye size={14} /> Details
                         </button>
-                        <button onClick={()=>handleApprove(contributor.cont_id)} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-lg transition-colors">
-                          <UserPlus size={16} />
-                          Approve
+                        <button
+                          onClick={() => handleApprove(contributor.cont_id)}
+                          disabled={busy}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#16A34A] dark:text-[#22C55E] bg-[#16A34A]/10 dark:bg-[#22C55E]/10 hover:bg-[#16A34A]/15 dark:hover:bg-[#22C55E]/20 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-colors"
+                        >
+                          <UserPlus size={14} /> {busy ? "…" : "Approve"}
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleReject(contributor)}
-                          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-colors"
+                          disabled={busy}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#DC2626] dark:text-[#EF4444] bg-[#DC2626]/10 dark:bg-[#EF4444]/10 hover:bg-[#DC2626]/15 dark:hover:bg-[#EF4444]/20 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-colors"
                         >
-                          <XCircle size={16} />
-                          Reject
+                          <XCircle size={14} /> Reject
                         </button>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-12 text-center">
-                <User className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-500 dark:text-gray-400 text-lg">No pending applications</p>
-              </div>
-            )}
-          </div>
-        </section>
+                );
+              })}
+            </div>
+          ) : (
+            <EmptyState Icon={User} label="No pending applications" />
+          )}
+        </div>
+      </section>
 
-        {/* Rejected Contributors */}
-        <section className="mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Rejected Applications</h2>
-            <StatusBadge status="Rejected" count={rejectedContributors.length} />
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-auto">
-            {rejectedContributors.length > 0 ? (
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                {rejectedContributors.map((contributor) => (
-                  <div key={contributor.cont_id} className="p-6">
-                    <div className="flex items-center gap-4 mb-3">
-                      <img 
-                        src={contributor.profile_pic || userSimbol} 
+      {/* Rejected applications */}
+      <section className="mb-8">
+        <SectionHeader
+          title="Rejected Applications"
+          badge={<StatusPill label="Rejected" count={rejectedContributors.length} tone="red" />}
+        />
+        <div className="bg-white dark:bg-[#162033] border border-[#E5E7EB] dark:border-[#243247]">
+          {rejectedContributors.length > 0 ? (
+            <div className="divide-y divide-[#E5E7EB] dark:divide-[#243247]">
+              {rejectedContributors.map((contributor) => {
+                const busy = actionId === contributor.cont_id;
+                return (
+                  <div key={contributor.cont_id} className="p-5">
+                    <div className="flex items-center gap-3 mb-3">
+                      <img
+                        src={contributor.profile_pic || userSimbol}
                         alt={contributor.username}
-                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
+                        className="w-9 h-9 rounded-full object-cover border border-[#E5E7EB] dark:border-[#243247] flex-shrink-0"
                       />
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{contributor.username}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{contributor.email}</p>
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F8FAFC] truncate">{contributor.username}</h3>
+                        <p className="text-xs text-[#6B7280] dark:text-[#AAB4C5] truncate">{contributor.email}</p>
                       </div>
                     </div>
-                    <div className="flex items-start gap-2">
-                      <XCircle size={16} className="text-red-500 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-red-600 dark:text-red-400 font-medium">{contributor.reject_reason}</p>
-                      </div>
+                    <div className="flex items-start gap-2 mb-3">
+                      <XCircle size={14} className="text-[#DC2626] dark:text-[#EF4444] mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-[#DC2626] dark:text-[#EF4444] font-medium">{contributor.reject_reason}</p>
                     </div>
-
-                    <div className='flex justify-end'>
-                      <button title='Delete' onClick={()=>handleDelete(contributor.cont_id)} className="inline-flex items-center gap-1 px-2 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors">
-                        <Trash2 size={14} /> Delete Account
+                    <div className="flex justify-end">
+                      <button
+                        title="Delete account"
+                        onClick={() => handleDelete(contributor.cont_id)}
+                        disabled={busy}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[#DC2626] dark:text-[#EF4444] hover:bg-[#DC2626]/10 dark:hover:bg-[#EF4444]/10 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-colors"
+                      >
+                        <Trash2 size={13} /> {busy ? "Deleting…" : "Delete Account"}
                       </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-12 text-center">
-                <XCircle className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-500 dark:text-gray-400 text-lg">No rejected applications</p>
-              </div>
-            )}
-          </div>
-        </section>
+                );
+              })}
+            </div>
+          ) : (
+            <EmptyState Icon={XCircle} label="No rejected applications" />
+          )}
+        </div>
+      </section>
 
-        {/* Approved Contributors */}
-        <section>
-          <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Active Contributors</h2>
-            <StatusBadge status="Contributors" count={approvedContributors.length} />
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-auto">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-900/50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Contributor</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Joined</th>
-                    
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {approvedContributors.map((contributor) => (
-                    <tr key={contributor.cont_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <img 
-                            src={contributor.profile_pic || userSimbol} 
+      {/* Active contributors */}
+      <section>
+        <SectionHeader
+          title="Active Contributors"
+          badge={<StatusPill label="Contributors" count={approvedContributors.length} tone="green" />}
+        />
+        <div className="bg-white dark:bg-[#162033] border border-[#E5E7EB] dark:border-[#243247] overflow-x-auto">
+          {approvedContributors.length > 0 ? (
+            <table className="min-w-full divide-y divide-[#E5E7EB] dark:divide-[#243247]">
+              <thead className="bg-[#FAFAF8] dark:bg-white/[0.02]">
+                <tr>
+                  {["Contributor", "Email", "Joined", "Status", "Actions"].map(h => (
+                    <th key={h} className="px-5 py-3 text-left text-[11px] font-semibold text-[#6B7280] dark:text-[#AAB4C5] uppercase tracking-wider">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E5E7EB] dark:divide-[#243247]">
+                {approvedContributors.map((contributor) => {
+                  const busy = actionId === contributor.cont_id;
+                  const isApproved = contributor.status === 'Approved';
+                  return (
+                    <tr key={contributor.cont_id} className="hover:bg-[#1E3A5F]/[0.03] dark:hover:bg-white/[0.03] transition-colors duration-100">
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-2.5">
+                          <img
+                            src={contributor.profile_pic || userSimbol}
                             alt={contributor.username}
-                            className="w-8 h-8 rounded-full object-cover"
+                            className="w-7 h-7 rounded-full object-cover flex-shrink-0"
                           />
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{contributor.username}</div>
+                          <span className="text-sm font-medium text-[#1F2937] dark:text-[#F8FAFC] truncate">{contributor.username}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{contributor.email}</td>
-                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{new Date(contributor.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          contributor.status === 'Approved' 
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                            : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
-                        }`}>
-                          {contributor.status === 'Approved' ? 'Active' : 'Blocked'}
+                      <td className="px-5 py-3 text-sm text-[#6B7280] dark:text-[#AAB4C5] truncate max-w-[200px]">{contributor.email}</td>
+                      <td className="px-5 py-3 text-sm text-[#6B7280] dark:text-[#AAB4C5] whitespace-nowrap">{fmtDate(contributor.created_at)}</td>
+                      <td className="px-5 py-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${isApproved
+                            ? "bg-[#16A34A]/10 dark:bg-[#22C55E]/15 text-[#16A34A] dark:text-[#22C55E]"
+                            : "bg-[#DC2626]/10 dark:bg-[#EF4444]/15 text-[#DC2626] dark:text-[#EF4444]"
+                          }`}>
+                          {isApproved ? "Active" : "Blocked"}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <button 
-                            onClick={() => toggleUserStatus(contributor.cont_id, contributor.status)}
-                            className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                              contributor.status === 'Approved'
-                                ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30'
-                                : 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30'
+                      <td className="px-5 py-3">
+                        <button
+                          onClick={() => toggleUserStatus(contributor.cont_id, contributor.status)}
+                          disabled={busy}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isApproved
+                              ? "text-[#DC2626] dark:text-[#EF4444] hover:bg-[#DC2626]/10 dark:hover:bg-[#EF4444]/10"
+                              : "text-[#16A34A] dark:text-[#22C55E] hover:bg-[#16A34A]/10 dark:hover:bg-[#22C55E]/10"
                             }`}
-                          >
-                            {contributor.status === 'Approved' ? (
-                              <>
-                                <Shield size={14} />
-                                Block
-                              </>
-                            ) : (
-                              <>
-                                <ShieldOff size={14} />
-                                Unblock
-                              </>
-                            )}
-                          </button>
-                        </div>
+                        >
+                          {isApproved ? <Shield size={13} /> : <ShieldOff size={13} />}
+                          {busy ? "…" : isApproved ? "Block" : "Unblock"}
+                        </button>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-      </div>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <EmptyState Icon={CheckCircle} label="No active contributors" />
+          )}
+        </div>
+      </section>
 
-      {/* Contributor Detail Modal */}
+      {/* ── Detail Modal ─────────────────────────────────────────────────── */}
       {showDetailModal && selectedContributor && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Contributor Details</h3>
+        <div
+          className="fixed inset-0 bg-[#1F2937]/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          onClick={() => setShowDetailModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-[#162033] max-w-2xl w-full border border-[#E5E7EB] dark:border-[#243247] max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()} // BUG FIX: clicking inside modal no longer closes it
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E7EB] dark:border-[#243247]">
+              <h3 className="text-base font-semibold text-[#1F2937] dark:text-[#F8FAFC]">Contributor Details</h3>
               <button
                 onClick={() => setShowDetailModal(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                className="text-[#6B7280] hover:text-[#1F2937] dark:text-[#AAB4C5] dark:hover:text-[#F8FAFC] transition-colors"
+                aria-label="Close"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
-            
+
             <div className="p-6">
-              {/* Profile Header */}
-              <div className="flex items-start gap-6 mb-6">
-                <img 
-                  src={selectedContributor.profile_pic || userSimbol} 
+              {/* Profile header */}
+              <div className="flex items-start gap-5 mb-6">
+                <img
+                  src={selectedContributor.profile_pic || userSimbol}
                   alt={selectedContributor.username}
-                  className="w-24 h-24 rounded-full object-cover border-4 border-gray-200 dark:border-gray-600"
+                  className="w-20 h-20 rounded-full object-cover border border-[#E5E7EB] dark:border-[#243247] flex-shrink-0"
                 />
-                <div className="flex-1">
-                  <h4 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{selectedContributor.username}</h4>
-                  <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                    <div className="flex items-center gap-2">
-                      <Mail size={16} />
-                      <span>{selectedContributor.email}</span>
+                <div className="min-w-0">
+                  <h4 className="text-xl font-semibold text-[#1F2937] dark:text-[#F8FAFC] mb-2 truncate">
+                    {selectedContributor.username}
+                  </h4>
+                  <div className="space-y-1.5 text-sm text-[#6B7280] dark:text-[#AAB4C5]">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Mail size={14} className="flex-shrink-0" />
+                      <span className="truncate">{selectedContributor.email}</span>
                     </div>
                     {selectedContributor.dob && (
                       <div className="flex items-center gap-2">
-                        <Calendar size={16} />
+                        <Calendar size={14} className="flex-shrink-0" />
                         <span>Born {new Date(selectedContributor.dob).toLocaleDateString()}</span>
                       </div>
                     )}
                     {(selectedContributor.city || selectedContributor.country) && (
                       <div className="flex items-center gap-2">
-                        <MapPin size={16} />
-                        <span>{selectedContributor.city}</span>
-                        {selectedContributor.country && <span>, {selectedContributor.country}</span>}
+                        <MapPin size={14} className="flex-shrink-0" />
+                        <span>
+                          {selectedContributor.city}
+                          {selectedContributor.city && selectedContributor.country ? ", " : ""}
+                          {selectedContributor.country}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -423,18 +457,18 @@ const ContriRequest = () => {
               {/* Bio */}
               {selectedContributor.bio && (
                 <div className="mb-6">
-                  <h5 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Bio</h5>
-                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{selectedContributor.bio}</p>
+                  <h5 className="text-xs font-semibold tracking-widest uppercase text-[#6B7280] dark:text-[#AAB4C5] mb-2">Bio</h5>
+                  <p className="text-sm text-[#1F2937] dark:text-[#F8FAFC] leading-relaxed">{selectedContributor.bio}</p>
                 </div>
               )}
 
               {/* Expertise */}
-              {selectedContributor.expertise && (
+              {selectedContributor.expertise?.length > 0 && (
                 <div className="mb-6">
-                  <h5 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Expertise</h5>
-                  <div className="flex flex-wrap gap-2">
+                  <h5 className="text-xs font-semibold tracking-widest uppercase text-[#6B7280] dark:text-[#AAB4C5] mb-2">Expertise</h5>
+                  <div className="flex flex-wrap gap-1.5">
                     {selectedContributor.expertise.map((skill) => (
-                      <span key={skill} className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm rounded-full">
+                      <span key={skill} className="px-2.5 py-1 bg-[#1E3A5F]/10 text-[#1E3A5F] dark:bg-[#4F8EF7]/15 dark:text-[#4F8EF7] text-xs rounded">
                         {skill}
                       </span>
                     ))}
@@ -443,112 +477,96 @@ const ContriRequest = () => {
               )}
 
               {/* Links */}
-              {selectedContributor.links && <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {selectedContributor.links.linkedin && (
-                  <a 
-                    href={selectedContributor.links.linkedin} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-400 dark:text-blue-600 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-                  >
-                    <FaLinkedin size={16} />
-                    LinkedIn Profile
-                  </a>
-                )}
-                {selectedContributor.links.twitter && (
-                  <a 
-                    href={selectedContributor.links.twitter} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-                  >
-                    <FaXTwitter  size={16} />
-                    Twitter(X) Profile
-                  </a>
-                )}
-                {selectedContributor.links.facebook && (
-                  <a 
-                    href={selectedContributor.links.facebook} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-                  >
-                    <FaFacebook size={16} />
-                    Facebook Profile
-                  </a>
-                )}
-                {selectedContributor.links.github && (
-                  <a 
-                    href={selectedContributor.links.github} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                  >
-                    <FaGithub size={16} />
-                    GitHub Profile
-                  </a>
-                )}
-              </div>}
+              {selectedContributor.links && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {selectedContributor.links.linkedin && (
+                    <a href={selectedContributor.links.linkedin} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-2.5 bg-[#FAFAF8] dark:bg-white/5 text-[#1F2937] dark:text-[#F8FAFC] text-sm rounded hover:bg-[#1E3A5F]/5 dark:hover:bg-white/10 transition-colors">
+                      <FaLinkedin size={15} /> LinkedIn Profile
+                    </a>
+                  )}
+                  {selectedContributor.links.twitter && (
+                    <a href={selectedContributor.links.twitter} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-2.5 bg-[#FAFAF8] dark:bg-white/5 text-[#1F2937] dark:text-[#F8FAFC] text-sm rounded hover:bg-[#1E3A5F]/5 dark:hover:bg-white/10 transition-colors">
+                      <FaXTwitter size={15} /> X (Twitter) Profile
+                    </a>
+                  )}
+                  {selectedContributor.links.facebook && (
+                    <a href={selectedContributor.links.facebook} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-2.5 bg-[#FAFAF8] dark:bg-white/5 text-[#1F2937] dark:text-[#F8FAFC] text-sm rounded hover:bg-[#1E3A5F]/5 dark:hover:bg-white/10 transition-colors">
+                      <FaFacebook size={15} /> Facebook Profile
+                    </a>
+                  )}
+                  {selectedContributor.links.github && (
+                    <a href={selectedContributor.links.github} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-2.5 bg-[#FAFAF8] dark:bg-white/5 text-[#1F2937] dark:text-[#F8FAFC] text-sm rounded hover:bg-[#1E3A5F]/5 dark:hover:bg-white/10 transition-colors">
+                      <FaGithub size={15} /> GitHub Profile
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Reject Modal */}
+      {/* ── Reject Modal ─────────────────────────────────────────────────── */}
       {showRejectModal && selectedContributor && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Reject Application</h3>
+        <div
+          className="fixed inset-0 bg-[#1F2937]/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          onClick={() => setShowRejectModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-[#162033] max-w-md w-full border border-[#E5E7EB] dark:border-[#243247]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E7EB] dark:border-[#243247]">
+              <h3 className="text-base font-semibold text-[#1F2937] dark:text-[#F8FAFC]">Reject Application</h3>
               <button
                 onClick={() => setShowRejectModal(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                className="text-[#6B7280] hover:text-[#1F2937] dark:text-[#AAB4C5] dark:hover:text-[#F8FAFC] transition-colors"
+                aria-label="Close"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
-            
+
             <div className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <img 
-                  src={selectedContributor.profile_pic} 
+              <div className="flex items-center gap-3 mb-5">
+                <img
+                  src={selectedContributor.profile_pic || userSimbol}
                   alt={selectedContributor.username}
-                  className="w-10 h-10 rounded-full object-cover"
+                  className="w-9 h-9 rounded-full object-cover flex-shrink-0"
                 />
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    You are about to reject the application from
-                  </p>
-                  <p className="font-semibold text-gray-900 dark:text-white">
-                    {selectedContributor.username}
-                  </p>
+                <div className="min-w-0">
+                  <p className="text-xs text-[#6B7280] dark:text-[#AAB4C5]">You are about to reject the application from</p>
+                  <p className="text-sm font-semibold text-[#1F2937] dark:text-[#F8FAFC] truncate">{selectedContributor.username}</p>
                 </div>
               </div>
-              
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Reason for rejection <span className="text-red-500">*</span>
+
+              <label className="block text-xs font-medium text-[#1F2937] dark:text-[#F8FAFC] mb-1.5">
+                Reason for rejection <span className="text-[#DC2626] dark:text-[#EF4444]">*</span>
               </label>
               <textarea
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Please provide a clear reason for rejecting this application..."
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white resize-none"
+                placeholder="Provide a clear reason for rejecting this application…"
                 rows={4}
-                required
+                className="w-full px-3 py-2.5 text-sm bg-white dark:bg-[#0B1220] text-[#1F2937] dark:text-[#F8FAFC] border border-[#E5E7EB] dark:border-[#243247] rounded resize-none focus:outline-none focus:border-[#DC2626] dark:focus:border-[#EF4444] focus:ring-2 focus:ring-[#DC2626]/10 dark:focus:ring-[#EF4444]/10 placeholder-[#6B7280]/60 dark:placeholder-[#AAB4C5]/50"
               />
             </div>
-            
-            <div className="flex gap-3 p-6 pt-0">
+
+            <div className="flex gap-3 px-6 pb-6">
               <button
                 onClick={() => setShowRejectModal(false)}
-                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                className="flex-1 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-[#1F2937] dark:text-[#F8FAFC] bg-[#E5E7EB]/60 dark:bg-white/5 hover:bg-[#E5E7EB] dark:hover:bg-white/10 rounded transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmReject}
                 disabled={!rejectReason.trim()}
-                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed rounded-lg transition-colors"
+                className="flex-1 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-white bg-[#DC2626] dark:bg-[#EF4444] hover:bg-[#DC2626]/90 dark:hover:bg-[#EF4444]/90 disabled:bg-[#DC2626]/30 dark:disabled:bg-[#EF4444]/30 disabled:cursor-not-allowed rounded transition-colors"
               >
                 Reject Application
               </button>

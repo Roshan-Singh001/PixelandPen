@@ -1,9 +1,14 @@
 import express from 'express';
 import db from './db.js';
+import { authMiddleware, authorizeReader } from './middleware.js';
 const actionRouter = express.Router();
 
+
+actionRouter.use(authMiddleware);
+actionRouter.use(authorizeReader);
+
 actionRouter.get('/isfollow/cont/', async (req, res) => {
-    const userId = req.headers['user_id'];
+    const userId = req.user.id;
     const cont_id = req.headers['cont_id'];
 
     try {
@@ -22,7 +27,7 @@ actionRouter.get('/isfollow/cont/', async (req, res) => {
 });
 
 actionRouter.get('/islike/article/', async (req, res) => {
-    const userId = req.headers['user_id'];
+    const userId = req.user.id;
     const article_id = req.headers['article_id'];
 
     try {
@@ -41,7 +46,8 @@ actionRouter.get('/islike/article/', async (req, res) => {
 });
 
 actionRouter.post('/like', async (req, res) => {
-    const { article_id, user_id } = req.body;
+    const { article_id} = req.body;
+    const user_id = req.user.id;
 
     try {
         const existing = await db.query(
@@ -84,7 +90,9 @@ actionRouter.post('/like', async (req, res) => {
 });
 
 actionRouter.post('/bookmark', async (req, res) => {
-    const { article_id, user_id } = req.body;
+    const { article_id} = req.body;
+    const user_id = req.user.id;
+
     try {
         const existing = await db.query(
             "SELECT * FROM bookmarks WHERE article_id = ? AND reader_id = ?",
@@ -114,7 +122,8 @@ actionRouter.post('/bookmark', async (req, res) => {
 })
 
 actionRouter.post('/follow/cont', async (req, res) => {
-    const { cont_id, user_id, follow } = req.body;
+    const { cont_id, follow } = req.body;
+    const user_id = req.user.id;
 
     try {
         if (follow) {
@@ -144,7 +153,9 @@ actionRouter.post('/follow/cont', async (req, res) => {
 });
 
 actionRouter.post('/comment', async (req, res) => {
-    const { article_id, article_title, userRole, user_id, content, username } = req.body;
+    const { article_id, article_title, content, username } = req.body;
+    const user_id = req.user.id;
+    const userRole = req.user.role;
 
     try {
         if (userRole == 'Admin') {

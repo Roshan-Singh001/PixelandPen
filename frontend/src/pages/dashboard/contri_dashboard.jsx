@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 
-import { 
-  LayoutDashboard, 
-  FileText, 
-  MessageCircle, 
-  BarChart3, 
-  UserCog, 
-  Settings, 
-  Plus, 
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
+
+import {
+  LayoutDashboard,
+  FileText,
+  MessageCircle,
+  BarChart3,
+  UserCog,
+  Settings,
+  Plus,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -25,7 +27,6 @@ import {
   Sparkles,
   Wrench
 } from 'lucide-react';
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 import {
@@ -44,14 +45,7 @@ import { FaAnglesLeft } from "react-icons/fa6";
 import { IoIosAddCircle } from "react-icons/io";
 
 import PixelPenLoader from "../../components/PixelPenLoader";
-import MyArticles from "./contri_components/MyArticles";
-import MyComments from "./contri_components/MyComments";
-import MyAnalytics from "./contri_components/MyAnalytics";
-import ContriSettings from "./contri_components/ContriSettings";
-import ContriProfile from "./contri_components/ContriProfile";
-import ArticleEditor from "./ArticleEditor";
 import { useAuth } from "../../contexts/AuthContext";
-import { ThemeProvider } from "../../contexts/ThemeContext";
 
 const AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -60,505 +54,268 @@ const AxiosInstance = axios.create({
   withCredentials: true,
 });
 
+
+
 const ContributorDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const { loggedIn, logout, userData, loading } = useAuth();
-  const [menuMinimize, setMenuMinimize] = useState(false);
-  const [menuOption, setMenuOption] = useState("Dashboard");
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [minimized, setMinimized] = useState(false);
   const [isAccepted, setAccecpted] = useState(false);
   const [isBlock, setBlock] = useState(false);
   const [status, setStatus] = useState('');
   const [rejectReason, setRejectReason] = useState('');
   const [isRender, setIsRender] = useState(1);
-  const [refSlug, setRefslug] = useState("");
-  const [statsData,setStatsData] = useState([]);
+  const [statsData, setStatsData] = useState([]);
 
   const [recentArticles, setRecentArticles] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
 
+  const NAV_ITEMS = [
+    {
+      label: "Dashboard",
+      path: "",
+      icon: <BiSolidDashboard size={18} />,
+      status: true,
+    },
+    {
+      label: "Profile",
+      path: "profile",
+      icon: <FaUserCog size={18} />,
+      status: true,
+    },
+    {
+      label: "Article",
+      path: "article",
+      icon: <MdArticle size={18} />,
+      status: isAccepted,
+    },
+    {
+      label: "Comments",
+      path: "comments",
+      icon: <FaComments size={18} />,
+      status: isAccepted,
+    },
+    {
+      label: "Stats",
+      path: "stats",
+      icon: <MdAnalytics size={18} />,
+      status: isAccepted,
+    },
+    {
+      label: "Settings",
+      path: "settings",
+      icon: <IoSettingsSharp size={18} />,
+      status: true,
+    },
+    {
+      label: "Article Editor",
+      path: "article/editor",
+      icon: <IoIosAddCircle size={18} />,
+      status: isAccepted && !isBlock,
+    },
+  ];
+
+  const activeItem = NAV_ITEMS.find(({ path }) => {
+    if (path === "") {
+      return location.pathname === "/dashboard/contributor";
+    }
+
+    return location.pathname === `/dashboard/contributor/${path}`;
+  });
+
+  const activeMenu = activeItem?.label || "Dashboard";
+
   useEffect(() => {
-    const fetchStats = async()=>{
-    try {
-      const response = await AxiosInstance.get('/dashboard/contri/status', {
-        headers: {
-          user_id: userData.user_id,
+    const fetchStats = async () => {
+      try {
+        const response = await AxiosInstance.get('/dashboard/contri/status');
+
+        const status = response.data[0].status;
+        const reject = response.data[0].reject_reason ? response.data[0].reject_reason : '';
+
+        setStatus(status);
+        setRejectReason(reject);
+
+        if (status == 'Approved') {
+          setAccecpted(true);
+          setBlock(false);
         }
-      });
+        else if (status == 'Block') {
+          setBlock(true);
+          setAccecpted(true);
+        }
 
-      const status = response.data[0].status;
-      const reject = response.data[0].reject_reason?response.data[0].reject_reason:'';
 
-      setStatus(status);
-      setRejectReason(reject);
+        const response1 = await AxiosInstance.get('/dashboard/contri/stat/posts');
+        setStatsData((prev) => ([...prev, { title: "Total Posts", value: response1.data.total_p || 0, color: "blue", icon: FileText }]));
 
-      if (status == 'Approved') {
-        setAccecpted(true);
-        setBlock(false);
+        const response2 = await AxiosInstance.get('/dashboard/contri/stat/views');
+        setStatsData((prev) => ([...prev, { title: "Total Views", value: response2.data.total_v || 0, color: "green", icon: Eye }]))
+
+        const response3 = await AxiosInstance.get('/dashboard/contri/stat/likes');
+        setStatsData((prev) => ([...prev, { title: "Total Likes", value: response3.data.total_l || 0, color: "red", icon: Heart }]));
+
+        const response4 = await AxiosInstance.get('/dashboard/contri/stat/followers');
+        setStatsData((prev) => ([...prev, { title: "Followers", value: response4.data.total_f || 0, color: "purple", icon: Users }]));
+
+      } catch (error) {
+        console.log(error);
+
       }
-      else if(status == 'Block'){
-        setBlock(true);
-        setAccecpted(true);
-      } 
-      
-      
-      const response1 = await AxiosInstance.get('/dashboard/contri/stat/posts', {
-        headers: {
-          user_id: userData.user_id,
-        }
-      });
-      setStatsData((prev)=>([...prev, {title: "Total Posts", value: response1.data.total_p || 0, color: "blue", icon: FileText} ]));
-
-      const response2 = await AxiosInstance.get('/dashboard/contri/stat/views', {
-        headers: {
-          user_id: userData.user_id,
-        }
-      });
-      setStatsData((prev)=>([...prev, {title: "Total Views", value: response2.data.total_v || 0, color: "green", icon: Eye} ]))
-
-      const response3 = await AxiosInstance.get('/dashboard/contri/stat/likes', {
-        headers: {
-          user_id: userData.user_id,
-        }
-      });
-
-      setStatsData((prev)=>([...prev, {title: "Total Likes", value: response3.data.total_l || 0, color: "red", icon: Heart} ]));
-
-      const response4 = await AxiosInstance.get('/dashboard/contri/stat/followers', {
-        headers: {
-          user_id: userData.user_id,
-        }
-      });
-      setStatsData((prev)=>([...prev, {title: "Followers", value: response4.data.total_f || 0, color: "purple", icon: Users} ]));
-    } catch (error) {
-      console.log(error);
-      
-    }
-  }
-
-  const fetchRecent = async ()=>{
-    try {
-      const response = await AxiosInstance.get('/dashboard/contri/recent', {
-        headers: {
-          user_id: userData.user_id,
-        }
-      });
-      setRecentArticles(response.data.recents);
-
-      const response1 = await AxiosInstance.get('/dashboard/contri/announcements');
-      setAnnouncements(response1.data.announce);
-
-    } catch (error) {
-      console.log(error); 
     }
 
-  }
-  fetchStats();
-  fetchRecent();
+    const fetchRecent = async () => {
+      try {
+        const response = await AxiosInstance.get('/dashboard/contri/recent');
+        setRecentArticles(response.data.recents);
+
+        const response1 = await AxiosInstance.get('/dashboard/contri/announcements');
+        setAnnouncements(response1.data.announce);
+
+      } catch (error) {
+        console.log(error);
+      }
+
+    }
+    fetchStats();
+    fetchRecent();
 
   }, [isRender]);
 
-  const handleReject = async()=>{
-    try {
-      await AxiosInstance.post('/dashboard/contri/resend',{
-        cont_id: userData.user_id,
-      });
-      setIsRender(isRender+1);
-      
-    } catch (error) {
-      console.log(error);
-      
-    }
-  }
-  
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Approved': return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20';
-      case 'Pending': return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20';
-      case 'Rejected': return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
-      default: return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/20';
-    }
-  };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'approved': return CheckCircle;
-      case 'pending': return Clock;
-      case 'rejected': return XCircle;
-      default: return FileText;
-    }
-  };
-
-  
-  if (loading) return <PixelPenLoader/>
+  if (loading) return <PixelPenLoader />
 
   if (!loggedIn) return navigate("/login");
 
   return (
-    <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
-      <button
-        className="fixed top-4 left-4 sm:hidden text-2xl text-indigo-600 dark:text-indigo-400 z-[60]"
-        onClick={() => setMenuOpen(!menuOpen)}
-        >
-        <FaBars />
-      </button>
+    <div className="font-[Inter,system-ui,sans-serif] flex h-screen overflow-hidden bg-[#FAFAF8] dark:bg-slate-900 text-gray-800 dark:text-gray-100 antialiased">
 
-      {/* Mobile Sidebar Backdrop (recommended) */}
-      {menuOpen && (
+      {/* Mobile Sidebar Backdrop*/}
+      {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 sm:hidden"
-          onClick={() => setMenuOpen(false)}
-          ></div>
-        )}
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        ></div>
+      )}
 
-        {/* Sidebar */}
-        <aside
-  className={`
-    h-screen py-6 m-0 transition-all duration-300 ease-in-out bg-white dark:bg-gray-800
-    fixed top-0 left-0 z-50
-    ${menuOpen ? 'translate-x-0' : '-translate-x-full'}
-    ${menuOpen ? '' : 'w-0 overflow-hidden'}
-    sm:static sm:translate-x-0 sm:z-auto
-    ${menuMinimize ? 'sm:w-[4.6rem]' : 'sm:w-64'}
-    
-  `}
->
-  <div className="flex justify-evenly gap-2">
-    {menuMinimize == false && (
-      <h2 className="inline text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-        Contributor Panel
-      </h2>
-    )}
-    {menuMinimize ? (
-      <button
-        onClick={() => setMenuMinimize(false)}
-        className="p-2 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-600"
+      {/* Sidebar */}
+
+      <aside
+        className={`
+                  flex flex-col h-screen
+                  bg-white dark:bg-slate-800
+                  border-r border-gray-200 dark:border-slate-700
+                  transition-all duration-200 ease-in-out
+                  fixed top-0 left-0 z-50 lg:static lg:z-auto
+                  ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+                  ${minimized ? "w-[60px]" : "w-56"}
+                `}
       >
-        <FaAnglesRight size={20} className="text-black dark:text-white" />
-      </button>
-    ) : (
-      <button
-        onClick={() => setMenuMinimize(true)}
-        className="p-2 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-600"
-      >
-        <FaAnglesLeft size={20} className="text-black dark:text-white" />
-      </button>
-    )}
-  </div>
-  <nav className="flex flex-col mt-4">
-    {[
-      { label: "Dashboard", icon: <BiSolidDashboard size={25} />, status: true },
-      { label: "My Articles", icon: <MdArticle size={25} />, status: isAccepted },
-      { label: "Comments", icon: <FaComments size={25} />, status: isAccepted },
-      { label: "My Stats", icon: <MdAnalytics size={25} />, status: isAccepted },
-      { label: "Profile", icon: <FaUserCog size={25} />, status: true },
-      { label: "Settings", icon: <IoSettingsSharp size={25} />, status: true },
-      { label: "Add Article", icon: <IoIosAddCircle size={25} />, status: isAccepted && !isBlock },
-    ].map(({ label, icon, status }) => (
-      <button
-        disabled={!status}
-        title={label}
-        key={label}
-        onClick={() => setMenuOption(label)}
-        className={`flex items-center gap-3 px-4 py-3 mx-2 rounded-lg transition-colors disabled:opacity-50 ${
-          menuOption === label
-            ? "bg-indigo-100 dark:bg-indigo-600 text-indigo-700 dark:text-white font-semibold"
-            : "hover:bg-gray-200 dark:hover:bg-gray-700"
-        }`}
-      >
-        {icon}
-        {menuMinimize == false && <span>{label}</span>}
-      </button>
-    ))}
-    <button
-      onClick={logout}
-      title="Log out"
-      className="flex items-center gap-3 px-4 py-3 mx-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-600 text-red-600 dark:text-red-300"
-    >
-      <MdLogout size={25} />
-      {menuMinimize == false && <span>Log Out</span>}
-    </button>
-  </nav>
-        </aside>
+        {/* Header row */}
+        <div className={`flex items-center border-b border-gray-200 dark:border-slate-700 h-14 px-3   ${minimized ? "justify-center" : "justify-between"}`}>
+          {!minimized && (
+            <span className="text-sm font-semibold text-[#1E3A5F] dark:text-blue-400 tracking-wide select-none">
+              Contributor Panel
+            </span>
+          )}
 
-
-
-      {/* Main Content */}
-      <main className="flex-1 px-5 py-2 h-screen overflow-y-auto">
-
-        {menuOption === "Dashboard" && (
-          <div className="space-y-8">
-          {/* Welcome Section */}
-          <div className="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl p-8 text-white shadow-xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-4xl font-bold mb-2">
-                  Welcome back, {userData.userName}! 👋
-                </h1>
-                <p className="text-blue-100 text-lg">
-                  Ready to create amazing content today?
-                </p>
-              </div>
-              <div className="hidden md:block">
-                <div className="w-32 h-32 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
-                  <TrendingUp className="w-16 h-16 text-white" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {status === 'Pending' && (
-          <div className="relative overflow-hidden rounded-xl border-2 border-amber-300 dark:border-amber-600 bg-gradient-to-br from-amber-50 to-yellow-100 dark:from-amber-900/20 dark:to-yellow-900/30 p-6 shadow-lg backdrop-blur-sm duration-300 hover:shadow-xl">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-5">
-              <div className="absolute inset-0" style={{
-                backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
-                backgroundSize: '20px 20px'
-              }}></div>
-            </div>
-            
-            {/* Animated pulse */}
-            <div className="absolute -top-1 -left-1 -right-1 -bottom-1 rounded-xl opacity-20 ">
-              <div className="w-full h-full rounded-xl bg-amber-400"></div>
-            </div>
-
-            <div className="relative flex items-start space-x-4">
-              {/* Status Icon */}
-              <div className="p-3 rounded-full bg-amber-100 dark:bg-amber-800/40 text-amber-600 dark:text-amber-400 shadow-md">
-                <Clock className="w-6 h-6" />
-              </div>
-              
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                {/* Status Badge */}
-                <div className="flex items-center space-x-2 mb-3">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-amber-100 dark:bg-amber-800/40 text-amber-600 dark:text-amber-400 shadow-sm">
-                    Pending
-                  </span>
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 rounded-full bg-amber-400 animate-bounce"></div>
-                    <div className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  </div>
-                </div>
-                
-                {/* Title */}
-                <h3 className="text-xl font-bold text-amber-800 dark:text-amber-200 mb-2">
-                  Application Under Review
-                </h3>
-                
-                {/* Message */}
-                <p className="text-amber-800 dark:text-amber-200 opacity-80 leading-relaxed mb-4">
-                  You are not approved by the admins yet. Kindly complete the profile to expedite the review process.
-                </p>
-                
-                {/* Action Button */}
-                <button onClick={()=>setMenuOption('Profile')} className="inline-flex items-center px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-md active:scale-95 bg-amber-100 dark:bg-amber-800/40 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-600">
-                  Complete Profile
-                  <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {status === 'Rejected' && (
-          <div className="relative overflow-hidden rounded-xl border-2 border-red-300 dark:border-red-600 bg-gradient-to-br from-red-50 to-rose-100 dark:from-red-900/20 dark:to-rose-900/30 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-5">
-              <div className="absolute inset-0" style={{
-                backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
-                backgroundSize: '20px 20px'
-              }}></div>
-            </div>
-
-            <div className="relative flex items-start space-x-4">
-              {/* Status Icon */}
-              <div className="p-3 rounded-full bg-red-100 dark:bg-red-800/40 text-red-600 dark:text-red-400 shadow-md">
-                <XCircle className="w-6 h-6" />
-              </div>
-              
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                {/* Status Badge */}
-                <div className="flex items-center space-x-2 mb-3">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 dark:bg-red-800/40 text-red-600 dark:text-red-400 shadow-sm">
-                    Rejected
-                  </span>
-                </div>
-                
-                {/* Title */}
-                <h3 className="text-xl font-bold text-red-800 dark:text-red-200 mb-2">
-                  Application Rejected
-                </h3>
-                
-                {/* Message */}
-                <p className="text-red-800 dark:text-red-200 opacity-80 leading-relaxed mb-4">
-                  Reject Reason: {rejectReason}
-                </p>
-                <p className="text-red-800 dark:text-red-200 opacity-80 leading-relaxed mb-4">
-                  You can resend the request after fixing the problem.
-                </p>
-
-                <button onClick={()=>handleReject()} className="bg-red-400 hover:bg-red-600 p-2 rounded-lg dark:bg-red-600 dark:hover:bg-red-800">Review Again</button>
-              
-              </div>
-            </div>
-          </div>
-        )}
-
-        {status === 'Block' && (
-          <div className="relative overflow-hidden rounded-xl border-2 border-orange-400 dark:border-orange-600 bg-gradient-to-br from-orange-50 to-red-100 dark:from-orange-900/20 dark:to-red-900/30 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-5">
-              <div className="absolute inset-0" style={{
-                backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
-                backgroundSize: '20px 20px'
-              }}></div>
-            </div>
-
-            <div className="relative flex items-start space-x-4">
-              {/* Status Icon */}
-              <div className="p-3 rounded-full bg-orange-100 dark:bg-orange-800/40 text-orange-600 dark:text-orange-400 shadow-md">
-                <Ban className="w-6 h-6" />
-              </div>
-              
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                {/* Status Badge */}
-                <div className="flex items-center space-x-2 mb-3">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-orange-100 dark:bg-orange-800/40 text-orange-600 dark:text-orange-400 shadow-sm">
-                    Blocked
-                  </span>
-                </div>
-                
-                {/* Title */}
-                <h3 className="text-xl font-bold text-orange-800 dark:text-orange-200 mb-2">
-                  Account Temporarily Suspended
-                </h3>
-                
-                {/* Message */}
-                <p className="text-orange-800 dark:text-orange-200 opacity-80 leading-relaxed mb-4">
-                  You are temporarily blocked by the admins. This action is under review and may be lifted after further evaluation.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {statsData.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <div key={index} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={`p-3 rounded-lg bg-${stat.color}-100 dark:bg-${stat.color}-900/20`}>
-                      <Icon className={`w-6 h-6 text-${stat.color}-600 dark:text-${stat.color}-400`} />
-                    </div>
-                  </div>
-                  <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">
-                    {stat.title}
-                  </h3>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {stat.value}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Articles Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                Recent Articles
-              </h2>
-            </div>
-            <div className="p-6 space-y-4">
-              {recentArticles.length > 0 ? (recentArticles.map((article) => {
-                const StatusIcon = getStatusIcon(article.article_status);
-                return (
-                  <div
-                    key={article.title}
-                    className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                  >
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 dark:text-white text-lg mb-1">
-                        {article.title}
-                      </h3>
-                    </div>
-                    <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(article.article_status)}`}>
-                      <StatusIcon className="w-4 h-4" />
-                      {article.article_status}
-                    </div>
-                  </div>
-                );
-              })): (
-              <>
-                <div className="text-center py-12">
-                  <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-                    <XCircle className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-                  </div>
-                  <p className="text-gray-500 dark:text-gray-400 text-lg">No Articles</p>
-                </div>
-              
-              </>)}
-            </div>
-          </div>
-
-          {/* Announcements */}
-          {announcements.length > 0 && <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                <Megaphone className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                Announcements
-              </h2>
-            </div>
-            <div className="p-6 space-y-4">
-              {announcements.map((announcement) => {
-                return (
-                  <div
-                    key={announcement.id}
-                    className="p-5 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-2">
-                          {announcement.title}
-                        </h3>
-                        <p className="text-gray-700 dark:text-gray-300 mb-3">
-                          {announcement.content}
-                        </p>
-                        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                          <Calendar className="w-4 h-4" />
-                          Posted on {new Date(announcement.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>}
-
+          <button
+            onClick={() => setMinimized(m => !m)}
+            className="hidden lg:flex p-1.5 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 dark:text-slate-500 transition-colors  "
+            aria-label="Toggle sidebar width"
+          >
+            {minimized ? <FaAnglesRight size={13} /> : <FaAnglesLeft size={13} />}
+          </button>
         </div>
-        )}
 
-        {menuOption === "My Articles" && <MyArticles userdata={userData} setMenuOption={setMenuOption} setRefslug={setRefslug} />}
-        {menuOption === "Comments" && <MyComments />}
-        {menuOption === "My Stats" && <MyAnalytics />}
-        {menuOption === "Profile" && <ContriProfile userdata={userData} />}
-        {menuOption === "Settings" && (
-          <ThemeProvider>
-            <ContriSettings />
-          </ThemeProvider>
-        )}
-        {menuOption === "Add Article" && <ArticleEditor userdata={userData} refSlug={refSlug} />}
-      </main>
+        <nav className="flex-1 py-2 flex flex-col gap-0.5 overflow-y-auto overflow-x-hidden">
+          {NAV_ITEMS.map(({ label, path, icon, status }) => (
+            <NavLink
+              key={label}
+              to={path}
+              end={path === ""}
+              disabled={!status}
+              onClick={(e) => {
+                if (!status) {
+                  e.preventDefault();
+                  return;
+                }
+                setMobileOpen(false)
+              }}
+              className={({ isActive }) => `
+                flex items-center gap-3 mx-2 rounded transition-colors duration-150 text-sm font-medium whitespace-nowrap overflow-hidden
+                ${!status ? "opacity-40 cursor-not-allowed" : ""}
+                ${minimized ? "justify-center px-0 py-2.5" : "px-3 py-2.5"}
+                ${isActive
+                  ? "bg-[#1E3A5F] text-white"
+                  : "text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-800 dark:hover:text-gray-100"
+                }
+              `}
+            >
+              <span>{icon}</span>
+
+              {!minimized && (
+                <span className="truncate">{label}</span>
+              )}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="border-t border-gray-200 dark:border-slate-700 p-2  ">
+          <button
+            onClick={logout}
+            title="Log out"
+            className={`flex items-center gap-3 w-full rounded text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150
+                      ${minimized ? "justify-center px-0 py-2.5" : "px-3 py-2.5"}`}
+          >
+            <MdLogout size={18} />
+            {!minimized && <span className="whitespace-nowrap">Log Out</span>}
+          </button>
+        </div>
+      </aside>
+
+
+
+      {/* Main area */}
+      <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
+
+        {/* Top bar */}
+        <header className="  bg-white dark:bg-slate-800 border-b-2 border-gray-100 dark:border-slate-700 px-5 h-14 flex items-center gap-3"
+          style={{ borderBottomColor: undefined }}
+        >
+          <button
+            className="lg:hidden p-1.5 rounded border border-gray-200 dark:border-slate-600 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors mr-1"
+            onClick={() => setMobileOpen(o => !o)}
+            aria-label="Open menu"
+          >
+            <FaBars size={15} />
+          </button>
+
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 leading-none">{activeMenu}</p>
+            <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-0.5 leading-none">Pixel & Pen — Contributor</p>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto">
+          <div className="p-5 sm:p-7">
+            <Outlet
+              context={{
+                userData,
+                statsData,
+                recentArticles,
+                announcements,
+                status,
+                rejectReason,
+              }}
+            />
+          </div>
+        </main>
+
+      </div>
     </div>
   );
 }

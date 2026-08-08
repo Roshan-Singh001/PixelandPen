@@ -38,11 +38,11 @@ import { FaBookReader } from "react-icons/fa";
 
 import Grainient from "../../components/Grainient";
 import PixelPenLoader from "../../components/PixelPenLoader";
-import Likes from "./subs_components/Likes";
-import Bookmarks from "./subs_components/Bookmarks";
-import Comments from "./subs_components/comments";
-import SubsProfile from "./subs_components/SubsProfile";
-import SubsSettings from "./subs_components/SubsSettings";
+import Likes from "./read_components/Likes";
+import Bookmarks from "./read_components/Bookmarks";
+import Comments from "./read_components/comments";
+import SubsProfile from "./read_components/SubsProfile";
+import SubsSettings from "./read_components/SubsSettings";
 
 import { useAuth } from "../../contexts/AuthContext";
 import { ThemeProvider } from "../../contexts/ThemeContext";

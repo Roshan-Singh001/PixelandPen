@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
-import { 
-  User, MapPin, Calendar, Users, Heart, Eye, Share2, 
+import {
+  User, MapPin, Calendar, Users, Heart, Eye, Share2,
   ExternalLink, BookOpen, TrendingUp, Clock, Star, MessageCircle,
   Award, Target, Zap, Filter, Search, ChevronRight,
   Globe, Mail, Phone
 } from 'lucide-react';
-import { FaXTwitter  } from 'react-icons/fa6';
-import { FaGithub, FaLinkedin, FaFacebook   } from "react-icons/fa";
-import {toast } from "react-toastify";
+import { FaXTwitter } from 'react-icons/fa6';
+import { FaGithub, FaLinkedin, FaFacebook } from "react-icons/fa";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import PixelPenLoader from '../components/PixelPenLoader';
@@ -24,7 +24,7 @@ const AxiosInstance = axios.create({
 });
 const ProfilePage = () => {
   const { slug } = useParams();
-  const { loggedIn, userData} = useAuth();
+  const { loggedIn, userData } = useAuth();
   const navigate = useNavigate();
   const [contributor, setContributor] = useState(null);
   const [articles, setArticles] = useState([]);
@@ -45,14 +45,13 @@ const ProfilePage = () => {
         setArticles(response1.data.articleInfo);
         setPopularArticles(response1.data.popularArticles);
         setMostLikedArticles(response1.data.likeArticles);
-  
+
         if (userData.userRole === 'Reader') {
-          let user_id = userData.user_id;
           let cont_id = response1.data.profileInfo.cont_id;
           try {
             const response2 = await AxiosInstance.get(`/action/isfollow/cont/`, {
-                headers: {cont_id: cont_id,
-                user_id: user_id
+              headers: {
+                cont_id: cont_id,
               }
             });
             setIsFollowing(response2.data.isFollow);
@@ -65,22 +64,22 @@ const ProfilePage = () => {
       }
       setIsLoading(false);
     };
-  
+
     fetchContributorData();
   }, [slug, userData]);
-  
 
-  const handleView = (article_slug)=>{
+
+  const handleView = (article_slug) => {
     window.open(`/view/${article_slug}`, '_blank');
   }
 
-  const handleFollow = async() => {
-    if(!loggedIn){
+  const handleFollow = async () => {
+    if (!loggedIn) {
       toast.error(`This action needs log in`);
       navigate("/login");
       return;
     }
-    else if(userData.userRole != 'Reader'){
+    else if (userData.userRole != 'Reader') {
       console.log(userData);
       toast.error(`You can't perform this action`);
       return;
@@ -89,43 +88,42 @@ const ProfilePage = () => {
     try {
       const newFollowState = !isFollowing;
       setIsFollowing(newFollowState);
-        await AxiosInstance.post(`/action/follow/cont/`, {
-            cont_id: contributor.cont_id,
-            user_id: userData.user_id,
-            follow: newFollowState
-          }
-        );
+      await AxiosInstance.post(`/action/follow/cont/`, {
+        cont_id: contributor.cont_id,
+        follow: newFollowState
+      }
+      );
 
       setContributor((prev) => ({
-          ...prev,
-          followers: newFollowState?prev.followers + 1:prev.followers - 1,
+        ...prev,
+        followers: newFollowState ? prev.followers + 1 : prev.followers - 1,
       }));
-      
+
     } catch (error) {
       console.log(error);
       toast.error("Failed to update follow status");
-      
+
     }
   };
 
-const filterList = (list) =>
-  list.filter(article =>
-    article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    article.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-let sortedArticles = [];
-switch (sortBy) {
-  case "popular":
-    sortedArticles = filterList(popularArticles);
-    break;
-  case "likes":
-    sortedArticles = filterList(mostLikedArticles);
-    break;
-  case "recent":
-  default:
-    sortedArticles = filterList(articles);
-    break;
-}
+  const filterList = (list) =>
+    list.filter(article =>
+      article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      article.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  let sortedArticles = [];
+  switch (sortBy) {
+    case "popular":
+      sortedArticles = filterList(popularArticles);
+      break;
+    case "likes":
+      sortedArticles = filterList(mostLikedArticles);
+      break;
+    case "recent":
+    default:
+      sortedArticles = filterList(articles);
+      break;
+  }
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -153,7 +151,7 @@ switch (sortBy) {
 
   if (isLoading) {
     return (
-      <PixelPenLoader/>
+      <PixelPenLoader />
     );
   }
 
@@ -191,16 +189,16 @@ switch (sortBy) {
             {/* Profile Info */}
             <div className="flex-1 text-center lg:text-left">
               <h1 className="text-4xl lg:text-5xl font-bold text-white mb-2">
-                {contributor.username}
+                {contributor.username || "Anonymous"}
               </h1>
               <p className="text-xl text-blue-100 mb-4 max-w-2xl">
-                {contributor.bio}
+                {contributor.bio || "This contributor hasn't added a bio yet."}
               </p>
-              
+
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 text-blue-100">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-5 h-5" />
-                  <span>{contributor.city}, {contributor.country}</span>
+                  <span>{contributor.city || 'NA'} { contributor.country && `, ${contributor.country}` || ' '}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-5 h-5" />
@@ -217,11 +215,10 @@ switch (sortBy) {
             <div className="flex flex-col gap-4">
               <button
                 onClick={handleFollow}
-                className={`px-8 py-3 rounded-lg font-semibold transition-all duration-200 ${
-                  isFollowing
+                className={`px-8 py-3 rounded-lg font-semibold transition-all duration-200 ${isFollowing
                     ? 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                     : 'bg-white text-blue-600 hover:bg-blue-50'
-                }`}
+                  }`}
               >
                 {isFollowing ? 'Following' : 'Follow'}
               </button>
@@ -246,11 +243,10 @@ switch (sortBy) {
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`flex items-center gap-2 py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
-                  activeTab === id
+                className={`flex items-center gap-2 py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${activeTab === id
                     ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
+                  }`}
               >
                 <Icon className="w-4 h-4" />
                 {label}
@@ -270,27 +266,30 @@ switch (sortBy) {
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">About</h2>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                  {contributor.bio}
+                  {contributor.bio || "This contributor hasn't added a bio yet."}
                 </p>
               </div>
 
               {/* Expertise */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                  <Award className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                  Expertise & Skills
-                </h2>
-                <div className="flex flex-wrap gap-3">
-                  {contributor.expertise.map((skill, index) => (
-                    <span
-                      key={index}
-                      className="px-4 py-2 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400 rounded-full text-sm font-medium border border-blue-200 dark:border-blue-800"
-                    >
-                      {skill}
-                    </span>
-                  ))}
+              {(contributor.expertise).length > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Award className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    Expertise & Skills
+                  </h2>
+                  <div className="flex flex-wrap gap-3">
+                    {contributor.expertise.map((skill, index) => (
+                      <span
+                        key={index}
+                        className="px-4 py-2 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400 rounded-full text-sm font-medium border border-blue-200 dark:border-blue-800"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )
+              }
 
               {/* Popular Articles Preview */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -308,7 +307,7 @@ switch (sortBy) {
                   </button>
                 </div>
                 <div className="space-y-4">
-                  {popularArticles.length >0 ?popularArticles.map((article) => (
+                  {popularArticles.length > 0 ? popularArticles.map((article) => (
                     <div key={article.article_id} className="flex gap-4 p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer">
                       <img
                         src={article.thumbnail_url}
@@ -331,13 +330,13 @@ switch (sortBy) {
                         </div>
                       </div>
                     </div>
-                  )): <div className="text-center py-12">
-                  <BookOpen className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No articles found</h3>
-                  <p className="text-gray-500 dark:text-gray-400">
-                    {searchTerm ? 'Try adjusting your search terms' : 'This contributor hasn\'t published any articles yet'}
-                  </p>
-                </div>}
+                  )) : <div className="text-center py-12">
+                    <BookOpen className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No articles found</h3>
+                    <p className="text-gray-500 dark:text-gray-400">
+                      {searchTerm ? 'Try adjusting your search terms' : 'This contributor hasn\'t published any articles yet'}
+                    </p>
+                  </div>}
 
                 </div>
               </div>
@@ -375,29 +374,31 @@ switch (sortBy) {
               </div>
 
               {/* Social Links */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Connect</h3>
-                <div className="space-y-3">
-                  {Object.entries(contributor.links).map(([platform, url]) => {
-                    const Icon = getSocialIcon(platform);
-                    return (
-                      <a
-                        key={platform}
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
-                      >
-                        <Icon className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
-                        <span className="text-gray-700 dark:text-gray-300 capitalize group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                          {platform}
-                        </span>
-                        <ExternalLink className="w-4 h-4 text-gray-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </a>
-                    );
-                  })}
-                </div>
-              </div>
+              {Object.keys(contributor.links).length > 0 &&
+                (<div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Connect</h3>
+                  <div className="space-y-3">
+                    {Object.entries(contributor.links).map(([platform, url]) => {
+                      const Icon = getSocialIcon(platform);
+                      return (
+                        <a
+                          key={platform}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
+                        >
+                          <Icon className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                          <span className="text-gray-700 dark:text-gray-300 capitalize group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                            {platform}
+                          </span>
+                          <ExternalLink className="w-4 h-4 text-gray-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>)
+              }
 
               {/* Contact Info */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -409,7 +410,7 @@ switch (sortBy) {
                   </div>
                   <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
                     <Globe className="w-5 h-5" />
-                    <span className="text-sm">{contributor.city}, {contributor.country}</span>
+                    <span className="text-sm">{contributor.city || 'NA'} { contributor.country && `, ${contributor.country}` || ' '}</span>
                   </div>
                 </div>
               </div>
@@ -457,11 +458,11 @@ switch (sortBy) {
                     />
                     <div className="absolute top-4 left-4">
                       <span className="px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-full">
-                        {article.category}
+                        {article.category_name}
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="p-6">
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                       {article.title}
@@ -469,7 +470,7 @@ switch (sortBy) {
                     <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-3">
                       {article.description}
                     </p>
-                    
+
                     <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
                       <div className="flex items-center gap-4">
                         <span className="flex items-center gap-1">
@@ -480,16 +481,16 @@ switch (sortBy) {
                           <Heart className="w-4 h-4" />
                           {formatNumber(article.likes)}
                         </span>
-                        
+
                       </div>
-                      
+
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-gray-500 dark:text-gray-400">
                         {formatDate(article.publish_at)}
                       </span>
-                      <button onClick={()=>handleView(article.slug)} className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm flex items-center gap-1">
+                      <button onClick={() => handleView(article.slug)} className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm flex items-center gap-1">
                         Read More
                         <ChevronRight className="w-4 h-4" />
                       </button>

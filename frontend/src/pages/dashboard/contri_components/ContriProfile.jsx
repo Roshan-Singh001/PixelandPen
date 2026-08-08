@@ -38,11 +38,7 @@ const ContriProfile = (props) => {
     const fetchProfile = async () => {
       try {
         setIsLoading(true);
-        const response = await AxiosInstance.get('/dashboard/contri/profile', {
-          headers: {
-            user_id: props.userdata.user_id,
-          }
-        });
+        const response = await AxiosInstance.get('/dashboard/contri/profile');
         
         const profileData = response.data[0];
         if (profileData.dob == null) profileData.dob = "";
@@ -52,9 +48,10 @@ const ContriProfile = (props) => {
         } catch (e) {
           setExpertise([]);
         }
+
         
         try {
-          setLinks(profileData.links ? profileData.links : {
+          setLinks((profileData.links).length > 0 ? profileData.links : {
             facebook: '',
             twitter: '',
             github: '',
@@ -68,6 +65,8 @@ const ContriProfile = (props) => {
             linkedin: ''
           });
         }
+
+        console.log('Fetched profile data:', profileData);
         
         setProfile(profileData);
         
@@ -263,7 +262,7 @@ const ContriProfile = (props) => {
 
   console.log(expertise);
   console.log(expertiseInput);
-  console.log(links);
+  console.log("Links",links);
 
   return (
     <div className="min-h-screen p-2">

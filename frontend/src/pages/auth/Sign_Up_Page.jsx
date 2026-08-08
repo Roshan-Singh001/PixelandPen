@@ -1,465 +1,391 @@
 import React, { useEffect, useState } from "react";
-import { TbMessageChatbot } from "react-icons/tb";
 import axios from "axios";
-import { GiCoffeeCup } from "react-icons/gi";
-import { IoMdPerson } from "react-icons/io";
 import { MdEmail } from "react-icons/md";
-import { FcGoogle } from "react-icons/fc";
-import { BiLogoFacebookCircle } from "react-icons/bi";
+import { IoMdPerson } from "react-icons/io";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { FaApple } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import LogoDark from "../../assets/images/Pixel & Pen(B&W).png";
 
+function evalPasswordStrength(pw) {
+  if (!pw) return null;
+  if (
+    pw.length >= 8 &&
+    /[a-z]/.test(pw) && /[A-Z]/.test(pw) &&
+    /\d/.test(pw) && /[^A-Za-z0-9]/.test(pw)
+  ) return "strong";
+  if (pw.length >= 8 && /[a-z]/.test(pw) && /[A-Z]/.test(pw) && /\d/.test(pw)) return "medium";
+  if (pw.length >= 4) return "weak";
+  return "vweak";
+}
+
+const STRENGTH_META = {
+  strong: { label: "Strong password", bar: "w-full", text: "text-green-600 dark:text-green-400", bg: "bg-green-500" },
+  medium: { label: "Medium", bar: "w-2/3", text: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500" },
+  weak: { label: "Weak", bar: "w-2/5", text: "text-orange-500 dark:text-orange-400", bg: "bg-orange-500" },
+  vweak: { label: "Too short", bar: "w-1/5", text: "text-red-600 dark:text-red-400", bg: "bg-red-500" },
+};
+
 function Sign_Up_Page() {
   const navigate = useNavigate();
-  const [showPassword, setshowPassword] = useState(false);
-  const [showConfirmPassword, setshowConfirmPassword] = useState();
-  const [role, setRole] = useState("");
-  const [form, setForm] = useState({
-    pass: "",
-    cpass: "",
-    email: "",
-    username: "",
-    RegisterAs: "",
-  });
-  const [Strength, setStrength] = useState();
-  const [valuePassMatch, setvaluePassMatch] = useState();
-  const [Error, setError] = useState();
-  const [isEmailExist, setisEmailExist] = useState(null);
-  const [isUserExist, setisUserExist] = useState(null);
 
-  const AxiosInstance = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
-    timeout: 10000,
-    headers: { "X-Custom-Header": "foobar" },
-  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [form, setForm] = useState({ pass: "", cpass: "", email: "", username: "", RegisterAs: "" });
+  const [strength, setStrength] = useState(null);
+  const [passMatch, setPassMatch] = useState(null); // "matched" | "mismatch" | null
+  const [isEmailExist, setIsEmailExist] = useState(null);
+  const [isUserExist, setIsUserExist] = useState(null);
 
-  const showTogglePassword = () => {
-    setshowPassword((prevState) => !prevState);
-  };
+  const API = axios.create({ baseURL: import.meta.env.VITE_API_URL, timeout: 10000 });
 
-  const showToggleConfirmPassword = () => {
-    setshowConfirmPassword((prevState) => !prevState);
-  };
-
-  function checkPasswordMatch(e) {
-    const { name, value } = e.target;
-    const updatedForm = { ...form, [name]: value };
-    setForm(updatedForm);
-
-    if (name === "pass" || name === "cpass") {
-      const { pass, cpass } = updatedForm;
-
-      if (!pass || !cpass) {
-        setvaluePassMatch("Password field can't be left Empty");
-      } else if (pass === cpass) {
-        setvaluePassMatch("Password Matched");
-      } else {
-        setvaluePassMatch("Password didn't Match");
-      }
-    }
-  }
-
-  const passwordMatch = {
-    "Password Matched": "text-green-500 dark:text-green-400 border-green-500",
-    "Password didn't Match": "text-red-500 dark:text-red-400 border-red-500",
-    "Password field can't be left Empty": "text-yellow-500 dark:text-yellow-400 border-red-500",
-  };
-
-  function CheckPasswordStrength(e) {
-    setForm({ ...form, [e.target.name]: e.target.value });
-
-    let password = e.target.value;
-
-    if (password.length === 0) {
-      setStrength("");
-    } else if (
-      password.length >= 8 &&
-      /[a-z]/.test(password) &&
-      /\d/.test(password) &&
-      /[A-Z]/.test(password) &&
-      /[^A-Za-z0-9]/.test(password)
-    ) {
-      setStrength("Password is Strong");
-    } else if (
-      password.length >= 8 &&
-      /[a-z]/.test(password) &&
-      /\d/.test(password) &&
-      /[A-Z]/.test(password)
-    ) {
-      setStrength("Password is Medium");
-    }
-    // Check if the password is weak (length >= 4)
-    else if (password.length >= 4) {
-      setStrength("Password is Weak");
-    } else {
-      setStrength("Password is Very Weak");
-    }
-  }
-
-  const strengthClasses = {
-    "Password is Very Weak": "text-red-500 dark:text-red-400 border-red-500",
-    "Password is Weak": "text-orange-500 dark:text-orange-400 border-orange-500",
-    "Password is Medium": "text-yellow-500 dark:text-yellow-400 border-yellow-500",
-    "Password is Strong": "text-green-500 dark:text-green-400 border-green-500",
-  };
-
-  function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    setRole(e.target.value);
-    console.log(form);
-  }
-
-  async function checkUsernameExist(username) {
-    if (username) {
-      try {
-        const response = await AxiosInstance.get(`/check-username/${username}`);
-        setisUserExist(response.data.exists);
-      } catch (err) {
-        console.log("Error checking email existence:", err);
-      }
-    } else {
-      setisUserExist(null);
-    }
-  }
-
+  /* ── Live availability checks ── */
   useEffect(() => {
-    if (form.username) {
-      checkUsernameExist(form.username);
-      console.log(form.username);
-    }
-  }, [form.username]);
+    const email = form.email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  async function checkEmailExist(email) {
-    if (email) {
-      try {
-        const response = await AxiosInstance.get(`/check-email/${email}`);
-        setisEmailExist(response.data.exists);
-      } catch (err) {
-        console.log("Error checking email existence:", err);
-      }
-    } else {
-      setisEmailExist(null);
+    if (!emailRegex.test(email)) {
+      setIsEmailExist(null);
+      return;
     }
-  }
 
-  useEffect(() => {
-    if (form.email) {
-      checkEmailExist(form.email);
-      console.log(form.email);
-    }
+    const timer = setTimeout(() => {
+      API.get(`/check-email/${email}`)
+        .then((res) => setIsEmailExist(res.data.exists))
+        .catch(() => { });
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [form.email]);
 
-  function handlePasswordChange(e) {
-    checkPasswordMatch(e);
-    CheckPasswordStrength(e);
+
+  useEffect(() => {
+    const username = form.username.trim();
+    const usernameRegex = /^[a-zA-Z0-9_]{3,}$/;
+
+    if (!usernameRegex.test(username)) {
+      setIsUserExist(null);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      API.get(`/check-username/${username}`)
+        .then((res) => setIsUserExist(res.data.exists))
+        .catch(() => { });
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [form.username]);
+
+  /* ── Handlers ── */
+  function handleChange(e) {
+    setForm(f => ({ ...f, [e.target.name]: e.target.value }));
   }
 
-  async function handleFormSubmit(e) {
+  function handlePasswordChange(e) {
+    const { name, value } = e.target;
+    const updated = { ...form, [name]: value };
+    setForm(updated);
+
+    if (name === "pass") setStrength(evalPasswordStrength(value));
+
+    const pass = name === "pass" ? value : updated.pass;
+    const cpass = name === "cpass" ? value : updated.cpass;
+    if (!pass || !cpass) setPassMatch(null);
+    else setPassMatch(pass === cpass ? "matched" : "mismatch");
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault();
+    if (form.pass !== form.cpass) { toast.error("Passwords don't match."); return; }
+    if (isEmailExist || isUserExist) { toast.error("Email or username already in use."); return; }
+    if (!form.RegisterAs) { toast.error("Select a role to continue."); return; }
 
-    if (form.pass !== form.cpass) {
-      toast.error("Check credentials and Retry again!");
-      return; // Don't submit the form
-    } else if (isEmailExist || isUserExist) {
-      toast.error("Email or username already exists!");
-      return; // Don't submit the form
-    } else {
-      if (!form.RegisterAs) {
-        toast.error("Please select a user role");
-        return;
-      }
-      try {
-        const response = await AxiosInstance.post("/submit", {
-          username: form.username,
-          password: form.pass,
-          email: form.email,
-          RegisterAs: form.RegisterAs,
-        });
-
-        console.log("Navigating to /verify-otp with email:", form.email);
-        navigate("/verify-otp", {
-          state: { email: form.email },
-        });
-
-        toast.success("Otp sent successfully");
-      } catch (err) {
-        const message = err.response?.data?.message || "An error occurred";
-        console.log(err);
-        toast.error(message);
-      }
-
-      setForm({ pass: "", cpass: "", email: "", username: "" });
-      setStrength("");
-      setvaluePassMatch("");
-      console.log("Form submitted successfully");
+    try {
+      await API.post("/submit", {
+        username: form.username, password: form.pass,
+        email: form.email, RegisterAs: form.RegisterAs,
+      });
+      toast.success("OTP sent — check your inbox.");
+      navigate("/verify-otp", { state: { email: form.email } });
+      setForm({ pass: "", cpass: "", email: "", username: "", RegisterAs: "" });
+      setStrength(null);
+      setPassMatch(null);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Something went wrong.");
     }
   }
 
+  /* ── Derived ── */
+  const emailState = isEmailExist === true ? "error" : isEmailExist === false ? "success" : null;
+  const userState = isUserExist === true ? "error" : isUserExist === false ? "success" : null;
+  const sm = strength ? STRENGTH_META[strength] : null;
+
+  const STEPS = [
+    { n: "01", title: "Create your account", desc: "Pick a role and set up credentials." },
+    { n: "02", title: "Verify your email", desc: "A one-time code keeps things secure." },
+    { n: "03", title: "Start publishing", desc: "Access BlogFlow and the full ecosystem." },
+  ];
+
+  /* ─────────────────────────────────────────────────────────────────────── */
   return (
-    <>
-      <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4 transition-all duration-300">
-        <div className="w-full max-w-6xl mx-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden backdrop-blur-lg border border-white/20 dark:border-gray-700/50 transition-all duration-300">
-            <div className="flex flex-col lg:flex-row min-h-[90vh]">
-              {/* Left Side - Hero Section */}
-              <div className="lg:w-2/5 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 dark:from-blue-700 dark:via-purple-700 dark:to-indigo-800 relative overflow-hidden">
-                {/* Animated background elements */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-600/20 animate-pulse"></div>
-                <div className="absolute top-10 right-10 w-32 h-32 bg-white/10 rounded-full blur-xl animate-bounce"></div>
-                <div className="absolute bottom-10 left-10 w-24 h-24 bg-purple-400/20 rounded-full blur-lg animate-pulse"></div>
-                
-                <div className="relative z-10 h-full flex flex-col justify-center items-center p-8 text-center">
-                  {/* Logo Section */}
-                  <div className="mb-8 transform hover:scale-105 transition-transform duration-300">
-                    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                      <img 
-                        src={LogoDark} 
-                        alt="WebsiteLogo" 
-                        className="max-w-[150px] h-auto filter brightness-0 invert"
-                      />
-                    </div>
-                  </div>
+    <div className="min-h-screen flex flex-col bg-[#FAFAF8] dark:bg-slate-900 font-[Inter,system-ui,sans-serif] antialiased">
 
-                  {/* Quote Section */}
-                  <div className="mb-12 max-w-sm">
-                    <blockquote className="text-white/90 font-medium text-lg leading-relaxed italic">
-                      "A pixel paints, a pen writes—together, they build worlds."
-                    </blockquote>
-                  </div>
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-8">
+        <div className="w-full max-w-5xl border border-gray-200 dark:border-slate-700 grid grid-cols-1 lg:grid-cols-[2fr_3fr] bg-white dark:bg-slate-800 shadow-sm">
 
-                  {/* Coffee Icon */}
-                  <div className="flex flex-col items-center space-y-3">
-                    <div className="bg-white/10 backdrop-blur-sm rounded-full p-4 border border-white/20 transform hover:scale-110 transition-all duration-300">
-                      <GiCoffeeCup size={48} className="text-white animate-pulse" />
-                    </div>
-                    <p className="text-white/80 font-medium text-lg">Enjoy the Journey</p>
-                  </div>
-                </div>
+          {/* ── Left panel ──────────────────────────────────────────────── */}
+          <div className="relative flex flex-col justify-between bg-[#1E3A5F] p-10 lg:p-12 overflow-hidden">
+
+            <div className="relative z-10">
+              {/* Logo */}
+              <div className="mb-10">
+                <img
+                  src={LogoDark}
+                  alt="Pixel & Pen"
+                  className="h-7 brightness-0 invert opacity-90"
+                />
               </div>
 
-              {/* Right Side - Form Section */}
-              <div className="lg:w-3/5 p-8 lg:p-12 bg-white dark:bg-gray-800 transition-colors duration-300">
-                <div className="max-w-md mx-auto">
-                  {/* Header */}
-                  <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent mb-2">
-                      Create Account
-                    </h1>
-                    <p className="text-gray-600 dark:text-gray-400">Join our creative community today</p>
+              {/* Headline */}
+              <div className="mb-10">
+                <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-3">
+                  Join the ecosystem
+                </p>
+                <h2 className="font-[Newsreader,Georgia,serif] text-[clamp(24px,2.5vw,34px)] font-medium leading-[1.15] tracking-tight text-white">
+                  Content tools built for{" "}
+                  <em className="text-[#FBBF24] not-italic" style={{ fontStyle: "italic" }}>creators.</em>
+                </h2>
+              </div>
+
+              {/* Steps timeline */}
+              <div className="flex flex-col">
+                {STEPS.map(({ n, title, desc }, i) => (
+                  <div key={n} className="flex gap-4">
+                    {/* dot + line column */}
+                    <div className="flex flex-col items-center pt-1">
+                      <span className="w-2 h-2 rounded-full bg-[#F59E0B] flex-shrink-0" />
+                      {i < STEPS.length - 1 && (
+                        <span className="w-px flex-1 bg-white/10 my-1.5" />
+                      )}
+                    </div>
+                    {/* text */}
+                    <div className={i < STEPS.length - 1 ? "pb-5" : ""}>
+                      <p className="text-[10px] font-semibold tracking-[0.14em] uppercase text-[#FBBF24] mb-0.5">{n}</p>
+                      <p className="text-sm font-medium text-white mb-0.5">{title}</p>
+                      <p className="text-xs text-white/45 leading-relaxed">{desc}</p>
+                    </div>
                   </div>
-
-                  {/* Form */}
-                  <form onSubmit={handleFormSubmit} className="space-y-6">
-                    {/* Role Selection */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Choose your role
-                      </label>
-                      <div className="relative">
-                        <select
-                          name="RegisterAs"
-                          value={form.RegisterAs}
-                          onChange={(e) => {
-                            handleChange(e);
-                            setRole(e.target.value);
-                          }}
-                          className={`w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none transition-all duration-300 ${
-                            form.RegisterAs === "" ? "text-gray-400 dark:text-gray-500" : ""
-                          }`}
-                        >
-                          <option value="" hidden>
-                            Select your role...
-                          </option>
-                          <option value="Admin">Admin</option>
-                          <option value="Contributor">Contributor</option>
-                          <option value="Reader">Reader</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Email Input */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Email Address
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="email"
-                          name="email"
-                          value={form.email}
-                          onChange={handleChange}
-                          required
-                          className="w-full px-4 py-3 pl-12 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none transition-all duration-300 placeholder-gray-400 dark:placeholder-gray-500"
-                          placeholder="Enter your email"
-                        />
-                        <MdEmail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
-                        {isEmailExist && (
-                          <p className="text-red-500 dark:text-red-400 text-sm mt-1 flex items-center">
-                            <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
-                            Email already exists
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Username Input */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Username
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          name="username"
-                          value={form.username}
-                          onChange={handleChange}
-                          minLength={4}
-                          required
-                          className="w-full px-4 py-3 pl-12 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none transition-all duration-300 placeholder-gray-400 dark:placeholder-gray-500"
-                          placeholder="Choose a username"
-                        />
-                        <IoMdPerson className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
-                        {isUserExist && (
-                          <p className="text-red-500 dark:text-red-400 text-sm mt-1 flex items-center">
-                            <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
-                            Username already exists
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Password Input */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Password
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          required
-                          value={form.pass}
-                          maxLength={16}
-                          minLength={4}
-                          name="pass"
-                          onChange={handlePasswordChange}
-                          className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none transition-all duration-300 placeholder-gray-400 dark:placeholder-gray-500"
-                          placeholder="Create a password"
-                        />
-                        <button
-                          type="button"
-                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
-                          onClick={showTogglePassword}
-                        >
-                          {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
-                        </button>
-                        {Strength && (
-                          <p className={`text-sm mt-1 font-medium ${strengthClasses[Strength]}`}>
-                            {Strength}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Confirm Password Input */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Confirm Password
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showConfirmPassword ? "text" : "password"}
-                          required
-                          value={form.cpass}
-                          name="cpass"
-                          className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none transition-all duration-300 placeholder-gray-400 dark:placeholder-gray-500"
-                          placeholder="Confirm your password"
-                          onChange={handlePasswordChange}
-                        />
-                        <button
-                          type="button"
-                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200"
-                          onClick={showToggleConfirmPassword}
-                        >
-                          {showConfirmPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
-                        </button>
-                        {valuePassMatch && (
-                          <p className={`text-sm mt-1 font-medium ${passwordMatch[valuePassMatch]}`}>
-                            {valuePassMatch}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Submit Button */}
-                    <button
-                      type="submit"
-                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 dark:from-blue-500 dark:to-purple-500 dark:hover:from-blue-600 dark:hover:to-purple-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
-                    >
-                      Create Account
-                    </button>
-                  </form>
-
-                  {/* Divider */}
-                  {/* <div className="relative my-8">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                      <span className="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                        Or continue with
-                      </span>
-                    </div>
-                  </div> */}
-
-                  {/* Social Sign Up
-                  <div className="flex justify-center space-x-4 mb-8">
-                    <button className="w-12 h-12 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-110">
-                      <FcGoogle size={24} />
-                    </button>
-                    <button className="w-12 h-12 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-110">
-                      <BiLogoFacebookCircle size={24} className="text-blue-600" />
-                    </button>
-                    <button className="w-12 h-12 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-110">
-                      <FaApple size={24} className="text-gray-800 dark:text-gray-200" />
-                    </button>
-                  </div> */}
-
-                  {/* Login Link */}
-                  <div className="text-center">
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Already have an account?{" "}
-                      <Link
-                        to="/Login"
-                        className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200"
-                      >
-                        Sign in here
-                      </Link>
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
+
+            {/* Quote */}
+            <div className="relative z-10 pt-8 border-t border-white/10">
+              <blockquote className="font-[Newsreader,Georgia,serif] text-sm italic text-white/45 leading-relaxed">
+                "A pixel paints, a pen writes - together, they build worlds."
+              </blockquote>
+            </div>
           </div>
+
+          {/* ── Right panel — form ──────────────────────────────────────── */}
+          <div className="p-8 sm:p-12 bg-white dark:bg-slate-800">
+            <div className="max-w-md mx-auto">
+
+              {/* Header */}
+              <div className="mb-8">
+                <h1 className="font-[Newsreader,Georgia,serif] text-[clamp(24px,2.5vw,32px)] font-medium tracking-tight leading-tight text-gray-900 dark:text-gray-50 mb-2">
+                  Create your account
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Already a member?{" "}
+                  <Link
+                    to="/Login"
+                    className="font-medium text-[#1E3A5F] dark:text-blue-400 underline underline-offset-2 hover:opacity-75 transition-opacity"
+                  >
+                    Sign in
+                  </Link>
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+
+                {/* Role */}
+                <div>
+                  <FieldLabel>Register as</FieldLabel>
+                  <div className="relative">
+                    <select
+                      name="RegisterAs"
+                      value={form.RegisterAs}
+                      onChange={handleChange}
+                      className={`${inputBase} appearance-none pr-8 ${!form.RegisterAs ? "text-gray-400 dark:text-slate-500" : ""}`}
+                    >
+                      <option value="" disabled hidden>Select a role</option>
+                      <option value="Admin">Admin</option>
+                      <option value="Contributor">Contributor</option>
+                      <option value="Reader">Reader</option>
+                    </select>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-[10px]">▾</span>
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div>
+                  <FieldLabel>Email address</FieldLabel>
+                  <div className="relative">
+                    <MdEmail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" size={16} />
+                    <input
+                      type="email"
+                      name="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      required
+                      placeholder="you@example.com"
+                      className={`${inputBase} pl-9 ${emailState === "error" ? inputError : emailState === "success" ? inputSuccess : ""}`}
+                    />
+                  </div>
+                  {isEmailExist === true && <FieldMsg text="This email is already registered." className="text-red-600 dark:text-red-400" />}
+                  {isEmailExist === false && <FieldMsg text="Email is available." className="text-green-600 dark:text-green-400" />}
+                </div>
+
+                {/* Username */}
+                <div>
+                  <FieldLabel>Username</FieldLabel>
+                  <div className="relative">
+                    <IoMdPerson className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" size={16} />
+                    <input
+                      type="text"
+                      name="username"
+                      value={form.username}
+                      onChange={handleChange}
+                      minLength={4}
+                      required
+                      placeholder="Min. 4 characters"
+                      className={`${inputBase} pl-9 ${userState === "error" ? inputError : userState === "success" ? inputSuccess : ""}`}
+                    />
+                  </div>
+                  {isUserExist === true && <FieldMsg text="Username is taken." className="text-red-600 dark:text-red-400" />}
+                  {isUserExist === false && <FieldMsg text="Username is available." className="text-green-600 dark:text-green-400" />}
+                </div>
+
+                {/* Password */}
+                <div>
+                  <FieldLabel>Password</FieldLabel>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="pass"
+                      value={form.pass}
+                      onChange={handlePasswordChange}
+                      required
+                      maxLength={16}
+                      minLength={4}
+                      placeholder="Create a password"
+                      className={`${inputBase} pr-10`}
+                    />
+                    <EyeButton show={showPassword} onToggle={() => setShowPassword(p => !p)} />
+                  </div>
+
+                  {/* Strength bar */}
+                  {sm && (
+                    <div className="mt-2">
+                      <div className="h-0.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full transition-all duration-300 ${sm.bar} ${sm.bg}`} />
+                      </div>
+                      <FieldMsg text={sm.label} className={sm.text} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Confirm password */}
+                <div>
+                  <FieldLabel>Confirm password</FieldLabel>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      name="cpass"
+                      value={form.cpass}
+                      onChange={handlePasswordChange}
+                      required
+                      placeholder="Repeat your password"
+                      className={`${inputBase} pr-10`}
+                    />
+                    <EyeButton show={showConfirmPassword} onToggle={() => setShowConfirmPassword(p => !p)} />
+                  </div>
+                  {passMatch === "matched" && <FieldMsg text="Passwords match" className="text-green-600 dark:text-green-400" />}
+                  {passMatch === "mismatch" && <FieldMsg text="Passwords don't match" className="text-red-600 dark:text-red-400" />}
+                </div>
+
+                {/* Submit */}
+                <button
+                  type="submit"
+                  className="w-full mt-1 py-3 px-6 bg-[#1E3A5F] hover:bg-[#162d4a] dark:bg-blue-500 dark:hover:bg-blue-600 text-white text-xs font-semibold tracking-widest uppercase rounded transition-all duration-150 hover:-translate-y-px active:translate-y-0"
+                >
+                  Create account
+                </button>
+              </form>
+
+              {/* Terms */}
+              <p className="mt-6 text-xs text-center text-gray-400 dark:text-slate-500 leading-relaxed">
+                By signing up you agree to our{" "}
+                <Link to="/terms" className="text-[#1E3A5F] dark:text-blue-400 hover:underline">Terms</Link>
+                {" "}and{" "}
+                <Link to="/privacy" className="text-[#1E3A5F] dark:text-blue-400 hover:underline">Privacy Policy</Link>.
+              </p>
+
+            </div>
+          </div>
+
         </div>
-        <ToastContainer 
-          position="top-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="colored"
-        />
       </main>
-    </>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={4000}
+        hideProgressBar
+        closeOnClick
+        pauseOnHover
+        theme="light"
+      />
+    </div>
   );
 }
+
+/* ─── Sub-components ──────────────────────────────────────────────────────── */
+const FieldLabel = ({ children }) => (
+  <label className="block mb-1.5 text-[11px] font-semibold tracking-widest uppercase text-gray-700 dark:text-gray-300">
+    {children}
+  </label>
+);
+
+const FieldMsg = ({ text, className }) =>
+  text ? (
+    <p className={`mt-1.5 text-xs font-medium flex items-center gap-1.5 ${className}`}>
+      <span className="w-1.5 h-1.5 rounded-full bg-current flex-shrink-0" />
+      {text}
+    </p>
+  ) : null;
+
+const EyeButton = ({ show, onToggle }) => (
+  <button
+    type="button"
+    onClick={onToggle}
+    aria-label={show ? "Hide password" : "Show password"}
+    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors duration-150"
+  >
+    {show ? <FaEyeSlash size={15} /> : <FaEye size={15} />}
+  </button>
+);
+
+/* shared input classes */
+const inputBase =
+  "w-full px-3 py-2.5 text-sm bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-slate-600 rounded focus:outline-none focus:border-[#1E3A5F] dark:focus:border-blue-400 focus:ring-2 focus:ring-[#1E3A5F]/10 dark:focus:ring-blue-400/10 placeholder-gray-400 dark:placeholder-slate-500 transition duration-150";
+
+const inputError = "border-red-500 dark:border-red-400 focus:border-red-500 focus:ring-red-500/10";
+const inputSuccess = "border-green-500 dark:border-green-400 focus:border-green-500 focus:ring-green-500/10";
+
+/* ─── Main Component ──────────────────────────────────────────────────────── */
+
 
 export default Sign_Up_Page;

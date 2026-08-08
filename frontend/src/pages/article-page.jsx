@@ -39,9 +39,7 @@ const ArticlePage = () => {
 
   useEffect(() => {
     const articleInfo = () => {
-      AxiosInstance.get(`/article/view/${slug}`, {
-        headers: { user_id: loggedIn ? userData.user_id : null }
-      })
+      AxiosInstance.get(`/article/view/${slug}`)
         .then((res) => {
           setArticle(res.data.article);
           setFeaturedImage(res.data.article[0].thumbnail_url);
@@ -66,7 +64,11 @@ const ArticlePage = () => {
       }
       if (userData.userRole != 'Contributor') {
         try {
-          const response = await AxiosInstance.get(`/action/islike/article/`, { headers: { 'user_id': userData.user_id, 'article_id': article[0].article_id } })
+          const response = await AxiosInstance.get(`/action/islike/article/`, 
+            { headers: {
+              'article_id': article[0].article_id 
+            } 
+          })
           setIsLiked(response.data.isLike);
 
         } catch (error) {
@@ -310,7 +312,6 @@ const ArticlePage = () => {
     try {
       await AxiosInstance.post('/action/like', {
         article_id: article[0].article_id,
-        user_id: userData.user_id,
       })
       setIsLiked(prev => !prev);
       setLikes_count(prev => isLiked ? prev - 1 : prev + 1);
@@ -335,7 +336,6 @@ const ArticlePage = () => {
     try {
       await AxiosInstance.post('/action/bookmark', {
         article_id: article[0].article_id,
-        user_id: userData.user_id,
       });
       setIsBookmarked(!isBookmarked);
 
@@ -358,8 +358,6 @@ const ArticlePage = () => {
         await AxiosInstance.post(`/action/comment/`, {
           article_id: article[0].article_id,
           article_title: article[0].title,
-          user_id: userData.user_id,
-          userRole: userData.userRole,
           content: comment,
           username: userData.userName
         });
