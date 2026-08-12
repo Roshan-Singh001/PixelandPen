@@ -83,9 +83,6 @@ const ContriRequest = () => {
   const [approvedContributors, setApprovedContributors] = useState([]);
   const [rejectedContributors, setRejectedContributors] = useState([]);
 
-  // BUG FIX: original code set isLoading(true) then immediately called an async
-  // function without awaiting it, then set isLoading(false) synchronously right after —
-  // meaning the loader basically never showed and state updates raced.
   useEffect(() => {
     let cancelled = false;
     const fetchData = async () => {
@@ -184,7 +181,7 @@ const ContriRequest = () => {
     <div className="font-['Inter',sans-serif]">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-extrabold text-[#1F2937] dark:text-[#F8FAFC] mb-1">
+        <h1 className="font-[Newsreader,Georgia,serif] text-4xl font-extrabold text-[#1F2937] dark:text-[#F8FAFC] mb-1">
           Contributor Management
         </h1>
         <p className="text-[#6B7280] dark:text-[#AAB4C5]">

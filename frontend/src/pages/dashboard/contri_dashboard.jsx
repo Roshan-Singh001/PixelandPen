@@ -73,48 +73,59 @@ const ContributorDashboard = () => {
   const [recentArticles, setRecentArticles] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
 
+  useEffect(() => {
+    document.title = 'Contributor · Pixel & Pen';
+  }, []);
+
   const NAV_ITEMS = [
     {
       label: "Dashboard",
       path: "",
       icon: <BiSolidDashboard size={18} />,
       status: true,
+      external: false,
     },
     {
       label: "Profile",
       path: "profile",
       icon: <FaUserCog size={18} />,
       status: true,
+      external: false,
     },
     {
       label: "Article",
       path: "article",
       icon: <MdArticle size={18} />,
       status: isAccepted,
+      external: false,
     },
     {
       label: "Comments",
       path: "comments",
       icon: <FaComments size={18} />,
       status: isAccepted,
+      external: false,
     },
     {
       label: "Stats",
       path: "stats",
       icon: <MdAnalytics size={18} />,
       status: isAccepted,
+      external: false,
     },
     {
       label: "Settings",
       path: "settings",
       icon: <IoSettingsSharp size={18} />,
       status: true,
+      external: false,
     },
     {
       label: "Article Editor",
       path: "article/editor",
       icon: <IoIosAddCircle size={18} />,
       status: isAccepted && !isBlock,
+      external: true,
     },
   ];
 
@@ -232,12 +243,14 @@ const ContributorDashboard = () => {
         </div>
 
         <nav className="flex-1 py-2 flex flex-col gap-0.5 overflow-y-auto overflow-x-hidden">
-          {NAV_ITEMS.map(({ label, path, icon, status }) => (
+          {NAV_ITEMS.map(({ label, path, icon, status, external }) => (
             <NavLink
               key={label}
               to={path}
               end={path === ""}
               disabled={!status}
+              target={path === "/article/editor" ? "_blank" : undefined}
+              rel={path === "/article/editor" ? "noopener noreferrer" : undefined}
               onClick={(e) => {
                 if (!status) {
                   e.preventDefault();

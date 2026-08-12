@@ -585,7 +585,7 @@ const ArticleEditor = (props) => {
   console.log(allCategories)
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8] dark:bg-[#0B1220] text-[#1F2937] dark:text-[#F8FAFC] transition-colors duration-300 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-[#FAFAF8] dark:bg-[#0B1220] text-[#1F2937] dark:text-[#F8FAFC] transition-colors duration-300 p-4 ">
       <div className="mb-4 sm:mb-6">
         <h1 className="text-2xl sm:text-3xl font-['Newsreader'] font-black tracking-tight">Article Editor</h1>
         <p className="mt-1 text-sm text-[#6B7280] dark:text-[#AAB4C5]">
@@ -632,7 +632,7 @@ const ArticleEditor = (props) => {
           </>}
 
         </button>
-        <button title={isSend ? 'Article is sended For review' : 'Send for Review'} onClick={handleSend} disabled={!isSave || isSend} className='flex justify-center items-center gap-2 py-2 px-4 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed text-sm font-semibold text-white bg-gradient-to-r from-[#1E3A5F] to-[#F97316] dark:from-[#4F8EF7] dark:to-[#FF8A3D] hover:opacity-90 transition-opacity'>
+        <button title={isSend ? 'Article is sended For review' : 'Send for Review'} onClick={handleSend} disabled={!isSave || isSend} className='flex justify-center items-center gap-2 py-2 px-4 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed text-sm font-semibold text-white bg-[#1e3a5f] hover:opacity-90 transition-opacity'>
           {inSaveProgress ? <PixelPenLoaderSmall /> : <>
             <span>Send</span>
             <IoMdSend />

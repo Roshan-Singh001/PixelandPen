@@ -103,12 +103,12 @@ const CategoryManage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8] font-['Inter',sans-serif] dark:bg-[#0B1220]">
+    <div className="min-h-screen font-['Inter',sans-serif] ">
       <div className="mx-auto">
         {/* Header */}
         <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-[#1F2937] dark:text-[#F8FAFC]">
+            <h1 className="font-[Newsreader,Georgia,serif] text-4xl font-extrabold tracking-tight text-[#1F2937] dark:text-[#F8FAFC]">
               Category Management
             </h1>
             <p className="mt-1 text-[#6B7280] dark:text-[#AAB4C5]">

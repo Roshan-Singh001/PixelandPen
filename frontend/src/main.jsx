@@ -245,10 +245,10 @@ const router = createBrowserRouter([
             path: "settings",
             element: <ContriSettings />,
           },
-          {
-            path: "article/editor",
-            element: <ArticleEditor />,
-          }
+          // {
+          //   path: "article/editor",
+          //   element: <ArticleEditor />,
+          // }
         ]
       },
     ],

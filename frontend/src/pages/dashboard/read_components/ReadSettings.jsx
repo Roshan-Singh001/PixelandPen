@@ -8,4 +8,4 @@ const SubsSettings = () => {
   )
 }
 
-export default SubsSettings
+export default SubsSettings;

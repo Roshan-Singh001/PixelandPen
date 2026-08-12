@@ -1,7 +1,7 @@
 import React from 'react'
 import axios from 'axios';
 
-import { TrendingUp, Clock, XCircle, Ban, FileText, Megaphone, Calendar } from "lucide-react";
+import { TrendingUp, Clock, XCircle, CheckCircle, Ban, FileText, Megaphone, Calendar } from "lucide-react";
 
 const AxiosInstance = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
@@ -9,8 +9,6 @@ const AxiosInstance = axios.create({
     headers: { "X-Custom-Header": "foobar" },
     withCredentials: true,
 });
-
-
 
 const DashboardOverview = ({ userData, status, announcements, statsData, recentArticles, rejectReason }) => {
     const handleReject = async () => {
@@ -26,10 +24,10 @@ const DashboardOverview = ({ userData, status, announcements, statsData, recentA
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'Approved': return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20';
-            case 'Pending': return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20';
-            case 'Rejected': return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
-            default: return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/20';
+            case 'Approved': return 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20';
+            case 'Pending': return 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20';
+            case 'Rejected': return 'text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
+            default: return 'text-gray-500 bg-gray-100 dark:bg-slate-700';
         }
     };
 
@@ -43,75 +41,58 @@ const DashboardOverview = ({ userData, status, announcements, statsData, recentA
     };
 
     return (
-        <div className="space-y-8">
-            {/* Welcome Section */}
-            <div className="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl p-8 text-white shadow-xl">
-                <div className="flex items-center justify-between">
+        <div className="space-y-5 font-[Inter,system-ui,sans-serif]">
+
+            {/* Welcome banner */}
+            <div className="bg-[#1E3A5F] p-6 sm:p-8 relative overflow-hidden">
+                <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                        backgroundImage: "radial-gradient(circle, rgba(255,255,255,.12) 1px, transparent 1px)",
+                        backgroundSize: "28px 28px",
+                    }}
+                />
+                <div className="relative z-10 flex items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-4xl font-bold mb-2">
-                            Welcome back, {userData.userName}! 👋
+                        <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-2">
+                            Contributor panel
+                        </p>
+                        <h1 className="font-[Newsreader,Georgia,serif] text-2xl sm:text-3xl font-black leading-tight text-white mb-1">
+                            Welcome back, {userData.userName}.
                         </h1>
-                        <p className="text-blue-100 text-lg">
-                            Ready to create amazing content today?
+                        <p className="text-sm text-white/50">
+                            Ready to create amazing content today.
                         </p>
                     </div>
-                    <div className="hidden md:block">
-                        <div className="w-32 h-32 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
-                            <TrendingUp className="w-16 h-16 text-white" />
-                        </div>
+                    <div className="hidden md:flex w-14 h-14 bg-white/10 rounded items-center justify-center">
+                        <TrendingUp className="w-7 h-7 text-white/60" />
                     </div>
                 </div>
             </div>
 
+            {/* Status alerts */}
             {status === 'Pending' && (
-                <div className="relative overflow-hidden rounded-xl border-2 border-amber-300 dark:border-amber-600 bg-gradient-to-br from-amber-50 to-yellow-100 dark:from-amber-900/20 dark:to-yellow-900/30 p-6 shadow-lg backdrop-blur-sm duration-300 hover:shadow-xl">
-                    {/* Background Pattern */}
-                    <div className="absolute inset-0 opacity-5">
-                        <div className="absolute inset-0" style={{
-                            backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
-                            backgroundSize: '20px 20px'
-                        }}></div>
-                    </div>
-
-                    {/* Animated pulse */}
-                    <div className="absolute -top-1 -left-1 -right-1 -bottom-1 rounded-xl opacity-20 ">
-                        <div className="w-full h-full rounded-xl bg-amber-400"></div>
-                    </div>
-
-                    <div className="relative flex items-start space-x-4">
-                        {/* Status Icon */}
-                        <div className="p-3 rounded-full bg-amber-100 dark:bg-amber-800/40 text-amber-600 dark:text-amber-400 shadow-md">
-                            <Clock className="w-6 h-6" />
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-6">
+                    <div className="flex items-start gap-4">
+                        <div className="p-2.5 rounded bg-amber-100 dark:bg-amber-800/40 text-amber-700 dark:text-amber-400">
+                            <Clock className="w-5 h-5" />
                         </div>
-
-                        {/* Content */}
                         <div className="flex-1 min-w-0">
-                            {/* Status Badge */}
-                            <div className="flex items-center space-x-2 mb-3">
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-amber-100 dark:bg-amber-800/40 text-amber-600 dark:text-amber-400 shadow-sm">
-                                    Pending
-                                </span>
-                                <div className="flex space-x-1">
-                                    <div className="w-2 h-2 rounded-full bg-amber-400 animate-bounce"></div>
-                                    <div className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                                    <div className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                                </div>
-                            </div>
-
-                            {/* Title */}
-                            <h3 className="text-xl font-bold text-amber-800 dark:text-amber-200 mb-2">
+                            <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded bg-amber-100 dark:bg-amber-800/40 text-amber-700 dark:text-amber-400 mb-3">
+                                Pending
+                            </span>
+                            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
                                 Application Under Review
                             </h3>
-
-                            {/* Message */}
-                            <p className="text-amber-800 dark:text-amber-200 opacity-80 leading-relaxed mb-4">
+                            <p className="text-sm text-gray-500 dark:text-slate-400 mb-4 leading-relaxed">
                                 You are not approved by the admins yet. Kindly complete the profile to expedite the review process.
                             </p>
-
-                            {/* Action Button */}
-                            <button onClick={() => setMenuOption('Profile')} className="inline-flex items-center px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-md active:scale-95 bg-amber-100 dark:bg-amber-800/40 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-600">
+                            <button
+                                onClick={() => setMenuOption('Profile')}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded bg-amber-100 dark:bg-amber-800/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-700 hover:bg-amber-100/70 dark:hover:bg-amber-800/60 transition-colors duration-150"
+                            >
                                 Complete Profile
-                                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                 </svg>
                             </button>
@@ -121,82 +102,49 @@ const DashboardOverview = ({ userData, status, announcements, statsData, recentA
             )}
 
             {status === 'Rejected' && (
-                <div className="relative overflow-hidden rounded-xl border-2 border-red-300 dark:border-red-600 bg-gradient-to-br from-red-50 to-rose-100 dark:from-red-900/20 dark:to-rose-900/30 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl">
-                    {/* Background Pattern */}
-                    <div className="absolute inset-0 opacity-5">
-                        <div className="absolute inset-0" style={{
-                            backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
-                            backgroundSize: '20px 20px'
-                        }}></div>
-                    </div>
-
-                    <div className="relative flex items-start space-x-4">
-                        {/* Status Icon */}
-                        <div className="p-3 rounded-full bg-red-100 dark:bg-red-800/40 text-red-600 dark:text-red-400 shadow-md">
-                            <XCircle className="w-6 h-6" />
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-6">
+                    <div className="flex items-start gap-4">
+                        <div className="p-2.5 rounded bg-red-100 dark:bg-red-800/40 text-red-700 dark:text-red-400">
+                            <XCircle className="w-5 h-5" />
                         </div>
-
-                        {/* Content */}
                         <div className="flex-1 min-w-0">
-                            {/* Status Badge */}
-                            <div className="flex items-center space-x-2 mb-3">
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 dark:bg-red-800/40 text-red-600 dark:text-red-400 shadow-sm">
-                                    Rejected
-                                </span>
-                            </div>
-
-                            {/* Title */}
-                            <h3 className="text-xl font-bold text-red-800 dark:text-red-200 mb-2">
+                            <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded bg-red-100 dark:bg-red-800/40 text-red-700 dark:text-red-400 mb-3">
+                                Rejected
+                            </span>
+                            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
                                 Application Rejected
                             </h3>
-
-                            {/* Message */}
-                            <p className="text-red-800 dark:text-red-200 opacity-80 leading-relaxed mb-4">
+                            <p className="text-sm text-gray-500 dark:text-slate-400 mb-1 leading-relaxed">
                                 Reject Reason: {rejectReason}
                             </p>
-                            <p className="text-red-800 dark:text-red-200 opacity-80 leading-relaxed mb-4">
+                            <p className="text-sm text-gray-500 dark:text-slate-400 mb-4 leading-relaxed">
                                 You can resend the request after fixing the problem.
                             </p>
-
-                            <button onClick={() => handleReject()} className="bg-red-400 hover:bg-red-600 p-2 rounded-lg dark:bg-red-600 dark:hover:bg-red-800">Review Again</button>
-
+                            <button
+                                onClick={() => handleReject()}
+                                className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded bg-red-100 dark:bg-red-800/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-700 hover:bg-red-100/70 dark:hover:bg-red-800/60 transition-colors duration-150"
+                            >
+                                Review Again
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
 
             {status === 'Block' && (
-                <div className="relative overflow-hidden rounded-xl border-2 border-orange-400 dark:border-orange-600 bg-gradient-to-br from-orange-50 to-red-100 dark:from-orange-900/20 dark:to-red-900/30 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl">
-                    {/* Background Pattern */}
-                    <div className="absolute inset-0 opacity-5">
-                        <div className="absolute inset-0" style={{
-                            backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
-                            backgroundSize: '20px 20px'
-                        }}></div>
-                    </div>
-
-                    <div className="relative flex items-start space-x-4">
-                        {/* Status Icon */}
-                        <div className="p-3 rounded-full bg-orange-100 dark:bg-orange-800/40 text-orange-600 dark:text-orange-400 shadow-md">
-                            <Ban className="w-6 h-6" />
+                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 p-6">
+                    <div className="flex items-start gap-4">
+                        <div className="p-2.5 rounded bg-orange-100 dark:bg-orange-800/40 text-orange-600 dark:text-orange-400">
+                            <Ban className="w-5 h-5" />
                         </div>
-
-                        {/* Content */}
                         <div className="flex-1 min-w-0">
-                            {/* Status Badge */}
-                            <div className="flex items-center space-x-2 mb-3">
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-orange-100 dark:bg-orange-800/40 text-orange-600 dark:text-orange-400 shadow-sm">
-                                    Blocked
-                                </span>
-                            </div>
-
-                            {/* Title */}
-                            <h3 className="text-xl font-bold text-orange-800 dark:text-orange-200 mb-2">
+                            <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded bg-orange-100 dark:bg-orange-800/40 text-orange-600 dark:text-orange-400 mb-3">
+                                Blocked
+                            </span>
+                            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
                                 Account Temporarily Suspended
                             </h3>
-
-                            {/* Message */}
-                            <p className="text-orange-800 dark:text-orange-200 opacity-80 leading-relaxed mb-4">
+                            <p className="text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
                                 You are temporarily blocked by the admins. This action is under review and may be lifted after further evaluation.
                             </p>
                         </div>
@@ -204,21 +152,19 @@ const DashboardOverview = ({ userData, status, announcements, statsData, recentA
                 </div>
             )}
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Stat cards — mosaic */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-gray-200 dark:bg-slate-700">
                 {statsData.map((stat, index) => {
                     const Icon = stat.icon;
                     return (
-                        <div key={index} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className={`p-3 rounded-lg bg-${stat.color}-100 dark:bg-${stat.color}-900/20`}>
-                                    <Icon className={`w-6 h-6 text-${stat.color}-600 dark:text-${stat.color}-400`} />
-                                </div>
+                        <div key={index} className="bg-white dark:bg-slate-800 p-6 hover:shadow-sm transition-shadow duration-150">
+                            <div className={`inline-flex p-2.5 rounded mb-4 bg-${stat.color}-50 dark:bg-${stat.color}-900/20`}>
+                                <Icon className={`w-5 h-5 text-${stat.color}-700 dark:text-${stat.color}-400`} />
                             </div>
-                            <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">
+                            <p className="text-[11px] font-semibold tracking-widest uppercase text-gray-400 dark:text-slate-500 mb-1">
                                 {stat.title}
-                            </h3>
-                            <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                            </p>
+                            <p className="text-3xl font-semibold text-gray-900 dark:text-gray-50">
                                 {stat.value}
                             </p>
                         </div>
@@ -227,79 +173,71 @@ const DashboardOverview = ({ userData, status, announcements, statsData, recentA
             </div>
 
             {/* Articles Section */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                        <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                        Recent Articles
-                    </h2>
+            <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700">
+                <div className="flex items-center gap-2.5 px-6 py-4 border-b border-gray-200 dark:border-slate-700">
+                    <FileText className="w-4 h-4 text-[#1E3A5F] dark:text-blue-400" />
+                    <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Recent Articles</h2>
                 </div>
-                <div className="p-6 space-y-4">
-                    {recentArticles.length > 0 ? (recentArticles.map((article) => {
-                        const StatusIcon = getStatusIcon(article.article_status);
-                        return (
-                            <div
-                                key={article.title}
-                                className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                            >
-                                <div className="flex-1">
-                                    <h3 className="font-semibold text-gray-900 dark:text-white text-lg mb-1">
-                                        {article.title}
-                                    </h3>
-                                </div>
-                                <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(article.article_status)}`}>
-                                    <StatusIcon className="w-4 h-4" />
-                                    {article.article_status}
-                                </div>
+                <div className="p-6">
+                    {recentArticles.length > 0 ? (
+                        <div className="space-y-2">
+                            {recentArticles.map((article) => {
+                                const StatusIcon = getStatusIcon(article.article_status);
+                                return (
+                                    <div
+                                        key={article.title}
+                                        className="flex items-center justify-between px-4 py-3 border border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors duration-100"
+                                    >
+                                        <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate mr-4">
+                                            {article.title}
+                                        </p>
+                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded ${getStatusColor(article.article_status)}`}>
+                                            <StatusIcon className="w-3 h-3" />
+                                            {article.article_status}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-10 text-center">
+                            <div className="w-10 h-10 bg-gray-100 dark:bg-slate-700 rounded flex items-center justify-center mb-3">
+                                <XCircle className="w-5 h-5 text-gray-300 dark:text-slate-500" />
                             </div>
-                        );
-                    })) : (
-                        <>
-                            <div className="text-center py-12">
-                                <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-                                    <XCircle className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-                                </div>
-                                <p className="text-gray-500 dark:text-gray-400 text-lg">No Articles</p>
-                            </div>
-
-                        </>)}
+                            <p className="text-sm text-gray-400 dark:text-slate-500">No Articles</p>
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* Announcements */}
-            {announcements.length > 0 && <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                        <Megaphone className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                        Announcements
-                    </h2>
-                </div>
-                <div className="p-6 space-y-4">
-                    {announcements.map((announcement) => {
-                        return (
+            {announcements.length > 0 && (
+                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700">
+                    <div className="flex items-center gap-2.5 px-6 py-4 border-b border-gray-200 dark:border-slate-700">
+                        <Megaphone className="w-4 h-4 text-[#1E3A5F] dark:text-blue-400" />
+                        <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Announcements</h2>
+                    </div>
+                    <div className="p-6 space-y-2">
+                        {announcements.map((announcement) => (
                             <div
                                 key={announcement.id}
-                                className="p-5 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                                className="px-4 py-4 border border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors duration-100"
                             >
-                                <div className="flex items-start gap-4">
-                                    <div className="flex-1">
-                                        <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-2">
-                                            {announcement.title}
-                                        </h3>
-                                        <p className="text-gray-700 dark:text-gray-300 mb-3">
-                                            {announcement.content}
-                                        </p>
-                                        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                                            <Calendar className="w-4 h-4" />
-                                            Posted on {new Date(announcement.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                                        </div>
-                                    </div>
+                                <h3 className="text-sm font-medium text-gray-800 dark:text-gray-100 mb-1.5">
+                                    {announcement.title}
+                                </h3>
+                                <p className="text-sm text-gray-500 dark:text-slate-400 mb-2">
+                                    {announcement.content}
+                                </p>
+                                <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-slate-500">
+                                    <Calendar className="w-3.5 h-3.5" />
+                                    Posted on {new Date(announcement.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                                 </div>
                             </div>
-                        );
-                    })}
+                        ))}
+                    </div>
                 </div>
-            </div>}
+            )}
 
         </div>
     )

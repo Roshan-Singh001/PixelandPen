@@ -75,6 +75,10 @@ const AdminDashboard = () => {
   const [articleRequests, setArticleRequests] = useState([]);
   const [contributorRequests, setContributorRequests] = useState([]);
 
+  useEffect(() => {
+    document.title = 'Admin · Pixel & Pen';
+  }, []);
+
   const activeItem = NAV_ITEMS.find(({ path }) => {
     if (path === "") {
       return location.pathname === "/dashboard/admin";
