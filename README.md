@@ -103,12 +103,8 @@ Readers enjoy a smooth browsing and interaction experience.
 
 ## 📸 Screenshots
 
-> _Coming Soon_
 
-- 🏠 Landing Page → ![Coming Soon](https://via.placeholder.com/600x350?text=Coming+Soon)
-- 📊 Admin Dashboard → ![Coming Soon](https://via.placeholder.com/600x350?text=Coming+Soon)
-- ✍️ Contributor Editor → ![Coming Soon](https://via.placeholder.com/600x350?text=Coming+Soon)
-- 📖 Reader View → ![Coming Soon](https://via.placeholder.com/600x350?text=Coming+Soon)
+![LP](https://github.com/Roshan-Singh001/PixelandPen/blob/main/frontend/src/assets/images/Screenshot1.png)
 
 ---
 

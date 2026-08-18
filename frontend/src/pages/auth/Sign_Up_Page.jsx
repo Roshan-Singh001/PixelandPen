@@ -153,24 +153,24 @@ function Sign_Up_Page() {
                 <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-3">
                   Join the ecosystem
                 </p>
-                <h2 className="font-[Newsreader,Georgia,serif] text-[clamp(24px,2.5vw,34px)] font-medium leading-[1.15] tracking-tight text-white">
+                <h2 className="font-[Newsreader,Georgia,serif] text-[clamp(53px,2.5vw,34px)] font-medium leading-[1.15] tracking-tight text-white mt-[6rem]">
                   Content tools built for{" "}
-                  <em className="text-[#FBBF24] not-italic" style={{ fontStyle: "italic" }}>creators.</em>
+                  <em className="text-[#FBBF24] not-italic text-[4rem]" style={{ fontStyle: "italic" }}>creators.</em>
                 </h2>
               </div>
 
               {/* Steps timeline */}
-              <div className="flex flex-col">
+              {/* <div className="flex flex-col">
                 {STEPS.map(({ n, title, desc }, i) => (
                   <div key={n} className="flex gap-4">
-                    {/* dot + line column */}
+                    
                     <div className="flex flex-col items-center pt-1">
                       <span className="w-2 h-2 rounded-full bg-[#F59E0B] flex-shrink-0" />
                       {i < STEPS.length - 1 && (
                         <span className="w-px flex-1 bg-white/10 my-1.5" />
                       )}
                     </div>
-                    {/* text */}
+                    
                     <div className={i < STEPS.length - 1 ? "pb-5" : ""}>
                       <p className="text-[10px] font-semibold tracking-[0.14em] uppercase text-[#FBBF24] mb-0.5">{n}</p>
                       <p className="text-sm font-medium text-white mb-0.5">{title}</p>
@@ -178,7 +178,7 @@ function Sign_Up_Page() {
                     </div>
                   </div>
                 ))}
-              </div>
+              </div> */}
             </div>
 
             {/* Quote */}

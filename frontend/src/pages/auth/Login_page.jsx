@@ -99,14 +99,14 @@ function Login_Page() {
                 <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-3">
                   Welcome back
                 </p>
-                <h2 className="font-[Newsreader,Georgia,serif] text-[clamp(24px,2.5vw,34px)] font-medium leading-[1.15] tracking-tight text-white">
+                <h2 className="font-[Newsreader,Georgia,serif] text-[clamp(53px,3.5vw,34px)] font-medium leading-[1.15] tracking-tight text-white">
                   Your content,{" "}
-                  <em className="text-[#FBBF24]" style={{ fontStyle: "italic" }}>waiting for you.</em>
+                  <em className="text-[#FBBF24] text-[4.5rem]" style={{ fontStyle: "italic" }}>waiting for you.</em>
                 </h2>
               </div>
 
               {/* Feature list */}
-              <div className="flex flex-col">
+              {/* <div className="flex flex-col">
                 {FEATURES.map(({ n, title, desc }, i) => (
                   <div key={n} className="flex gap-4">
                     <div className="flex flex-col items-center pt-1">
@@ -122,7 +122,7 @@ function Login_Page() {
                     </div>
                   </div>
                 ))}
-              </div>
+              </div> */}
             </div>
 
             {/* Quote */}
