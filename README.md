@@ -105,6 +105,10 @@ Readers enjoy a smooth browsing and interaction experience.
 
 
 ![LP](https://github.com/Roshan-Singh001/PixelandPen/blob/main/frontend/src/assets/images/Screenshot1.png)
+![Signup](https://github.com/Roshan-Singh001/PixelandPen/blob/main/frontend/src/assets/images/Screenshot2.png)
+![Reister](https://github.com/Roshan-Singh001/PixelandPen/blob/main/frontend/src/assets/images/Screenshot3.png)
+![Contributor Dashboard](https://github.com/Roshan-Singh001/PixelandPen/blob/main/frontend/src/assets/images/Screenshot4.png)
+![Article Editor](https://github.com/Roshan-Singh001/PixelandPen/blob/main/frontend/src/assets/images/Screenshot5.png)
 
 ---
 
