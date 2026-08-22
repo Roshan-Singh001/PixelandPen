@@ -31,13 +31,12 @@ const NAV_LINKS = [
 ];
 
 const Navbar = () => {
-  const [menuOpen, setMenuOpen] = useState(false); // account dropdown
-  const [mobileOpen, setMobileOpen] = useState(false); // mobile sheet
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const { isDarkMode, toggleDark } = useTheme();
   const { loggedIn, logout, userData } = useAuth();
   const menuRef = useRef(null);
 
-  // Close the account dropdown when clicking outside it
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -48,7 +47,6 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Lock body scroll while the mobile sheet is open
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
     return () => {

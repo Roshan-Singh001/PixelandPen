@@ -1,18 +1,12 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import AxiosInstance from '../../../api/axiosInstance';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Edit, FileText, Clock, CheckCircle, XCircle, Trash2, Calendar, Tag } from 'lucide-react';
 
 import PixelPenLoader from '../../../components/PixelPenLoader';
 
 const MyArticles = (props) => {
-  const AxiosInstance = axios.create({
-      baseURL: import.meta.env.VITE_API_URL,
-      timeout: 30000,
-      headers: { "X-Custom-Header": "foobar" },
-      withCredentials: true,
-    });
   const navigate = useNavigate();
   const [draftArticles, setDraftArticles] = useState([]);
   const [pendingArticles, setPendingArticles] = useState([]);

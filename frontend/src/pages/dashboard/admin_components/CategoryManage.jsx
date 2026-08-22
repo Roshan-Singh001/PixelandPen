@@ -1,13 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
-import axios from "axios";
+import AxiosInstance from "../../../api/axiosInstance";
 import { FiPlus, FiX, FiFolder, FiCheckCircle, FiAlertCircle, FiEdit2 } from "react-icons/fi";
 
-const AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  timeout: 30000,
-  headers: { "X-Custom-Header": "foobar" },
-  withCredentials: true,
-});
 
 const EMPTY_FORM = { name: "", description: "" };
 

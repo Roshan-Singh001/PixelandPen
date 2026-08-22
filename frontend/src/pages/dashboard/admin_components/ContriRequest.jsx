@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import AxiosInstance from '../../../api/axiosInstance';
 import {
   UserPlus, XCircle, CheckCircle, Eye, X, User, Calendar,
   Mail, Shield, ShieldOff, MapPin, Trash2,
@@ -9,11 +9,6 @@ import { FaGithub, FaLinkedin, FaFacebook } from 'react-icons/fa';
 import userSimbol from '../../../assets/images/userSimbol.png';
 import PixelPenLoader from '../../../components/PixelPenLoader';
 
-const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: true,
-  timeout: 10000,
-});
 
 /* ─── Shared bits ─────────────────────────────────────────────────────────── */
 const StatusPill = ({ label, count, tone }) => {
@@ -89,9 +84,9 @@ const ContriRequest = () => {
       setIsLoading(true);
       try {
         const [p, a, r] = await Promise.all([
-          API.get('/dashboard/admin/fetch/cont/pending'),
-          API.get('/dashboard/admin/fetch/cont/approved'),
-          API.get('/dashboard/admin/fetch/cont/rejected'),
+          AxiosInstance.get('/dashboard/admin/fetch/cont/pending'),
+          AxiosInstance.get('/dashboard/admin/fetch/cont/approved'),
+          AxiosInstance.get('/dashboard/admin/fetch/cont/rejected'),
         ]);
         if (cancelled) return;
         setPendingContributors(p.data.pending ?? []);
@@ -112,7 +107,7 @@ const ContriRequest = () => {
   const handleApprove = async (cont_id) => {
     setActionId(cont_id);
     try {
-      await API.post('/dashboard/admin/cont/approve', { cont_id });
+      await AxiosInstance.post('/dashboard/admin/cont/approve', { cont_id });
       refresh();
     } catch (err) {
       console.error(err);
@@ -124,7 +119,7 @@ const ContriRequest = () => {
   const handleDelete = async (cont_id) => {
     setActionId(cont_id);
     try {
-      await API.post('/dashboard/admin/cont/delete', { cont_id });
+      await AxiosInstance.post('/dashboard/admin/cont/delete', { cont_id });
       refresh();
     } catch (err) {
       console.error(err);
@@ -147,7 +142,7 @@ const ContriRequest = () => {
   const confirmReject = async () => {
     if (!rejectReason.trim() || !selectedContributor) return; // BUG FIX: guard against empty submit
     try {
-      await API.post('/dashboard/admin/cont/reject', {
+      await AxiosInstance.post('/dashboard/admin/cont/reject', {
         cont_id: selectedContributor.cont_id,
         reject_reason: rejectReason,
       });
@@ -163,7 +158,7 @@ const ContriRequest = () => {
   const toggleUserStatus = async (cont_id, currentStatus) => {
     setActionId(cont_id);
     try {
-      await API.post('/dashboard/admin/cont/status', {
+      await AxiosInstance.post('/dashboard/admin/cont/status', {
         cont_id,
         set_status: currentStatus === 'Approved' ? 'Block' : 'Approved',
       });

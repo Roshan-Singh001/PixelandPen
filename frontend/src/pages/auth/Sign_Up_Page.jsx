@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import AxiosInstance from "../../api/axiosInstance";
 import { MdEmail } from "react-icons/md";
 import { IoMdPerson } from "react-icons/io";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -38,8 +38,6 @@ function Sign_Up_Page() {
   const [isEmailExist, setIsEmailExist] = useState(null);
   const [isUserExist, setIsUserExist] = useState(null);
 
-  const API = axios.create({ baseURL: import.meta.env.VITE_API_URL, timeout: 10000 });
-
   /* ── Live availability checks ── */
   useEffect(() => {
     const email = form.email.trim();
@@ -51,7 +49,7 @@ function Sign_Up_Page() {
     }
 
     const timer = setTimeout(() => {
-      API.get(`/check-email/${email}`)
+      AxiosInstance.get(`/check-email/${email}`)
         .then((res) => setIsEmailExist(res.data.exists))
         .catch(() => { });
     }, 500);
@@ -70,7 +68,7 @@ function Sign_Up_Page() {
     }
 
     const timer = setTimeout(() => {
-      API.get(`/check-username/${username}`)
+      AxiosInstance.get(`/check-username/${username}`)
         .then((res) => setIsUserExist(res.data.exists))
         .catch(() => { });
     }, 500);
@@ -103,7 +101,7 @@ function Sign_Up_Page() {
     if (!form.RegisterAs) { toast.error("Select a role to continue."); return; }
 
     try {
-      await API.post("/submit", {
+      await AxiosInstance.post("/submit", {
         username: form.username, password: form.pass,
         email: form.email, RegisterAs: form.RegisterAs,
       });

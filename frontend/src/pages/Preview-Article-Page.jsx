@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import AxiosInstance from '../api/axiosInstance';
 import { Heart, Share2, BookmarkPlus, MessageCircle, Calendar, User, Printer, Copy, Link2, ChevronUp } from 'lucide-react';
 import { FaXTwitter } from "react-icons/fa6";
 import { FaFacebook } from "react-icons/fa";
@@ -10,12 +10,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from "../contexts/AuthContext";
 
 const PreviewArticlePage = () => {
-  const AxiosInstance = axios.create({
-        baseURL: import.meta.env.VITE_API_URL,
-        withCredentials: true,
-        timeout: 3000,
-        headers: {'X-Custom-Header': 'foobar'}
-      });
   const navigate = useNavigate();
   const { slug } = useParams();
   const [isExist, setIsExist] = useState(false);

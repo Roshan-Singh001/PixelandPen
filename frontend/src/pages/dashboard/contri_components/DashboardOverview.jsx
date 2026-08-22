@@ -1,14 +1,6 @@
-import React from 'react'
-import axios from 'axios';
+import AxiosInstance from "../../../api/axiosInstance";
 
 import { TrendingUp, Clock, XCircle, CheckCircle, Ban, FileText, Megaphone, Calendar } from "lucide-react";
-
-const AxiosInstance = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
-    timeout: 30000,
-    headers: { "X-Custom-Header": "foobar" },
-    withCredentials: true,
-});
 
 const DashboardOverview = ({ userData, status, announcements, statsData, recentArticles, rejectReason }) => {
     const handleReject = async () => {

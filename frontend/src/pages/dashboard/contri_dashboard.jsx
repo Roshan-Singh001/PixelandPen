@@ -3,36 +3,14 @@ import React, { useState, useEffect } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 
 import {
-  LayoutDashboard,
   FileText,
-  MessageCircle,
-  BarChart3,
-  UserCog,
-  Settings,
-  Plus,
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-  Menu,
-  Ban,
   Users,
   Eye,
   Heart,
-  TrendingUp,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Calendar,
-  Megaphone,
-  Sparkles,
-  Wrench
 } from 'lucide-react';
-import axios from "axios";
+import AxiosInstance from "../../api/axiosInstance";
 
 import {
-  FaCheckCircle,
-  FaTimesCircle,
-  FaUserPlus,
   FaBars,
   FaComments,
   FaUserCog,
@@ -47,19 +25,11 @@ import { IoIosAddCircle } from "react-icons/io";
 import PixelPenLoader from "../../components/PixelPenLoader";
 import { useAuth } from "../../contexts/AuthContext";
 
-const AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  timeout: 30000,
-  headers: { "X-Custom-Header": "foobar" },
-  withCredentials: true,
-});
-
 
 
 const ContributorDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [menuOpen, setMenuOpen] = useState(false);
   const { loggedIn, logout, userData, loading } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);

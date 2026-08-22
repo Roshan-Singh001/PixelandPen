@@ -1,9 +1,9 @@
 import React from 'react'
 
-const SubsProfile = () => {
+const ReadProfile = () => {
   return (
-    <div>SubsProfile</div>
+    <div>ReadProfile</div>
   )
 }
 
-export default SubsProfile
+export default ReadProfile;

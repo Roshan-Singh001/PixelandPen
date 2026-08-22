@@ -1,16 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import AxiosInstance from '../../../api/axiosInstance';
 import { Switch } from '@headlessui/react';
 import { useAuth } from "../../../contexts/AuthContext";
 import { useTheme } from '../../../contexts/ThemeContext';
 import PixelPenLoaderSmall from '../../../components/PixelPenLoaderSmall';
 
-const AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  timeout: 30000,
-  headers: { "X-Custom-Header": "foobar" },
-  withCredentials: true,
-});
 
 const ContriSettings = () => {
   const { isDarkMode, toggleDark } = useTheme();

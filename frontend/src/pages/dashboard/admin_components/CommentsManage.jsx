@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import  axios  from "axios";
+import AxiosInstance from '../../../api/axiosInstance';
 import { Check,User, X, Trash2, MessageCircle, Clock, CheckCircle, AlertCircle, Eye } from 'lucide-react';
 import PixelPenLoader from "../../../components/PixelPenLoader";
-
-const AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: true,
-  timeout: 3000,
-  headers: {'X-Custom-Header': 'foobar'}
-});
 
 const CommentsManage = () => {
   const [approvedComments, setApprovedComments] = useState([]);

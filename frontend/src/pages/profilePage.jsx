@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
-import axios from 'axios';
+import AxiosInstance from '../api/axiosInstance';
 import {
   User, MapPin, Calendar, Users, Heart, Eye, Share2,
   ExternalLink, BookOpen, TrendingUp, Clock, Star, MessageCircle,
@@ -16,12 +16,6 @@ import "react-toastify/dist/ReactToastify.css";
 import PixelPenLoader from '../components/PixelPenLoader';
 import { useAuth } from '../contexts/AuthContext';
 
-const AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  timeout: 30000,
-  headers: { "X-Custom-Header": "foobar" },
-  withCredentials: true,
-});
 const ProfilePage = () => {
   const { slug } = useParams();
   const { loggedIn, userData } = useAuth();

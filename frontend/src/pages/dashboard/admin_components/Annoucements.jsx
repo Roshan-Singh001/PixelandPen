@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import AxiosInstance from '../../../api/axiosInstance';
 import { 
   Megaphone, Plus, Search, Filter, Calendar, Users, Eye, Edit3, 
   Trash2, Save, X, AlertCircle, Check, ChevronDown, Send, 
@@ -7,13 +7,6 @@ import {
 } from 'lucide-react';
 
 import PixelPenLoader from "../../../components/PixelPenLoader";
-
-const AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  timeout: 30000,
-  headers: { "X-Custom-Header": "foobar" },
-  withCredentials: true,
-});
 
 const Announcements = () => {
   const [draftAnnounce, setDraftAnnounce] = useState([]);

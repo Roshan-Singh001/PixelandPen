@@ -1,11 +1,9 @@
 import React from 'react'
 
-
-
-const SubsSettings = () => {
+const ReadSettings = () => {
   return (
-    <div>SubsSettings</div>
+    <div>ReadSettings</div>
   )
 }
 
-export default SubsSettings;
+export default ReadSettings;

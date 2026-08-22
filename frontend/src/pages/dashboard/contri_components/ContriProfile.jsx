@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import AxiosInstance from '../../../api/axiosInstance';
 import { 
   User, Camera, Calendar, FileText, Save, Upload, Check, AlertCircle, 
   MapPin, Globe, Plus, X, ExternalLink,
@@ -10,12 +10,6 @@ import { FaGithub, FaLinkedin, FaFacebook   } from "react-icons/fa";
 import PixelPenLoader from '../../../components/PixelPenLoader';
 
 const ContriProfile = (props) => {
-  const AxiosInstance = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
-    withCredentials: true,
-    timeout: 3000,
-    headers: {'X-Custom-Header': 'foobar'}
-  });
 
   const [profile, setProfile] = useState({});
   const [preview, setPreview] = useState('../../../assets/images/icons-user-30.png');

@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, User, Calendar, Clock, Eye, Heart, BookmarkPlus, Share2, Star, TrendingUp, Award, Zap } from 'lucide-react';
-import axios from "axios";
-
-const AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  timeout: 10000,
-  headers: { "X-Custom-Header": "foobar" },
-});
 
 
 // Enhanced Hero Slider component

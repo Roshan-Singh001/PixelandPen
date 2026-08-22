@@ -1,7 +1,6 @@
 import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { v4 as uuidv4 } from 'uuid';
+import AxiosInstance from '../../api/axiosInstance';
 import { Slate, Editable, withReact, useSlate } from 'slate-react';
 import { Node, Text, createEditor, Editor, Range, Transforms, Element as SlateElement } from 'slate';
 import { withHistory, HistoryEditor } from 'slate-history';
@@ -55,12 +54,6 @@ const ArticleEditor = (props) => {
   const [slug, setSlug] = useState('');
   const [isRightSideBar, setIsRightSideBar] = useState(true);
   const LIST_TYPES = ['numbered-list', 'bulleted-list'];
-  const AxiosInstance = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
-    withCredentials: true,
-    timeout: 3000,
-    headers: { 'X-Custom-Header': 'foobar' }
-  });
   const [allCategories, setAllCategories] = useState([]);
 
   const [featuredImage, setFeaturedImage] = useState(null);
@@ -230,7 +223,8 @@ const ArticleEditor = (props) => {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/dashboard/contributor/article/uploads/featuredimage`, formData, {
+      const res = await AxiosInstance.post(`${import.meta.env.VITE_API_URL}/dashboard/contributor/article/uploads/featuredimage`,
+        formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -593,214 +587,214 @@ const ArticleEditor = (props) => {
         </p>
       </div>
 
-    <nav className='flex flex-wrap justify-between items-center gap-2 p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#162033] border border-[#E5E7EB] dark:border-[#243247] shadow-sm'>
-      <div className='flex gap-2'>
-        <button
-          onMouseDown={event => {
-            event.preventDefault();
-            HistoryEditor.undo(editor);
-          }}
-          disabled={!canUndo(editor)}
-          className="py-2 px-3 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed bg-[#FAFAF8] dark:bg-[#0B1220] text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F] dark:hover:bg-[#4F8EF7] hover:text-white transition-colors"
-          title='Undo'
-        >
-          <IoMdUndo />
-        </button>
+      <nav className='flex flex-wrap justify-between items-center gap-2 p-2.5 sm:p-3 rounded-xl bg-white dark:bg-[#162033] border border-[#E5E7EB] dark:border-[#243247] shadow-sm'>
+        <div className='flex gap-2'>
+          <button
+            onMouseDown={event => {
+              event.preventDefault();
+              HistoryEditor.undo(editor);
+            }}
+            disabled={!canUndo(editor)}
+            className="py-2 px-3 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed bg-[#FAFAF8] dark:bg-[#0B1220] text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F] dark:hover:bg-[#4F8EF7] hover:text-white transition-colors"
+            title='Undo'
+          >
+            <IoMdUndo />
+          </button>
 
-        <button
-          onMouseDown={event => {
-            event.preventDefault();
-            HistoryEditor.redo(editor);
-          }}
-          disabled={!canRedo(editor)}
-          className="py-2 px-3 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed bg-[#FAFAF8] dark:bg-[#0B1220] text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F] dark:hover:bg-[#4F8EF7] hover:text-white transition-colors"
-          title='Redo'
-        >
-          <IoMdRedo />
-        </button>
+          <button
+            onMouseDown={event => {
+              event.preventDefault();
+              HistoryEditor.redo(editor);
+            }}
+            disabled={!canRedo(editor)}
+            className="py-2 px-3 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed bg-[#FAFAF8] dark:bg-[#0B1220] text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F] dark:hover:bg-[#4F8EF7] hover:text-white transition-colors"
+            title='Redo'
+          >
+            <IoMdRedo />
+          </button>
 
-      </div>
-      <div className='flex gap-2'>
-        <button onClick={handlePreview} title='Preview' disabled={!isSave} className='py-2 px-3 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed text-lg text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F] dark:hover:bg-[#4F8EF7] hover:text-white transition-colors'><VscOpenPreview /></button>
-        <button onClick={e => { setIsRightSideBar(!isRightSideBar) }} title={isRightSideBar ? 'Sidebar Collapse' : 'Sidebar Expand'} className={`py-2 px-3 rounded-lg text-lg transition-colors ${isRightSideBar ? 'bg-[#1E3A5F] dark:bg-[#4F8EF7] text-white' : 'text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F] dark:hover:bg-[#4F8EF7] hover:text-white'}`}>
-          {isRightSideBar ? <GoSidebarCollapse /> : <GoSidebarExpand />}
-        </button>
-        <button title='Save Draft' onClick={handleSave} disabled={handleCanBeSave()} className={`flex justify-center items-center gap-2 py-2 px-4 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed text-sm font-semibold border border-[#E5E7EB] dark:border-[#243247] text-[#1F2937] dark:text-[#F8FAFC] hover:border-[#1E3A5F] dark:hover:border-[#4F8EF7] transition-colors`}>
-          {inProgress ? <PixelPenLoaderSmall /> : <>
-            <span>Save</span>
-            <CiSaveDown2 />
-          </>}
-
-        </button>
-        <button title={isSend ? 'Article is sended For review' : 'Send for Review'} onClick={handleSend} disabled={!isSave || isSend} className='flex justify-center items-center gap-2 py-2 px-4 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed text-sm font-semibold text-white bg-[#1e3a5f] hover:opacity-90 transition-opacity'>
-          {inSaveProgress ? <PixelPenLoaderSmall /> : <>
-            <span>Send</span>
-            <IoMdSend />
-          </>}
-        </button>
-
-      </div>
-    </nav>
-
-    <div className='mt-4 flex flex-col lg:flex-row gap-4'>
-      <div className={`w-full ${isRightSideBar ? 'lg:max-w-[54rem]' : ''} p-4 sm:p-6 bg-white dark:bg-[#162033] border border-[#E5E7EB] dark:border-[#243247] rounded-2xl shadow-sm transition-colors`}>
-        <div className="mb-4">
-          <input value={title} onChange={e => { setTitle(e.target.value); setIsTitleDirty(true); }} className="text-2xl sm:text-3xl font-['Newsreader'] border-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none bg-transparent w-full font-semibold text-[#1F2937] dark:text-[#F8FAFC] placeholder-[#6B7280] dark:placeholder-[#AAB4C5] mb-2" type="text" placeholder='Add title' />
         </div>
-        <div>
-          <Slate key={editorKey} editor={editor} initialValue={value} onChange={handleChange}>
-            <Toolbar toggleMark={toggleMark} toggleBlock={toggleBlock} isBlockActive={isBlockActive} toggleAlignment={toggleAlignment} toggleLink={toggleLink} isLinkActive={isLinkActive} unwrapLink={unwrapLink} insertImage={insertImage} embedYoutube={embedYoutube} isAlignActive={isAlignActive} />
-            <div className="h-[45vh] sm:h-[50vh] overflow-auto mt-4 border border-[#E5E7EB] dark:border-[#243247] rounded-xl p-3 sm:p-4 min-h-[240px] sm:min-h-[300px] bg-[#FAFAF8]/40 dark:bg-[#0B1220]/40">
-              <Editable
-                renderElement={renderElement}
-                renderLeaf={renderLeaf}
-                placeholder="Write your article..."
-                className="prose dark:prose-invert max-w-none outline-none min-h-[220px] sm:min-h-[280px]"
-                onKeyDown={(event) => {
-                  for (const hotkey in HOTKEYS) {
-                    if (isHotkey(hotkey, event)) {
-                      event.preventDefault();
-                      toggleMark(editor, HOTKEYS[hotkey]);
-                      return;
-                    }
-                  }
-                  const [match] = Editor.nodes(editor, {
-                    match: n => SlateElement.isElement(n) && n.type === 'code',
-                  });
+        <div className='flex gap-2'>
+          <button onClick={handlePreview} title='Preview' disabled={!isSave} className='py-2 px-3 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed text-lg text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F] dark:hover:bg-[#4F8EF7] hover:text-white transition-colors'><VscOpenPreview /></button>
+          <button onClick={e => { setIsRightSideBar(!isRightSideBar) }} title={isRightSideBar ? 'Sidebar Collapse' : 'Sidebar Expand'} className={`py-2 px-3 rounded-lg text-lg transition-colors ${isRightSideBar ? 'bg-[#1E3A5F] dark:bg-[#4F8EF7] text-white' : 'text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F] dark:hover:bg-[#4F8EF7] hover:text-white'}`}>
+            {isRightSideBar ? <GoSidebarCollapse /> : <GoSidebarExpand />}
+          </button>
+          <button title='Save Draft' onClick={handleSave} disabled={handleCanBeSave()} className={`flex justify-center items-center gap-2 py-2 px-4 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed text-sm font-semibold border border-[#E5E7EB] dark:border-[#243247] text-[#1F2937] dark:text-[#F8FAFC] hover:border-[#1E3A5F] dark:hover:border-[#4F8EF7] transition-colors`}>
+            {inProgress ? <PixelPenLoaderSmall /> : <>
+              <span>Save</span>
+              <CiSaveDown2 />
+            </>}
 
-                  if (match) {
-                    if (event.key === 'Enter') {
-                      if (event.shiftKey || event.ctrlKey) {
+          </button>
+          <button title={isSend ? 'Article is sended For review' : 'Send for Review'} onClick={handleSend} disabled={!isSave || isSend} className='flex justify-center items-center gap-2 py-2 px-4 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed text-sm font-semibold text-white bg-[#1e3a5f] hover:opacity-90 transition-opacity'>
+            {inSaveProgress ? <PixelPenLoaderSmall /> : <>
+              <span>Send</span>
+              <IoMdSend />
+            </>}
+          </button>
+
+        </div>
+      </nav>
+
+      <div className='mt-4 flex flex-col lg:flex-row gap-4'>
+        <div className={`w-full ${isRightSideBar ? 'lg:max-w-[54rem]' : ''} p-4 sm:p-6 bg-white dark:bg-[#162033] border border-[#E5E7EB] dark:border-[#243247] rounded-2xl shadow-sm transition-colors`}>
+          <div className="mb-4">
+            <input value={title} onChange={e => { setTitle(e.target.value); setIsTitleDirty(true); }} className="text-2xl sm:text-3xl font-['Newsreader'] border-none ring-0 focus:outline-none focus:ring-0 focus:shadow-none bg-transparent w-full font-semibold text-[#1F2937] dark:text-[#F8FAFC] placeholder-[#6B7280] dark:placeholder-[#AAB4C5] mb-2" type="text" placeholder='Add title' />
+          </div>
+          <div>
+            <Slate key={editorKey} editor={editor} initialValue={value} onChange={handleChange}>
+              <Toolbar toggleMark={toggleMark} toggleBlock={toggleBlock} isBlockActive={isBlockActive} toggleAlignment={toggleAlignment} toggleLink={toggleLink} isLinkActive={isLinkActive} unwrapLink={unwrapLink} insertImage={insertImage} embedYoutube={embedYoutube} isAlignActive={isAlignActive} />
+              <div className="h-[45vh] sm:h-[50vh] overflow-auto mt-4 border border-[#E5E7EB] dark:border-[#243247] rounded-xl p-3 sm:p-4 min-h-[240px] sm:min-h-[300px] bg-[#FAFAF8]/40 dark:bg-[#0B1220]/40">
+                <Editable
+                  renderElement={renderElement}
+                  renderLeaf={renderLeaf}
+                  placeholder="Write your article..."
+                  className="prose dark:prose-invert max-w-none outline-none min-h-[220px] sm:min-h-[280px]"
+                  onKeyDown={(event) => {
+                    for (const hotkey in HOTKEYS) {
+                      if (isHotkey(hotkey, event)) {
                         event.preventDefault();
-                        Transforms.insertNodes(editor, {
-                          type: 'paragraph',
-                          children: [{ text: '' }],
-                        });
+                        toggleMark(editor, HOTKEYS[hotkey]);
                         return;
                       }
-
-                      event.preventDefault();
-                      Transforms.insertText(editor, '\n');
-                      return;
                     }
-                  }
-                }}
-              />
+                    const [match] = Editor.nodes(editor, {
+                      match: n => SlateElement.isElement(n) && n.type === 'code',
+                    });
+
+                    if (match) {
+                      if (event.key === 'Enter') {
+                        if (event.shiftKey || event.ctrlKey) {
+                          event.preventDefault();
+                          Transforms.insertNodes(editor, {
+                            type: 'paragraph',
+                            children: [{ text: '' }],
+                          });
+                          return;
+                        }
+
+                        event.preventDefault();
+                        Transforms.insertText(editor, '\n');
+                        return;
+                      }
+                    }
+                  }}
+                />
+              </div>
+
+
+            </Slate>
+          </div>
+          <div className="mt-4 flex flex-wrap justify-between items-center gap-2 text-sm text-[#6B7280] dark:text-[#AAB4C5]">
+            <div>
+              Characters: {getTextLength(value)}
+            </div>
+            <div>
+              {(!isSave && isContentDirty) && (
+                <span className="text-[#D97706] dark:text-[#F59E0B] font-medium">
+                  • Unsaved changes
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {isRightSideBar && <aside className="w-full h-auto  lg:w-[25rem] shrink-0 p-4 sm:p-6 bg-white dark:bg-[#162033] rounded-2xl border border-[#E5E7EB] dark:border-[#243247] shadow-sm space-y-6 lg:overflow-y-auto">
+          <h2 className="text-lg sm:text-xl font-['Newsreader'] font-semibold text-[#1F2937] dark:text-[#F8FAFC]">Post Settings</h2>
+
+          {/* Featured Image */}
+          <div>
+            <label className="block mb-2 text-sm font-medium text-[#1F2937] dark:text-[#F8FAFC]">Set Featured Image</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="block w-full text-sm text-[#1F2937] dark:text-[#F8FAFC] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#1E3A5F]/10 dark:file:bg-[#4F8EF7]/10 file:text-[#1E3A5F] dark:file:text-[#4F8EF7] hover:file:bg-[#1E3A5F]/20 dark:hover:file:bg-[#4F8EF7]/20 file:transition-colors"
+            />
+            {featuredImage && (
+              <img src={featuredImage} alt="Featured" className="mt-3 w-full rounded-xl shadow-sm border border-[#E5E7EB] dark:border-[#243247]" />
+            )}
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block mb-2 text-sm font-medium text-[#1F2937] dark:text-[#F8FAFC]">
+              Description (160 characters)
+            </label>
+            <textarea
+              maxLength={160}
+              rows={3}
+              value={description}
+              onChange={(e) => { setDescription(e.target.value); setIsDescriptionDirty(true) }}
+              className="w-full focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/30 dark:focus:ring-[#4F8EF7]/30 p-2.5 rounded-lg bg-[#FAFAF8] dark:bg-[#0B1220] text-[#1F2937] dark:text-[#F8FAFC] border border-[#E5E7EB] dark:border-[#243247] transition-shadow"
+              placeholder="Short description of the post..."
+            />
+            <p className="text-xs text-right text-[#6B7280] dark:text-[#AAB4C5] mt-1">{description.length}/160</p>
+          </div>
+
+          {/* Categories */}
+          <div>
+            <label className="block mb-2 text-sm font-medium text-[#1F2937] dark:text-[#F8FAFC]">Select Categories</label>
+            <div className="space-y-2">
+              {allCategories != null && allCategories.map((cat) => (
+                <label key={cat.id} className="flex items-center gap-2 text-sm text-[#1F2937] dark:text-[#F8FAFC] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={categories.includes(cat.id)}
+                    disabled={
+                      categories.length > 0 && !categories.includes(cat.id)
+                    }
+                    onChange={() => toggleCategory(cat.id)}
+                    className="h-4 w-4 rounded accent-[#1E3A5F] dark:accent-[#4F8EF7] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                  <span>{cat.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Tags */}
+          <div>
+            <label className="block mb-2 text-sm font-medium text-[#1F2937] dark:text-[#F8FAFC]">
+              Tags (max 10)
+            </label>
+
+            <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-[#E5E7EB] dark:border-[#243247] bg-[#FAFAF8] dark:bg-[#0B1220]">
+              {tags.map((tag, index) => (
+                <div
+                  key={index}
+                  className="flex items-center bg-[#F59E0B]/10 text-[#D97706] dark:bg-[#F6B93B]/15 dark:text-[#F6B93B] px-2.5 py-1 rounded-full text-sm"
+                >
+                  <span className="mr-2">{tag}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeTag(index)}
+                    className="focus:outline-none text-sm ml-2 hover:text-[#DC2626] dark:hover:text-[#EF4444] transition-colors"
+                  >
+                    &times;
+                  </button>
+                </div>
+              ))}
+
+              {tags.length < 10 && (
+                <input
+                  type="text"
+                  value={inputTag}
+                  onChange={(e) => setInputTag(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type and press Enter"
+                  className="flex-1 border-none focus:border-none ring-0 focus:ring-0 focus:shadow-none min-w-[150px] p-1 focus:outline-none bg-transparent text-[#1F2937] dark:text-[#F8FAFC] placeholder-[#6B7280] dark:placeholder-[#AAB4C5]"
+                />
+              )}
             </div>
 
-
-          </Slate>
-        </div>
-        <div className="mt-4 flex flex-wrap justify-between items-center gap-2 text-sm text-[#6B7280] dark:text-[#AAB4C5]">
-          <div>
-            Characters: {getTextLength(value)}
-          </div>
-          <div>
-            {(!isSave && isContentDirty) && (
-              <span className="text-[#D97706] dark:text-[#F59E0B] font-medium">
-                • Unsaved changes
-              </span>
+            {error && (
+              <p className="text-[#DC2626] dark:text-[#EF4444] text-sm mt-1">{error}</p>
             )}
+
           </div>
-        </div>
+        </aside>}
       </div>
-
-      {isRightSideBar && <aside className="w-full h-auto  lg:w-[25rem] shrink-0 p-4 sm:p-6 bg-white dark:bg-[#162033] rounded-2xl border border-[#E5E7EB] dark:border-[#243247] shadow-sm space-y-6 lg:overflow-y-auto">
-        <h2 className="text-lg sm:text-xl font-['Newsreader'] font-semibold text-[#1F2937] dark:text-[#F8FAFC]">Post Settings</h2>
-
-        {/* Featured Image */}
-        <div>
-          <label className="block mb-2 text-sm font-medium text-[#1F2937] dark:text-[#F8FAFC]">Set Featured Image</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            className="block w-full text-sm text-[#1F2937] dark:text-[#F8FAFC] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#1E3A5F]/10 dark:file:bg-[#4F8EF7]/10 file:text-[#1E3A5F] dark:file:text-[#4F8EF7] hover:file:bg-[#1E3A5F]/20 dark:hover:file:bg-[#4F8EF7]/20 file:transition-colors"
-          />
-          {featuredImage && (
-            <img src={featuredImage} alt="Featured" className="mt-3 w-full rounded-xl shadow-sm border border-[#E5E7EB] dark:border-[#243247]" />
-          )}
-        </div>
-
-        {/* Description */}
-        <div>
-          <label className="block mb-2 text-sm font-medium text-[#1F2937] dark:text-[#F8FAFC]">
-            Description (160 characters)
-          </label>
-          <textarea
-            maxLength={160}
-            rows={3}
-            value={description}
-            onChange={(e) => { setDescription(e.target.value); setIsDescriptionDirty(true) }}
-            className="w-full focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/30 dark:focus:ring-[#4F8EF7]/30 p-2.5 rounded-lg bg-[#FAFAF8] dark:bg-[#0B1220] text-[#1F2937] dark:text-[#F8FAFC] border border-[#E5E7EB] dark:border-[#243247] transition-shadow"
-            placeholder="Short description of the post..."
-          />
-          <p className="text-xs text-right text-[#6B7280] dark:text-[#AAB4C5] mt-1">{description.length}/160</p>
-        </div>
-
-        {/* Categories */}
-        <div>
-          <label className="block mb-2 text-sm font-medium text-[#1F2937] dark:text-[#F8FAFC]">Select Categories</label>
-          <div className="space-y-2">
-            {allCategories != null && allCategories.map((cat) => (
-              <label key={cat.id} className="flex items-center gap-2 text-sm text-[#1F2937] dark:text-[#F8FAFC] cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={categories.includes(cat.id)}
-                  disabled={
-                    categories.length > 0 && !categories.includes(cat.id)
-                  }
-                  onChange={() => toggleCategory(cat.id)}
-                  className="h-4 w-4 rounded accent-[#1E3A5F] dark:accent-[#4F8EF7] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                />
-                <span>{cat.name}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Tags */}
-        <div>
-          <label className="block mb-2 text-sm font-medium text-[#1F2937] dark:text-[#F8FAFC]">
-            Tags (max 10)
-          </label>
-
-          <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border border-[#E5E7EB] dark:border-[#243247] bg-[#FAFAF8] dark:bg-[#0B1220]">
-            {tags.map((tag, index) => (
-              <div
-                key={index}
-                className="flex items-center bg-[#F59E0B]/10 text-[#D97706] dark:bg-[#F6B93B]/15 dark:text-[#F6B93B] px-2.5 py-1 rounded-full text-sm"
-              >
-                <span className="mr-2">{tag}</span>
-                <button
-                  type="button"
-                  onClick={() => removeTag(index)}
-                  className="focus:outline-none text-sm ml-2 hover:text-[#DC2626] dark:hover:text-[#EF4444] transition-colors"
-                >
-                  &times;
-                </button>
-              </div>
-            ))}
-
-            {tags.length < 10 && (
-              <input
-                type="text"
-                value={inputTag}
-                onChange={(e) => setInputTag(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Type and press Enter"
-                className="flex-1 border-none focus:border-none ring-0 focus:ring-0 focus:shadow-none min-w-[150px] p-1 focus:outline-none bg-transparent text-[#1F2937] dark:text-[#F8FAFC] placeholder-[#6B7280] dark:placeholder-[#AAB4C5]"
-              />
-            )}
-          </div>
-
-          {error && (
-            <p className="text-[#DC2626] dark:text-[#EF4444] text-sm mt-1">{error}</p>
-          )}
-
-        </div>
-      </aside>}
-    </div>
     </div>
   );
 };

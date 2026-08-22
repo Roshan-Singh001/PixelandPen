@@ -6,4 +6,4 @@ const Likes = () => {
   )
 }
 
-export default Likes
+export default Likes;

@@ -1,13 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { ToastContainer, toast } from "react-toastify";
-import axios from "axios";
+import AxiosInstance from "../api/axiosInstance";
 
 const AuthContext = createContext();
-
-const AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: true,
-});
 
 export const AuthProvider = ({ children }) => {
   const [loggedIn, setLoggedIn] = useState(false);

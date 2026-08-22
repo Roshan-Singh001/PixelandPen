@@ -3,18 +3,12 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Bookmark, BookmarkX, Eye, Calendar, Tag, User, Clock } from 'lucide-react';
+import AxiosInstance from '../../../api/axiosInstance';
 
 import PixelPenLoader from '../../../components/PixelPenLoader';
 
-const AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  timeout: 30000,
-  headers: { "X-Custom-Header": "foobar" },
-  withCredentials: true,
-});
-
 const Bookmarks = (props) => {
-  
+
   const navigate = useNavigate();
   const [bookmarkedArticles, setBookmarkedArticles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,14 +25,14 @@ const Bookmarks = (props) => {
           user_id: props.userdata.user_id,
         }
       })
-      .then((res) => {
-        setBookmarkedArticles(res.data);
-        setIsLoading(false);
-      })
-      .catch((err) => {
-        console.log(err);
-        setIsLoading(false);
-      });
+        .then((res) => {
+          setBookmarkedArticles(res.data);
+          setIsLoading(false);
+        })
+        .catch((err) => {
+          console.log(err);
+          setIsLoading(false);
+        });
     } catch (error) {
       console.log(error);
       setIsLoading(false);
@@ -52,13 +46,13 @@ const Bookmarks = (props) => {
           user_id: props.userdata.user_id,
         }
       })
-      .then((res) => {
-        // Remove the article from the local state
-        setBookmarkedArticles(bookmarkedArticles.filter(article => article.slug !== articleSlug));
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+        .then((res) => {
+          // Remove the article from the local state
+          setBookmarkedArticles(bookmarkedArticles.filter(article => article.slug !== articleSlug));
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     } catch (error) {
       console.log(error);
     }
@@ -78,12 +72,12 @@ const Bookmarks = (props) => {
       secondary: 'text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50',
       danger: 'text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20',
     };
-    
+
     const sizeConfig = {
       sm: 'p-2',
       md: 'p-2.5',
     };
-    
+
     return (
       <button
         onClick={onClick}
@@ -103,17 +97,17 @@ const Bookmarks = (props) => {
             <div className="flex items-center gap-3 mb-3">
               <Bookmark className="w-5 h-5 text-blue-500 dark:text-blue-400 flex-shrink-0 fill-current" />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors cursor-pointer"
-                  onClick={() => handleViewArticle(article.slug)}>
+                onClick={() => handleViewArticle(article.slug)}>
                 {article.title}
               </h3>
             </div>
-            
+
             {article.excerpt && (
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
                 {article.excerpt}
               </p>
             )}
-            
+
             <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 flex-wrap">
               {article.category && (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
@@ -121,25 +115,25 @@ const Bookmarks = (props) => {
                   {article.category}
                 </span>
               )}
-              
+
               {article.author && (
                 <span className="flex items-center gap-1">
                   <User className="w-3 h-3" />
                   {article.author}
                 </span>
               )}
-              
+
               {article.published_date && (
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  {new Date(article.published_date).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'short', 
-                    day: 'numeric' 
+                  {new Date(article.published_date).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
                   })}
                 </span>
               )}
-              
+
               {article.read_time && (
                 <span className="flex items-center gap-1">
                   <Clock className="w-3 h-3" />
@@ -147,18 +141,18 @@ const Bookmarks = (props) => {
                 </span>
               )}
             </div>
-            
+
             {article.bookmarked_date && (
               <div className="mt-2 text-xs text-gray-400 dark:text-gray-500">
-                Bookmarked on {new Date(article.bookmarked_date).toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
+                Bookmarked on {new Date(article.bookmarked_date).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
                 })}
               </div>
             )}
           </div>
-          
+
           <div className="flex items-center gap-1 ml-4 opacity-0 group-hover:opacity-100 transition-opacity self-center">
             <ActionButton
               onClick={() => handleViewArticle(article.slug)}
@@ -221,9 +215,9 @@ const Bookmarks = (props) => {
 
         {/* Bookmarked Articles */}
         <section>
-          <SectionHeader 
-            title="Saved Articles" 
-            count={bookmarkedArticles.length} 
+          <SectionHeader
+            title="Saved Articles"
+            count={bookmarkedArticles.length}
             icon={Bookmark}
           />
           <div className="space-y-4">

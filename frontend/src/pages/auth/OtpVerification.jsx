@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import axios from "axios";
+import AxiosInstance from "../../api/axiosInstance";
 import { toast } from "react-toastify";
 
 function OtpVerification() {
@@ -12,11 +12,6 @@ function OtpVerification() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [timer, setTimer] = useState(600); // 10 minutes in seconds
-  const AxiosInstance = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
-    timeout: 3000,
-    headers: {'X-Custom-Header': 'foobar'}
-  });
 
   useEffect(() => {
     if (timer > 0) {

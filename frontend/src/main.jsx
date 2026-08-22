@@ -45,6 +45,15 @@ import ContriSettings from "./pages/dashboard/contri_components/ContriSettings.j
 import ArticleEditor from "./pages/dashboard/ArticleEditor.jsx";
 
 import Reader from "./pages/dashboard/read_dashboard.jsx";
+import DashboardHome3 from "./pages/dashboard/read_components/Dashboard_Home3.jsx";
+import MyReads from "./pages/dashboard/read_components/MyReads.jsx";
+import Comments from "./pages/dashboard/read_components/Comments.jsx";
+import Likes from "./pages/dashboard/read_components/Likes.jsx";
+import Bookmarks from "./pages/dashboard/read_components/Bookmarks.jsx";
+import Following from "./pages/dashboard/read_components/Following.jsx"
+import ReadProfile from "./pages/dashboard/read_components/ReadProfile.jsx";
+import ReadSettings from "./pages/dashboard/read_components/ReadSettings.jsx";
+
 import Profile from "./pages/profilePage.jsx";
 import ArticlePage from "./pages/article-page.jsx";
 import PreviewArticlePage from "./pages/Preview-Article-Page.jsx";
@@ -245,29 +254,55 @@ const router = createBrowserRouter([
             path: "settings",
             element: <ContriSettings />,
           },
-          // {
-          //   path: "article/editor",
-          //   element: <ArticleEditor />,
-          // }
+          {
+            path: "article/editor",
+            element: <ArticleEditor />,
+          }
         ]
       },
     ],
   },
-  {
-    element: <PrivateRoute allowedRoles={["Contributor"]} />,
-    children: [
-      {
-        path: "/dashboard/contributor/article/editor",
-        element: <ArticleEditor />,
-      },
-    ],
-  },
+  
   {
     element: <PrivateRoute allowedRoles={["Reader"]} />,
     children: [
       {
         path: "/dashboard/reader",
         element: <Reader />,
+        children: [
+          {
+            index: true,
+            element: <DashboardHome3 />,
+          },
+          {
+            path: "reads",
+            element: <MyReads />,
+          },
+          {
+            path: "comments",
+            element: <Comments />,
+          },
+          {
+            path: "likes",
+            element: <Likes />,
+          },
+          {
+            path: "bookmarks",
+            element: <Bookmarks />,
+          },
+          {
+            path: "following",
+            element: <Following />,
+          },
+          {
+            path: "profile",
+            element: <ReadProfile />,
+          },
+          {
+            path: "settings",
+            element: <ReadSettings />,
+          },
+        ]
       },
     ],
   },

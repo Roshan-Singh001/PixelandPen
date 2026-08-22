@@ -3,7 +3,7 @@ import {
   UserCheck, FileText, Eye, Users, FolderCog,
 } from "lucide-react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import AxiosInstance from "../../api/axiosInstance";
 import { FaBars } from "react-icons/fa";
 import { BiComment, BiSolidDashboard } from "react-icons/bi";
 import { MdArticle, MdAnalytics, MdLogout } from "react-icons/md";
@@ -13,12 +13,6 @@ import { GrAnnounce } from "react-icons/gr";
 
 import { useAuth } from "../../contexts/AuthContext";
 import PixelPenLoader from "../../components/PixelPenLoader";
-
-const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  timeout: 30000,
-  withCredentials: true,
-});
 
 const NAV_ITEMS = [
   {
@@ -93,10 +87,10 @@ const AdminDashboard = () => {
     const fetchAll = async () => {
       try {
         const [r1, r2, r3, r4] = await Promise.all([
-          API.get("/dashboard/admin/stat/posts"),
-          API.get("/dashboard/admin/stat/views"),
-          API.get("/dashboard/admin/stat/contributors"),
-          API.get("/dashboard/admin/stat/readers"),
+          AxiosInstance.get("/dashboard/admin/stat/posts"),
+          AxiosInstance.get("/dashboard/admin/stat/views"),
+          AxiosInstance.get("/dashboard/admin/stat/contributors"),
+          AxiosInstance.get("/dashboard/admin/stat/readers"),
         ]);
         setStatsData([
           { title: "Total Posts", value: r1.data.total_p || 0, icon: FileText },
@@ -108,8 +102,8 @@ const AdminDashboard = () => {
 
       try {
         const [ra, rc] = await Promise.all([
-          API.get("/dashboard/admin/recent/article"),
-          API.get("/dashboard/admin/recent/contributor"),
+          AxiosInstance.get("/dashboard/admin/recent/article"),
+          AxiosInstance.get("/dashboard/admin/recent/contributor"),
         ]);
         setArticleRequests(ra.data.recents ?? []);
         setContributorRequests(rc.data.recents ?? []);

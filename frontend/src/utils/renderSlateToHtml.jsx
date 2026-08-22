@@ -20,7 +20,7 @@ export function renderSlateToHtml(nodes) {
       case 'paragraph':
         return <p key={i} className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4 text-base sm:text-lg">{children}</p>;
       case 'code':
-        return <CodeElement key={i} children={children}/>;
+        return <CodeElement key={i} children={children} />;
       case 'heading-one':
         return <HeadingOneElement key={i} children={children} />;
       case 'heading-two':
@@ -36,17 +36,17 @@ export function renderSlateToHtml(nodes) {
       case 'block-quote':
         return <BlockQuoteElement key={i} children={children} />;
       case 'bulleted-list':
-        return <BulletListElement key={i} children={children}/>;
+        return <BulletListElement key={i} children={children} />;
       case 'numbered-list':
-        return <NumberListElement key={i} children={children}/>;
+        return <NumberListElement key={i} children={children} />;
       case 'link':
-        return <LinkElement key={i} children={children}/>;
+        return <LinkElement key={i} children={children} />;
       case 'list-item':
-        return <ListItemElement key={i} children={children}/>;
+        return <ListItemElement key={i} children={children} />;
       case 'image':
-        return <ImageElement key={i} children={children}/>;
+        return <ImageElement key={i} children={children} />;
       case 'youtube':
-        return <YoutubeElement key={i} children={children}/>;
+        return <YoutubeElement key={i} children={children} />;
       default:
         return <DefaultElement key={i} children={children} />;
     }
@@ -75,7 +75,7 @@ const CodeElement = (props) => (
         </button>
       </div>
     </div>
-    
+
     {/* Code content */}
     <div className="relative">
       <pre className="bg-gray-900 dark:bg-gray-950 p-6 overflow-x-auto font-mono text-sm leading-relaxed scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
@@ -83,7 +83,7 @@ const CodeElement = (props) => (
           {props.children}
         </code>
       </pre>
-      
+
       {/* Gradient overlay for scroll indication */}
       <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-900 dark:from-gray-950 to-transparent pointer-events-none"></div>
     </div>
@@ -97,10 +97,10 @@ const DefaultElement = (props) => (
 );
 
 const LinkElement = (props) => (
-  <a 
-    href={props.element.url} 
-    target="_blank" 
-    rel="noopener noreferrer" 
+  <a
+    href={props.element.url}
+    target="_blank"
+    rel="noopener noreferrer"
     className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline decoration-2 underline-offset-2 hover:decoration-blue-600 dark:hover:decoration-blue-400 transition-all duration-200 font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20 px-1 py-0.5 rounded-md"
   >
     {props.children}
@@ -110,10 +110,10 @@ const LinkElement = (props) => (
 const ImageElement = (props) => (
   <div {...props.attributes} contentEditable={false} className="my-8">
     <div className="rounded-2xl overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 transition-all duration-300 hover:shadow-3xl">
-      <img 
-        src={props.element.url} 
-        alt='Image' 
-        className="w-full h-auto object-cover rounded-xl hover:scale-[1.02] transition-transform duration-500 ease-out" 
+      <img
+        src={props.element.url}
+        alt='Image'
+        className="w-full h-auto object-cover rounded-xl hover:scale-[1.02] transition-transform duration-500 ease-out"
       />
     </div>
   </div>
@@ -123,13 +123,13 @@ const YoutubeElement = (props) => (
   <div className="my-8" {...props.attributes} contentEditable={false}>
     <div className="relative w-full max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 transition-all duration-300 hover:shadow-3xl">
       <div className="relative pb-[56.25%] h-0 rounded-xl overflow-hidden">
-        <iframe 
-          className="absolute top-0 left-0 w-full h-full rounded-xl" 
-          src={props.element.url} 
-          title="YouTube video player" 
-          frameBorder="0" 
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-          referrerPolicy="strict-origin-when-cross-origin" 
+        <iframe
+          className="absolute top-0 left-0 w-full h-full rounded-xl"
+          src={props.element.url}
+          title="YouTube video player"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerPolicy="strict-origin-when-cross-origin"
           allowFullScreen
         />
       </div>
@@ -178,7 +178,7 @@ const BlockQuoteElement = (props) => (
   <blockquote className="my-6 sm:my-8 p-6 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-700 rounded-2xl border-l-4 border-blue-500 shadow-lg relative overflow-hidden">
     <div className="absolute top-4 right-4 text-blue-500/20 dark:text-blue-400/20">
       <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+        <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
       </svg>
     </div>
     <p className="text-slate-700 dark:text-slate-300 italic text-base sm:text-lg font-medium leading-relaxed relative z-10">

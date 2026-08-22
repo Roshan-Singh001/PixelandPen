@@ -1,15 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, XCircle, Eye, FileText, Trash2, X, StarsIcon } from 'lucide-react';
-import axios from 'axios';
-
+import AxiosInstance from '../../../api/axiosInstance';
 import PixelPenLoader from "../../../components/PixelPenLoader";
 
-const AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  timeout: 30000,
-  headers: { "X-Custom-Header": "foobar" },
-  withCredentials: true,
-});
 
 const ArticleRequests = () => {
   const [showRejectModal, setShowRejectModal] = useState(false);
