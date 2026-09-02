@@ -15,6 +15,7 @@ import articleRouter from './article.js';
 import contriRouter from './cont.js';
 import profileRouter from './profile.js';
 import actionRouter from "./actions.js";
+import readRouter from "./reader.js";
 // import db from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -37,6 +38,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/dashboard/admin', adminRouter);
 app.use('/dashboard/contri', contriRouter);
+app.use('/dashboard/reader', readRouter);
 app.use('/profile', profileRouter);
 app.use('/article', articleRouter);
 app.use('/action', actionRouter);
@@ -124,7 +126,7 @@ async function connectToDatabase() {
     )`;
     await db.execute(query_contributor_table);
 
-    const query_subscriber_table = `CREATE TABLE IF NOT EXISTS reader (
+    const query_reader_table = `CREATE TABLE IF NOT EXISTS reader (
       sub_id VARCHAR(255) PRIMARY KEY,
       username VARCHAR(100) NOT NULL,
       email VARCHAR(100) NOT NULL UNIQUE,
@@ -133,7 +135,7 @@ async function connectToDatabase() {
       profile_pic VARCHAR(255),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`;
-    await db.execute(query_subscriber_table);
+    await db.execute(query_reader_table);
 
     const query_articles_table = `CREATE TABLE IF NOT EXISTS articles (
       article_id VARCHAR(255) PRIMARY KEY,
@@ -167,6 +169,18 @@ async function connectToDatabase() {
     )`;
 
     await db.execute(query_likes_table);
+    
+    const query_view_table = `CREATE TABLE IF NOT EXISTS article_views (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      reader_id VARCHAR(255),
+      article_id VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(reader_id, article_id),
+      FOREIGN KEY (reader_id) REFERENCES reader(sub_id) ON DELETE CASCADE,
+      FOREIGN KEY (article_id) REFERENCES articles(article_id) ON DELETE CASCADE
+      )`;
+
+    await db.execute(query_view_table);
 
     const query_follow_table = `CREATE TABLE IF NOT EXISTS reader_follows (
       id INT AUTO_INCREMENT PRIMARY KEY,

@@ -1,17 +1,27 @@
-import React from 'react';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Bookmark, BookmarkX, Eye, Calendar, Tag, User, Clock } from 'lucide-react';
+import { Bookmark, BookmarkX, Eye, Tag, FileText, CalendarCheck } from 'lucide-react';
 import AxiosInstance from '../../../api/axiosInstance';
 
-import PixelPenLoader from '../../../components/PixelPenLoader';
+function daysAgo(dateString) {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  const diffMs = Date.now() - date.getTime();
+  const diffDay = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-const Bookmarks = (props) => {
+  if (diffDay <= 0) return "Added today";
+  if (diffDay === 1) return "Added 1 day ago";
+  if (diffDay < 30) return `Added ${diffDay} days ago`;
+
+  return `Added on ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+}
+
+const Bookmarks = () => {
 
   const navigate = useNavigate();
   const [bookmarkedArticles, setBookmarkedArticles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [removingId, setremovingId] = useState(null);
 
   useEffect(() => {
     fetchBookmarks();
@@ -20,11 +30,7 @@ const Bookmarks = (props) => {
   const fetchBookmarks = () => {
     setIsLoading(true);
     try {
-      AxiosInstance.get('/bookmarks', {
-        headers: {
-          user_id: props.userdata.user_id,
-        }
-      })
+      AxiosInstance.get('/dashboard/reader/bookmarks')
         .then((res) => {
           setBookmarkedArticles(res.data);
           setIsLoading(false);
@@ -39,200 +45,192 @@ const Bookmarks = (props) => {
     }
   };
 
-  const handleRemoveBookmark = (articleSlug) => {
+  const handleRemoveBookmark = (articleId) => {
+    setremovingId(articleId);
     try {
-      AxiosInstance.delete(`/bookmark/${articleSlug}`, {
-        headers: {
-          user_id: props.userdata.user_id,
-        }
-      })
-        .then((res) => {
-          // Remove the article from the local state
-          setBookmarkedArticles(bookmarkedArticles.filter(article => article.slug !== articleSlug));
+      AxiosInstance.delete(`/dashboard/reader/bookmark/${articleId}`)
+        .then(() => {
+          setBookmarkedArticles((prev) => prev.filter(article => article.article_id !== articleId));
+          setremovingId(null);
         })
         .catch((err) => {
           console.log(err);
+          setremovingId(null);
         });
     } catch (error) {
       console.log(error);
+      setremovingId(null);
     }
   };
 
   const handleViewArticle = (slug) => {
-    navigate(`/article/${slug}`);
+    navigate(`/view/article/${slug}`);
   };
 
-  if (isLoading) {
-    return <PixelPenLoader />;
-  }
+  const totalBookmarks = bookmarkedArticles.length;
+  const addedThisWeek = bookmarkedArticles.filter((article) => {
+    if (!article.bookmarked_date) return false;
+    const diffDay = (Date.now() - new Date(article.bookmarked_date).getTime()) / (1000 * 60 * 60 * 24);
+    return diffDay <= 7;
+  }).length;
 
-  const ActionButton = ({ onClick, icon: Icon, variant = 'primary', title, size = 'sm' }) => {
-    const variants = {
-      primary: 'text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20',
-      secondary: 'text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50',
-      danger: 'text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20',
-    };
-
-    const sizeConfig = {
-      sm: 'p-2',
-      md: 'p-2.5',
-    };
-
-    return (
-      <button
-        onClick={onClick}
-        title={title}
-        className={`${variants[variant]} ${sizeConfig[size]} rounded-lg transition-all duration-200 hover:scale-105`}
-      >
-        <Icon className="w-4 h-4" />
-      </button>
-    );
-  };
-
-  const BookmarkCard = ({ article }) => (
-    <div className="group bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600">
-      <div className="p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 mb-3">
-              <Bookmark className="w-5 h-5 text-blue-500 dark:text-blue-400 flex-shrink-0 fill-current" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors cursor-pointer"
-                onClick={() => handleViewArticle(article.slug)}>
-                {article.title}
-              </h3>
-            </div>
-
-            {article.excerpt && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
-                {article.excerpt}
-              </p>
-            )}
-
-            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 flex-wrap">
-              {article.category && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
-                  <Tag className="w-3 h-3 mr-1" />
-                  {article.category}
-                </span>
-              )}
-
-              {article.author && (
-                <span className="flex items-center gap-1">
-                  <User className="w-3 h-3" />
-                  {article.author}
-                </span>
-              )}
-
-              {article.published_date && (
-                <span className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  {new Date(article.published_date).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                  })}
-                </span>
-              )}
-
-              {article.read_time && (
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {article.read_time} min read
-                </span>
-              )}
-            </div>
-
-            {article.bookmarked_date && (
-              <div className="mt-2 text-xs text-gray-400 dark:text-gray-500">
-                Bookmarked on {new Date(article.bookmarked_date).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-1 ml-4 opacity-0 group-hover:opacity-100 transition-opacity self-center">
-            <ActionButton
-              onClick={() => handleViewArticle(article.slug)}
-              icon={Eye}
-              variant="secondary"
-              title="View Article"
-            />
-            <ActionButton
-              onClick={() => handleRemoveBookmark(article.slug)}
-              icon={BookmarkX}
-              variant="danger"
-              title="Remove Bookmark"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const SectionHeader = ({ title, count, icon: Icon }) => (
-    <div className="flex items-center gap-3 mb-6">
-      <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-        <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-      </div>
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-        {title}
-      </h2>
-      <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full text-sm font-medium">
-        {count}
-      </span>
-    </div>
-  );
-
-  const EmptyState = ({ message, icon: Icon }) => (
-    <div className="text-center py-16">
-      <div className="mx-auto w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-full flex items-center justify-center mb-4">
-        <Icon className="w-10 h-10 text-blue-500 dark:text-blue-400" />
-      </div>
-      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-        {message}
-      </h3>
-      <p className="text-gray-500 dark:text-gray-400">
-        Start bookmarking articles to read them later
-      </p>
-    </div>
-  );
+  const statsData = [
+    { label: "Total Bookmarks", value: totalBookmarks, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-900/20", icon: Bookmark },
+    { label: "Added This Week", value: addedThisWeek, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/20", icon: CalendarCheck },
+  ];
 
   return (
-    <div className="min-h-screen p-2">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-            My Bookmarks
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Your saved articles for later reading
-          </p>
+    <div className="space-y-8 font-[Inter,system-ui,sans-serif]">
+
+      {/* Header */}
+      <div>
+        <h1 className="font-[Newsreader,Georgia,serif] text-3xl sm:text-4xl font-black text-gray-900 dark:text-gray-50 mb-2">
+          My Bookmarks
+        </h1>
+        <p className="text-gray-500 dark:text-slate-400">
+          Your saved articles for later reading
+        </p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-slate-700 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
+        {isLoading
+          ? [0, 1].map((i) => (
+            <div key={i} className="flex items-center justify-between px-6 sm:px-8 py-6 animate-pulse">
+              <div>
+                <div className="h-3 bg-gray-100 dark:bg-slate-700 rounded w-24 mb-3" />
+                <div className="h-8 bg-gray-100 dark:bg-slate-700 rounded w-10" />
+              </div>
+              <div className="w-11 h-11 rounded-lg bg-gray-100 dark:bg-slate-700" />
+            </div>
+          ))
+          : statsData.map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <div key={stat.label} className="flex items-center justify-between px-6 sm:px-8 py-6">
+                <div>
+                  <p className="text-xs font-semibold tracking-widest uppercase text-gray-400 dark:text-slate-500 mb-2">
+                    {stat.label}
+                  </p>
+                  <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
+                </div>
+                <div className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${stat.bg}`}>
+                  <Icon className={`w-5 h-5 ${stat.color}`} />
+                </div>
+              </div>
+            );
+          })}
+      </div>
+
+      {/* Saved Articles */}
+      <div>
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-50">Saved Articles</h2>
+          {!isLoading && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+              {totalBookmarks} saved
+            </span>
+          )}
         </div>
 
-        {/* Bookmarked Articles */}
-        <section>
-          <SectionHeader
-            title="Saved Articles"
-            count={bookmarkedArticles.length}
-            icon={Bookmark}
-          />
-          <div className="space-y-4">
-            {bookmarkedArticles.length > 0 ? (
-              bookmarkedArticles.map((article) => (
-                <BookmarkCard key={article.slug} article={article} />
-              ))
-            ) : (
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <EmptyState message="No bookmarks yet" icon={Bookmark} />
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden animate-pulse">
+                <div className="h-40 bg-gray-100 dark:bg-slate-700" />
+                <div className="p-5">
+                  <div className="h-4 bg-gray-100 dark:bg-slate-700 rounded w-3/4 mb-3" />
+                  <div className="h-3 bg-gray-100 dark:bg-slate-700 rounded w-1/2 mb-2" />
+                  <div className="h-3 bg-gray-100 dark:bg-slate-700 rounded w-1/3" />
+                </div>
               </div>
-            )}
+            ))}
           </div>
-        </section>
+        ) : bookmarkedArticles.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+            {bookmarkedArticles.map((article) => (
+              <div
+                key={article.slug}
+                className="group bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden hover:shadow-sm transition-shadow duration-150 flex flex-col"
+              >
+                {/* Thumbnail */}
+                <button
+                  onClick={() => handleViewArticle(article.slug)}
+                  className="block w-full h-40 shrink-0 bg-gray-100 dark:bg-slate-700 overflow-hidden"
+                >
+                  {article.thumbnail_url ? (
+                    <img
+                      src={article.thumbnail_url}
+                      alt=""
+                      className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-200"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <FileText className="w-8 h-8 text-gray-300 dark:text-slate-500" />
+                    </div>
+                  )}
+                </button>
+
+                {/* Body */}
+                <div className="p-5 flex-1 flex flex-col">
+                  <h3
+                    onClick={() => handleViewArticle(article.slug)}
+                    className="text-sm font-semibold text-gray-800 dark:text-gray-100 line-clamp-2 mb-2 cursor-pointer hover:text-[#1E3A5F] dark:hover:text-blue-400 transition-colors duration-100"
+                  >
+                    {article.title}
+                  </h3>
+
+                  <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-slate-500 mb-1">
+                    {article.category && (
+                      <span className="inline-flex items-center gap-1">
+                        <Tag className="w-3 h-3" />
+                        {article.category}
+                      </span>
+                    )}
+                    {article.category && article.author && <span>·</span>}
+                    {article.author && <span>{article.author}</span>}
+                  </div>
+
+                  <p className="text-xs text-gray-400 dark:text-slate-500 mb-4">
+                    {daysAgo(article.created_at)}
+                  </p>
+
+                  {/* Actions */}
+                  <div className="mt-auto pt-4 border-t border-gray-100 dark:border-slate-700 flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => handleViewArticle(article.slug)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded text-[#1E3A5F] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors duration-150"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      View
+                    </button>
+                    <button
+                      onClick={() => handleRemoveBookmark(article.article_id)}
+                      disabled={removingId === article.article_id}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors duration-150 disabled:opacity-50"
+                    >
+                      <BookmarkX className="w-3.5 h-3.5" />
+                      {removingId === article.article_id ? "Removing…" : "Remove"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-14 h-14 bg-gray-100 dark:bg-slate-700 rounded-lg flex items-center justify-center mb-4">
+              <Bookmark className="w-6 h-6 text-gray-300 dark:text-slate-500" />
+            </div>
+            <p className="text-gray-500 dark:text-slate-400 font-medium">No bookmarks yet</p>
+            <p className="text-sm text-gray-400 dark:text-slate-500 mt-1">
+              Start bookmarking articles to read them later
+            </p>
+          </div>
+        )}
       </div>
+
     </div>
   );
 };

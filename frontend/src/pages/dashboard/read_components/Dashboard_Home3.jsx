@@ -3,10 +3,12 @@ import DashboardOverview from "./DashboardOverview";
 
 const DashboardHome3 = () => {
   const {
+    articlesReadCount,
+    likedArticlesCount,
+    savedArticlesCount,
     userData,
     announcements,
     recentArticles, 
-    statsData
   } = useOutletContext();
 
   return (
@@ -14,7 +16,9 @@ const DashboardHome3 = () => {
       userData={userData}
       announcements={announcements}
       recentArticles={recentArticles}
-      statsData={statsData}
+      articlesReadCount={articlesReadCount}
+      likedArticlesCount={likedArticlesCount}
+      savedArticlesCount={savedArticlesCount}
     />
   );
 };

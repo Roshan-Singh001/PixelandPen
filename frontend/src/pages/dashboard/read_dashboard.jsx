@@ -37,7 +37,6 @@ const ReaderDashboard = () => {
   const [articlesReadCount, setArticlesReadCount] = useState(0);
   const [likedArticlesCount, setLikedArticlesCount] = useState(0);
   const [savedArticlesCount, setSavedArticlesCount] = useState(0);
-  const [statsData, setStatsData] = useState({});
 
   const [recentArticles, setRecentArticles] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
@@ -110,14 +109,14 @@ const ReaderDashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response1 = await AxiosInstance.get('/dashboard/reader/stat/read');
-        setArticlesReadCount(response1.data.total_read || 0);
+        const response1 = await AxiosInstance.get('/dashboard/reader/stat/reads/total');
+        setArticlesReadCount(response1.data.total_reads || 0);
 
-        const response2 = await AxiosInstance.get('/dashboard/reader/stat/liked');
-        setLikedArticlesCount(response2.data.total_liked || 0);
+        const response2 = await AxiosInstance.get('/dashboard/reader/stat/likes');
+        setLikedArticlesCount(response2.data.total_likes || 0);
 
-        const response3 = await AxiosInstance.get('/dashboard/reader/stat/saved');
-        setSavedArticlesCount(response3.data.total_saved || 0);
+        const response3 = await AxiosInstance.get('/dashboard/reader/stat/bookmarks');
+        setSavedArticlesCount(response3.data.total_bookmarks || 0);
 
       } catch (error) {
         console.log(error);
@@ -127,7 +126,7 @@ const ReaderDashboard = () => {
 
     const fetchRecent = async () => {
       try {
-        const response = await AxiosInstance.get('/dashboard/reader/recent');
+        const response = await AxiosInstance.get('/dashboard/reader/recent/published');
         setRecentArticles(response.data.recents);
 
         const response1 = await AxiosInstance.get('/dashboard/reader/announcements');
@@ -263,7 +262,9 @@ const ReaderDashboard = () => {
             <Outlet
               context={{
                 userData,
-                statsData,
+                articlesReadCount,
+                likedArticlesCount,
+                savedArticlesCount,
                 recentArticles,
                 announcements,
               }}

@@ -3,7 +3,6 @@ import db from './db.js';
 import { authMiddleware, authorizeReader } from './middleware.js';
 const actionRouter = express.Router();
 
-
 actionRouter.use(authMiddleware);
 actionRouter.use(authorizeReader);
 
@@ -176,9 +175,5 @@ actionRouter.post('/comment', async (req, res) => {
 
     }
 });
-
-
-
-
 
 export default actionRouter;

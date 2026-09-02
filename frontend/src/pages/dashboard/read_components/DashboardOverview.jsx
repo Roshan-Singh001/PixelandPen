@@ -1,5 +1,3 @@
-import AxiosInstance from "../../../api/axiosInstance";
-
 import { TrendingUp, BookOpen, Heart, Bookmark, XCircle, FileText, Megaphone, Calendar, ExternalLink } from "lucide-react";
 
 const STAT_ACCENTS = [
@@ -8,19 +6,19 @@ const STAT_ACCENTS = [
     { bg: "bg-amber-50 dark:bg-amber-900/20", icon: "text-amber-700 dark:text-amber-400" },
 ];
 
-const DashboardOverview = ({ userData, announcements, statsData, recentArticles }) => {
+const DashboardOverview = ({ userData, announcements, articlesReadCount, likedArticlesCount, savedArticlesCount, recentArticles }) => {
 
     const statsData2 = [
-        { title: "Articles Read", value: statsData?.articlesRead || 0, icon: BookOpen },
-        { title: "Liked Articles", value: statsData?.likedArticles || 0, icon: Heart },
-        { title: "Saved Articles", value: statsData?.savedArticles || 0, icon: Bookmark },
+        { title: "Articles Read", value: articlesReadCount || 0, icon: BookOpen },
+        { title: "Liked Articles", value: likedArticlesCount || 0, icon: Heart },
+        { title: "Saved Articles", value: savedArticlesCount || 0, icon: Bookmark },
     ];
 
     return (
         <div className="space-y-5 font-[Inter,system-ui,sans-serif]">
 
             {/* Welcome banner */}
-            <div className="bg-[#1E3A5F] p-6 sm:p-8 relative overflow-hidden">
+            <div className="bg-[#1E3A5F] p-6 sm:p-8 relative overflow-hidden rounded-xl">
                 <div
                     className="absolute inset-0 pointer-events-none"
                     style={{
@@ -48,7 +46,7 @@ const DashboardOverview = ({ userData, announcements, statsData, recentArticles 
 
 
             {/* Stat cards — mosaic */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-gray-200 dark:bg-slate-700">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-gray-200 dark:bg-slate-700 rounded-xl overflow-hidden">
                 {statsData2.map((stat, index) => {
                     const Icon = stat.icon;
                     const accent = STAT_ACCENTS[index] ?? STAT_ACCENTS[0];
@@ -69,19 +67,19 @@ const DashboardOverview = ({ userData, announcements, statsData, recentArticles 
             </div>
 
             {/* Recently Published Articles */}
-            <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
                 <div className="flex items-center gap-2.5 px-6 py-4 border-b border-gray-200 dark:border-slate-700">
                     <FileText className="w-4 h-4 text-[#1E3A5F] dark:text-blue-400" />
                     <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Recently Published</h2>
                 </div>
                 <div className="p-6">
                     {recentArticles.length > 0 ? (
-                        <div className="space-y-2">
+                        <div className="space-y-2 rounded-xl">
                             {recentArticles.map((article) => {
                                 return (
                                     <a
-                                        key={article.title}
-                                        href={article.url}
+                                        key={article.article_id}
+                                        href={`/article/view/${article.slug}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="group flex items-center justify-between px-4 py-3 border border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors duration-100"
@@ -107,7 +105,7 @@ const DashboardOverview = ({ userData, announcements, statsData, recentArticles 
 
             {/* Announcements */}
             {announcements.length > 0 && (
-                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700">
+                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
                     <div className="flex items-center gap-2.5 px-6 py-4 border-b border-gray-200 dark:border-slate-700">
                         <Megaphone className="w-4 h-4 text-[#1E3A5F] dark:text-blue-400" />
                         <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Announcements</h2>
@@ -116,7 +114,7 @@ const DashboardOverview = ({ userData, announcements, statsData, recentArticles 
                         {announcements.map((announcement) => (
                             <div
                                 key={announcement.id}
-                                className="px-4 py-4 border border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors duration-100"
+                                className="px-4 py-4 border border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors duration-100 rounded-xl"
                             >
                                 <h3 className="text-sm font-medium text-gray-800 dark:text-gray-100 mb-1.5">
                                     {announcement.title}
