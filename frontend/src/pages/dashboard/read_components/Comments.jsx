@@ -59,11 +59,7 @@ const Comments = (props) => {
   const handleDelete = (commentId) => {
     setDeletingId(commentId);
     try {
-      AxiosInstance.delete(`/comment/${commentId}`, {
-        headers: {
-          user_id: props.userdata.user_id,
-        }
-      })
+      AxiosInstance.delete(`/dashboard/reader/comment/${commentId}`)
         .then(() => {
           const removed = comments.find(c => c.id === commentId);
           setComments((prev) => prev.filter(c => c.id !== commentId));

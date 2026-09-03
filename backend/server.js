@@ -596,8 +596,6 @@ app.post("/validate", async (req, res) => {
 });
 
 function verifyToken(req, res, next) {
-  // const authHeader = req.headers["authorization"];
-  // const token = authHeader && authHeader.split(" ")[1];
   const token = req.cookies.token;
   console.log("token is :", token);
 
@@ -607,7 +605,7 @@ function verifyToken(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // decoded contains { id, username, role }
+    req.user = decoded;
     console.log(req.user);
     console.log("role:", req.user.role);
     next();

@@ -219,8 +219,8 @@ const ContributorDashboard = () => {
               to={path}
               end={path === ""}
               disabled={!status}
-              target={path === "/article/editor" ? "_blank" : undefined}
-              rel={path === "/article/editor" ? "noopener noreferrer" : undefined}
+              target={path === "article/editor" ? "_blank" : undefined}
+              rel={path === "article/editor" ? "noopener noreferrer" : undefined}
               onClick={(e) => {
                 if (!status) {
                   e.preventDefault();
@@ -293,6 +293,7 @@ const ContributorDashboard = () => {
                 announcements,
                 status,
                 rejectReason,
+                setIsRender,
               }}
             />
           </div>

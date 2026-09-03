@@ -20,7 +20,6 @@ const ReadProfile = () => {
   const [stats, setStats] = useState({ reads: 0, bookmarks: 0, likes: 0, following: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
 
-
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({ username: "", bio: "" });
   const [imageFile, setImageFile] = useState(null);
@@ -33,13 +32,19 @@ const ReadProfile = () => {
     fetchStats();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (imagePreview) URL.revokeObjectURL(imagePreview);
+    };
+  }, [imagePreview]);
+
   function fetchProfile() {
     setProfileLoading(true);
     setProfileError("");
     try {
       AxiosInstance.get('/dashboard/reader/profile')
         .then((res) => {
-          setProfile(res.data);
+          setProfile(res.data.profile);
           setProfileLoading(false);
         })
         .catch((err) => {
@@ -54,25 +59,25 @@ const ReadProfile = () => {
     }
   }
 
-  function fetchStats() {
+  async function fetchStats() {
     setStatsLoading(true);
     try {
-      AxiosInstance.get('/dashboard/reader/profile/stats')
-        .then((res) => {
-          setStats({
-            reads: res.data.reads || 0,
-            bookmarks: res.data.bookmarks || 0,
-            likes: res.data.likes || 0,
-            following: res.data.following || 0,
-          });
-          setStatsLoading(false);
-        })
-        .catch((err) => {
-          console.log(err);
-          setStatsLoading(false);
-        });
+      const [likesRes, bookmarksRes, readsRes, followingRes] = await Promise.allSettled([
+        AxiosInstance.get('/dashboard/reader/stat/likes'),
+        AxiosInstance.get('/dashboard/reader/stat/bookmarks'),
+        AxiosInstance.get('/dashboard/reader/stat/reads/total'),
+        AxiosInstance.get('/dashboard/reader/stat/following'),
+      ]);
+
+      setStats({
+        reads: readsRes.status === 'fulfilled' ? (readsRes.value.data.total || 0) : 0,
+        bookmarks: bookmarksRes.status === 'fulfilled' ? (bookmarksRes.value.data.total_bookmarks || 0) : 0,
+        likes: likesRes.status === 'fulfilled' ? (likesRes.value.data.total_likes || 0) : 0,
+        following: followingRes.status === 'fulfilled' ? (followingRes.value.data.total_following || 0) : 0,
+      });
     } catch (error) {
       console.log(error);
+    } finally {
       setStatsLoading(false);
     }
   }
@@ -84,7 +89,6 @@ const ReadProfile = () => {
     { label: "Following", value: stats.following, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/20", icon: Users },
   ];
 
-  // ---- Edit handlers ----
   const startEditing = () => {
     setForm({ username: profile.username, bio: profile.bio || "" });
     setImageFile(null);
@@ -94,6 +98,7 @@ const ReadProfile = () => {
   };
 
   const cancelEditing = () => {
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
     setIsEditing(false);
     setImageFile(null);
     setImagePreview(null);
@@ -103,37 +108,64 @@ const ReadProfile = () => {
   const handleImageSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
   };
 
+  const getProfileChanges = () => {
+    const trimmedUsername = form.username.trim();
+    const trimmedBio = form.bio.trim();
+    return {
+      trimmedUsername,
+      trimmedBio,
+      usernameChanged: trimmedUsername !== profile.username,
+      bioChanged: trimmedBio !== (profile.bio || ""),
+      imageChanged: Boolean(imageFile),
+    };
+  };
+
   const handleSaveProfile = () => {
-    if (!form.username.trim()) {
+    const { trimmedUsername, trimmedBio, usernameChanged, bioChanged, imageChanged } = getProfileChanges();
+
+    if (!trimmedUsername) {
       setSaveError("Username can't be empty.");
+      return;
+    }
+
+    if (!usernameChanged && !bioChanged && !imageChanged) {
+      setIsEditing(false);
       return;
     }
 
     setSaving(true);
     setSaveError("");
 
-    const payload = new FormData();
-    payload.append('username', form.username.trim());
-    payload.append('bio', form.bio.trim());
-    if (imageFile) payload.append('profile_pic', imageFile);
+    let request;
+
+    if (imageChanged) {
+      const payload = new FormData();
+      if (usernameChanged) payload.append('username', trimmedUsername);
+      if (bioChanged) payload.append('bio', trimmedBio);
+      payload.append('profile_pic', imageFile);
+      request = AxiosInstance.put('/dashboard/reader/profile/update', payload);
+    } else {
+      const payload = {};
+      if (usernameChanged) payload.username = trimmedUsername;
+      if (bioChanged) payload.bio = trimmedBio;
+      request = AxiosInstance.put('/dashboard/reader/profile/update', payload);
+    }
 
     try {
-      AxiosInstance.put('/dashboard/reader/profile', payload, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      })
+      request
         .then((res) => {
           setProfile((prev) => ({
             ...prev,
-            username: res.data.username ?? form.username.trim(),
-            bio: res.data.bio ?? form.bio.trim(),
+            username: res.data.username ?? (usernameChanged ? trimmedUsername : prev.username),
+            bio: res.data.bio ?? (bioChanged ? trimmedBio : prev.bio),
             profile_pic: res.data.profile_pic ?? prev.profile_pic,
           }));
+          if (imagePreview) URL.revokeObjectURL(imagePreview);
           setIsEditing(false);
           setImageFile(null);
           setImagePreview(null);
@@ -155,7 +187,7 @@ const ReadProfile = () => {
 
   if (profileLoading) {
     return (
-      <div className="space-y-8 font-[Inter,system-ui,sans-serif] max-w-3xl">
+      <div className="space-y-8 font-[Inter,system-ui,sans-serif]">
         <div>
           <h1 className="font-[Newsreader,Georgia,serif] text-3xl sm:text-4xl font-black text-gray-900 dark:text-gray-50 mb-2">
             Profile
@@ -198,10 +230,14 @@ const ReadProfile = () => {
     );
   }
 
+  const activeChanges = isEditing ? getProfileChanges() : null;
+  const hasChanges = activeChanges
+    ? activeChanges.usernameChanged || activeChanges.bioChanged || activeChanges.imageChanged
+    : false;
+
   return (
     <div className="space-y-8 font-[Inter,system-ui,sans-serif]">
 
-      {/* Header */}
       <div>
         <h1 className="font-[Newsreader,Georgia,serif] text-3xl sm:text-4xl font-black text-gray-900 dark:text-gray-50 mb-2">
           Profile
@@ -211,11 +247,9 @@ const ReadProfile = () => {
         </p>
       </div>
 
-      {/* Profile card */}
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-start gap-6">
 
-          {/* Avatar */}
           <div className="flex sm:block justify-center">
             <div className="relative w-24 h-24 shrink-0">
               {displayedPic ? (
@@ -249,7 +283,6 @@ const ReadProfile = () => {
             </div>
           </div>
 
-          {/* Info */}
           <div className="flex-1 min-w-0 text-center sm:text-left">
 
             {!isEditing ? (
@@ -321,7 +354,6 @@ const ReadProfile = () => {
             )}
           </div>
 
-          {/* Edit / Save controls */}
           <div className="flex sm:flex-col items-center sm:items-end gap-2 shrink-0 justify-center">
             {!isEditing ? (
               <button
@@ -343,7 +375,7 @@ const ReadProfile = () => {
                 </button>
                 <button
                   onClick={handleSaveProfile}
-                  disabled={saving}
+                  disabled={saving || !hasChanges}
                   className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg text-white bg-[#1E3A5F] hover:bg-[#16304d] transition-colors duration-150 disabled:opacity-50"
                 >
                   {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
@@ -355,7 +387,6 @@ const ReadProfile = () => {
         </div>
       </div>
 
-      {/* Activity stats */}
       <div>
         <h2 className="text-xl font-bold text-gray-900 dark:text-gray-50 mb-4">Activity</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-gray-200 dark:bg-slate-700 rounded-xl overflow-hidden">

@@ -1,12 +1,17 @@
 import express from "express";
-import db from "./db.js"
-
+import db from "./db.js";
+import axios from 'axios';
+import multer from "multer";
+import fs from "fs";
+import FormData from 'form-data';
+import bcrypt from "bcryptjs";
 import { authMiddleware, authorizeReader } from './middleware.js';
 
 const readRouter = express.Router();
 
 readRouter.use(authMiddleware);
 readRouter.use(authorizeReader);
+const upload = multer({ dest: "uploads/" });
 
 // Stats
 
@@ -154,6 +159,20 @@ readRouter.get("/stat/comments", async (req, res) => {
     }
 })
 
+readRouter.get("/stat/following", async (req, res) => {
+    const userId = req.user.id;
+
+    try {
+        const queryFollowing = "SELECT COUNT(*) AS following FROM reader_follows WHERE reader_id = ?";
+        const [followingResult] = await db.query(queryFollowing, [userId]);
+        const following = followingResult[0].following || 0;
+
+        res.status(200).json({ total_following: following });
+    } catch (error) {
+        console.error("Error fetching following stats:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
 
 // Announcements
 readRouter.get("/announcements", async (req, res) => {
@@ -360,6 +379,192 @@ readRouter.get("/comments", async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 })
+
+readRouter.delete("/comment/:commentId", async (req, res) => {
+    const userId = req.user.id;
+    const { commentId } = req.params;
+
+    try {
+        const deleteQuery = `
+            DELETE FROM comments
+            WHERE id = ? AND user_id = ?
+        `;
+        const [result] = await db.query(deleteQuery, [commentId, userId]);
+        if (result.affectedRows > 0) {
+            res.status(200).json({ message: "Comment deleted successfully" });
+        } else {
+            res.status(404).json({ message: "Comment not found" });
+        }
+    } catch (error) {
+        console.error("Error deleting comment:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Profile
+
+readRouter.get("/profile", async (req, res) => {
+    const userId = req.user.id;
+
+    try {
+        const queryProfile = `
+            SELECT username, bio, email, profile_pic, created_at
+            FROM reader 
+            WHERE sub_id = ?`
+        const [profile] = await db.query(queryProfile, [userId]);
+        res.status(200).json({ profile: profile[0] });
+
+    } catch (error) {
+        console.error("Error fetching profile:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+})
+
+readRouter.put("/profile/update", upload.single("profile_pic"), async (req, res) => {
+    const userId = req.user.id;
+    const { username, bio } = req.body;
+
+    const usernameChanged = username !== undefined;
+    const bioChanged = bio !== undefined;
+    const profilePicChanged = req.file !== undefined;
+
+    console.log({
+        usernameChanged,
+        bioChanged,
+        profilePicChanged,
+    });
+
+    try {
+        if (usernameChanged) {
+            const checkUsernameQuery = "SELECT COUNT(*) AS count FROM users WHERE username = ?";
+            const [usernameCheckResult] = await db.query(checkUsernameQuery, [username]);
+            const usernameExists = usernameCheckResult[0].count > 0;
+            if (usernameExists) {
+                return res.status(400).json({ message: "Username already taken" });
+            }
+            const updateUsernameQuery = "UPDATE reader SET username = ? WHERE sub_id = ?";
+            await db.query(updateUsernameQuery, [username, userId]);
+            console.log("Username should be updated:", username);
+        }
+
+        if (bioChanged) {
+            const updateBioQuery = "UPDATE reader SET bio = ? WHERE sub_id = ?";
+            await db.query(updateBioQuery, [bio, userId]);
+            console.log("Bio should be updated:", bio);
+        }
+
+        if (profilePicChanged) {
+            console.log("Profile picture should be updated:", req.file.originalname);
+
+            const fileStream = fs.createReadStream(req.file.path);
+
+            const form = new FormData();
+            form.append("file", fileStream);
+            form.append("name", req.file.originalname);
+            form.append("network", "public");
+
+            const pinataRes = await axios.post(
+                "https://uploads.pinata.cloud/v3/files",
+                form,
+                {
+                    headers: {
+                        Authorization: `Bearer ${process.env.PINATA_BEARER_TOKEN}`,
+                        ...form.getHeaders(),
+                    },
+                }
+            );
+
+            fs.unlinkSync(req.file.path);
+
+            const imageUrl =
+                pinataRes.data?.data?.preview ||
+                `https://gateway.pinata.cloud/ipfs/${pinataRes.data?.data?.cid}`;
+
+            console.log("New image:", imageUrl);
+
+            const updateProfilePicQuery = "UPDATE reader SET profile_pic = ? WHERE sub_id = ?";
+            await db.query(updateProfilePicQuery, [imageUrl, userId]);
+        }
+
+        res.status(200).json({
+            updated: {
+                username: usernameChanged,
+                bio: bioChanged,
+                profile_pic: profilePicChanged,
+            },
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            message: "Profile update failed",
+        });
+    }
+})
+
+// Settings
+
+readRouter.put("/settings/password", async (req, res) => {
+    const userId = req.user.id;
+    const { current_password, new_password } = req.body;
+
+    try {
+        const oldHashedPassword = await bcrypt.hash(current_password, 10);
+
+        const queryGetPassword = "SELECT password FROM users WHERE id = ?";
+        const [user] = await db.query(queryGetPassword, [userId]);
+
+        const isPasswordCorrect = await bcrypt.compare(oldHashedPassword, user[0].password);
+
+        if (!isPasswordCorrect) {
+            return res.status(400).json({ message: "Current password is incorrect" });
+        }
+
+        const newHashedPassword = await bcrypt.hash(new_password, 10);
+        const updatePasswordQuery = "UPDATE users SET password = ? WHERE id = ?";
+        await db.query(updatePasswordQuery, [newHashedPassword, userId]);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            message: "Password update failed",
+        });
+    }
+});
+
+readRouter.delete("/delete", async (req, res) =>{
+    const userId = req.user.id;
+
+    try {
+        const queryDeleteReader = "DELETE FROM reader WHERE sub_id = ?";
+        await db.query(queryDeleteReader, [userId]);
+
+        const queryDeleteUser = "DELETE FROM users WHERE id = ?";
+        await db.query(queryDeleteUser, [userId]);
+
+        const queryDeleteFollows = "DELETE FROM reader_follows WHERE reader_id = ?";
+        await db.query(queryDeleteFollows, [userId]);
+
+        const queryDeleteBookmarks = "DELETE FROM bookmarks WHERE reader_id = ?";
+        await db.query(queryDeleteBookmarks, [userId]);
+
+        const queryDeleteLikes = "DELETE FROM article_likes WHERE reader_id = ?";
+        await db.query(queryDeleteLikes, [userId]);
+
+        const queryDeleteComments = "DELETE FROM comments WHERE user_id = ?";
+        await db.query(queryDeleteComments, [userId]);
+
+        res.status(200).json({
+            message: "User deleted successfully",
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            message: "User deletion failed",
+        });
+    }
+});
 
 
 export default readRouter;

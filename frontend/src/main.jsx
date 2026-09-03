@@ -53,8 +53,9 @@ import Bookmarks from "./pages/dashboard/read_components/Bookmarks.jsx";
 import Following from "./pages/dashboard/read_components/Following.jsx"
 import ReadProfile from "./pages/dashboard/read_components/ReadProfile.jsx";
 import ReadSettings from "./pages/dashboard/read_components/ReadSettings.jsx";
+import ReadProfilePage from "./pages/profile/ReadProfilePage.jsx";
 
-import Profile from "./pages/profilePage.jsx";
+import Profile from "./pages/profile/profilePage.jsx";
 import ArticlePage from "./pages/article-page.jsx";
 import PreviewArticlePage from "./pages/Preview-Article-Page.jsx";
 
@@ -150,6 +151,16 @@ const router = createBrowserRouter([
       <>
         <Navbar />
         <Profile />
+        <Footer />
+      </>
+    ),
+  },
+  {
+    path: "/profile/reader/:slug",
+    element: (
+      <>
+        <Navbar />
+        <ReadProfilePage />
         <Footer />
       </>
     ),
@@ -254,13 +265,21 @@ const router = createBrowserRouter([
             path: "settings",
             element: <ContriSettings />,
           },
-          {
-            path: "article/editor",
-            element: <ArticleEditor />,
-          }
         ]
       },
     ],
+  },
+  
+  {
+    element: <PrivateRoute allowedRoles={["Contributor"]} />,
+    children: [
+      {
+        path: "/dashboard/contributor/article/editor",
+        element: <ArticleEditor />,
+
+      }
+    ]
+
   },
   
   {

@@ -8,13 +8,15 @@ const DashboardHome2 = () => {
     announcements,
     recentArticles, 
     rejectReason,
-    statsData
+    statsData,
+    setIsRender,
   } = useOutletContext();
 
   return (
     <DashboardOverview
       userData={userData}
       status={status}
+      setIsRender={setIsRender}
       announcements={announcements}
       recentArticles={recentArticles}
       rejectReason={rejectReason}

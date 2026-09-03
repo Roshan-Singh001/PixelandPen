@@ -77,17 +77,16 @@ contriRouter.post('/updateprofile', async (req, res) => {
   const { updatedProfile } = req.body;
   const user_id = req.user.id;
 
-  console.log(user_id);
   console.log(updatedProfile);
 
   try {
     const fetchinfoQuery = `UPDATE contributor SET username = ?, bio = ?, profile_pic = ?, dob = ?, expertise = ?, links = ?, city = ?, country = ?  WHERE cont_id = ?`;
-    const results = await db.query(fetchinfoQuery, [updatedProfile.username, updatedProfile.bio, updatedProfile.profile_pic, updatedProfile.dob, updatedProfile.expertise, updatedProfile.links, updatedProfile.city, updatedProfile.country, user_id]);
+    const results = await db.query(fetchinfoQuery, [updatedProfile.username, updatedProfile.bio, updatedProfile.profile_pic, updatedProfile.dob, updatedProfile.expertise || null, updatedProfile.links || null, updatedProfile.city, updatedProfile.country, user_id]);
 
     res.status(200).json({ message: "Profile Updated Successfully" });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Error Fetching Article" });
+    res.status(500).json({ message: "Error updating profile" });
 
   }
 });
@@ -108,6 +107,7 @@ contriRouter.post('/resend', async (req, res) => {
 
 
 // Stats
+
 contriRouter.get('/stat/posts', async (req, res) => {
   const userId = req.user.id;
 
@@ -257,34 +257,9 @@ WHERE comments.status = 'Approved' AND articles.cont_id=?`;
   }
 });
 
-contriRouter.get('/delete', async (req, res) => {
-  const userId = req.user.id;
-  const username = req.user.username;
 
-  try {
-    const tableName = `${userId}` + '_articles';
-    const dropQuery = `DROP TABLE IF EXISTS ${tableName}`;
-    await db.query(dropQuery);
 
-    const dropQuery2 = `DELETE FROM contributor WHERE cont_id=?`;
-    await db.query(dropQuery2, userId);
 
-    const dropQuery3 = `DELETE FROM articles WHERE author=?`;
-    await db.query(dropQuery3, username);
-
-    const dropQuery4 = `DELETE FROM users WHERE id=?`;
-    await db.query(dropQuery4, username);
-
-    const dropQuery5 = `DELETE FROM review_articles WHERE cont_id=?`;
-    await db.query(dropQuery5, userId);
-
-    res.status(200).json({ message: "Success" });
-
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Error Fetching Data" });
-  }
-});
 
 // Articles APIs
 
@@ -515,6 +490,66 @@ contriRouter.get('/article/fetch', async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Error Fetching Article" });
+  }
+});
+
+
+// Settings
+
+contriRouter.put("/settings/password", async (req, res) => {
+    const userId = req.user.id;
+    const { current_password, new_password } = req.body;
+
+    try {
+        const oldHashedPassword = await bcrypt.hash(current_password, 10);
+
+        const queryGetPassword = "SELECT password FROM users WHERE id = ?";
+        const [user] = await db.query(queryGetPassword, [userId]);
+
+        const isPasswordCorrect = await bcrypt.compare(oldHashedPassword, user[0].password);
+
+        if (!isPasswordCorrect) {
+            return res.status(400).json({ message: "Current password is incorrect" });
+        }
+
+        const newHashedPassword = await bcrypt.hash(new_password, 10);
+        const updatePasswordQuery = "UPDATE users SET password = ? WHERE id = ?";
+        await db.query(updatePasswordQuery, [newHashedPassword, userId]);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            message: "Password update failed",
+        });
+    }
+});
+
+contriRouter.get('/delete', async (req, res) => {
+  const userId = req.user.id;
+  const username = req.user.username;
+
+  try {
+    const tableName = `${userId}` + '_articles';
+    const dropQuery = `DROP TABLE IF EXISTS ${tableName}`;
+    await db.query(dropQuery);
+
+    const dropQuery2 = `DELETE FROM contributor WHERE cont_id=?`;
+    await db.query(dropQuery2, userId);
+
+    const dropQuery3 = `DELETE FROM articles WHERE author=?`;
+    await db.query(dropQuery3, username);
+
+    const dropQuery4 = `DELETE FROM users WHERE id=?`;
+    await db.query(dropQuery4, username);
+
+    const dropQuery5 = `DELETE FROM review_articles WHERE cont_id=?`;
+    await db.query(dropQuery5, userId);
+
+    res.status(200).json({ message: "Success" });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
   }
 });
 

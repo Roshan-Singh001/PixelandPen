@@ -1,8 +1,9 @@
 import AxiosInstance from "../../../api/axiosInstance";
-
+import { useNavigate } from 'react-router-dom';
 import { TrendingUp, Clock, XCircle, CheckCircle, Ban, FileText, Megaphone, Calendar } from "lucide-react";
 
 const DashboardOverview = ({ userData, status, announcements, statsData, recentArticles, rejectReason }) => {
+    const navigate = useNavigate();
     const handleReject = async () => {
         try {
             await AxiosInstance.post('/dashboard/contri/resend');
@@ -36,7 +37,7 @@ const DashboardOverview = ({ userData, status, announcements, statsData, recentA
         <div className="space-y-5 font-[Inter,system-ui,sans-serif]">
 
             {/* Welcome banner */}
-            <div className="bg-[#1E3A5F] p-6 sm:p-8 relative overflow-hidden">
+            <div className="bg-[#1E3A5F] p-6 sm:p-8 relative overflow-hidden rounded-xl">
                 <div
                     className="absolute inset-0 pointer-events-none"
                     style={{
@@ -64,7 +65,7 @@ const DashboardOverview = ({ userData, status, announcements, statsData, recentA
 
             {/* Status alerts */}
             {status === 'Pending' && (
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-6">
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-6 rounded-xl">
                     <div className="flex items-start gap-4">
                         <div className="p-2.5 rounded bg-amber-100 dark:bg-amber-800/40 text-amber-700 dark:text-amber-400">
                             <Clock className="w-5 h-5" />
@@ -80,7 +81,7 @@ const DashboardOverview = ({ userData, status, announcements, statsData, recentA
                                 You are not approved by the admins yet. Kindly complete the profile to expedite the review process.
                             </p>
                             <button
-                                onClick={() => setMenuOption('Profile')}
+                                onClick={() => navigate('/dashboard/contributor/profile')}
                                 className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded bg-amber-100 dark:bg-amber-800/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-700 hover:bg-amber-100/70 dark:hover:bg-amber-800/60 transition-colors duration-150"
                             >
                                 Complete Profile
@@ -94,7 +95,7 @@ const DashboardOverview = ({ userData, status, announcements, statsData, recentA
             )}
 
             {status === 'Rejected' && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-6">
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-6 rounded-xl">
                     <div className="flex items-start gap-4">
                         <div className="p-2.5 rounded bg-red-100 dark:bg-red-800/40 text-red-700 dark:text-red-400">
                             <XCircle className="w-5 h-5" />
@@ -124,7 +125,7 @@ const DashboardOverview = ({ userData, status, announcements, statsData, recentA
             )}
 
             {status === 'Block' && (
-                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 p-6">
+                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 p-6 rounded-xl">
                     <div className="flex items-start gap-4">
                         <div className="p-2.5 rounded bg-orange-100 dark:bg-orange-800/40 text-orange-600 dark:text-orange-400">
                             <Ban className="w-5 h-5" />
@@ -145,7 +146,7 @@ const DashboardOverview = ({ userData, status, announcements, statsData, recentA
             )}
 
             {/* Stat cards — mosaic */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-gray-200 dark:bg-slate-700">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-gray-200 dark:bg-slate-700 rounded-xl overflow-hidden">
                 {statsData.map((stat, index) => {
                     const Icon = stat.icon;
                     return (
@@ -165,14 +166,14 @@ const DashboardOverview = ({ userData, status, announcements, statsData, recentA
             </div>
 
             {/* Articles Section */}
-            <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl">
                 <div className="flex items-center gap-2.5 px-6 py-4 border-b border-gray-200 dark:border-slate-700">
                     <FileText className="w-4 h-4 text-[#1E3A5F] dark:text-blue-400" />
                     <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Recent Articles</h2>
                 </div>
                 <div className="p-6">
                     {recentArticles.length > 0 ? (
-                        <div className="space-y-2">
+                        <div className="space-y-2 rounded-xl">
                             {recentArticles.map((article) => {
                                 const StatusIcon = getStatusIcon(article.article_status);
                                 return (
@@ -204,12 +205,12 @@ const DashboardOverview = ({ userData, status, announcements, statsData, recentA
 
             {/* Announcements */}
             {announcements.length > 0 && (
-                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700">
+                <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl">
                     <div className="flex items-center gap-2.5 px-6 py-4 border-b border-gray-200 dark:border-slate-700">
                         <Megaphone className="w-4 h-4 text-[#1E3A5F] dark:text-blue-400" />
                         <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Announcements</h2>
                     </div>
-                    <div className="p-6 space-y-2">
+                    <div className="p-6 space-y-2 rounded-xl">
                         {announcements.map((announcement) => (
                             <div
                                 key={announcement.id}
