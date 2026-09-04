@@ -50,18 +50,14 @@ const ArticlePage = () => {
     }
 
     const info = async () => {
-      if (!loggedIn) {
-        toast.error(`This action needs log in`);
-        navigate("/login");
-        return;
-      }
-      if (userData.userRole != 'Contributor') {
+      if (userData?.userRole != 'Contributor') {
         try {
-          const response = await AxiosInstance.get(`/action/islike/article/`, 
-            { headers: {
-              'article_id': article[0].article_id 
-            } 
-          })
+          const response = await AxiosInstance.get(`/action/islike/article/`,
+            {
+              headers: {
+                'article_id': article[0].article_id
+              }
+            })
           setIsLiked(response.data.isLike);
 
         } catch (error) {
@@ -352,7 +348,6 @@ const ArticlePage = () => {
           article_id: article[0].article_id,
           article_title: article[0].title,
           content: comment,
-          username: userData.userName
         });
         setComment('');
         setComments(prev => [
@@ -477,11 +472,9 @@ const ArticlePage = () => {
               )}
               <div className="absolute bottom-4 left-4 right-4 ">
                 <div className="flex flex-wrap gap-2 mb-3 sm:mb-4">
-                  {(article[0].category).map((cat) => {
-                    return (<span key={cat} className="px-2 sm:px-3 py-1 text-xs font-semibold rounded-full bg-white/20 backdrop-blur-sm text-white border border-white/30">
-                      {cat}
-                    </span>)
-                  })}
+                  <span className="px-2 sm:px-3 py-1 text-xs font-semibold rounded-full bg-white/20 backdrop-blur-sm text-white border border-white/30">
+                    {article[0].category_id}
+                  </span>
                 </div>
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
                   {article[0].title}

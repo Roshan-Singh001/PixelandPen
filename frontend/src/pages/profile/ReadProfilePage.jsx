@@ -89,7 +89,7 @@ const ReadProfilePage = () => {
   };
 
   const handleViewArticle = (articleSlug) => {
-    window.open(`/article/view/${articleSlug}`, '_blank', 'noopener,noreferrer');
+    window.open(`/view/${articleSlug}`, '_blank', 'noopener,noreferrer');
   };
 
   const handleViewContributor = (contSlug) => {

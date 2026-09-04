@@ -470,7 +470,7 @@ app.post("/OtpVerification", async (req, res) => {
       const query_cont_articles_table = `CREATE TABLE IF NOT EXISTS ${tableName} (
         slug VARCHAR(255) PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
-        category JSON,
+        category_id INT NOT NULL,
         description VARCHAR(200),
         content JSON NOT NULL,
         tags JSON,
@@ -484,6 +484,8 @@ app.post("/OtpVerification", async (req, res) => {
         pending_date TIMESTAMP DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+        FOREIGN KEY (category_id) REFERENCES categories(id)
       )`;
       await db.execute(query_cont_articles_table);
 

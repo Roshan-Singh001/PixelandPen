@@ -279,7 +279,16 @@ const router = createBrowserRouter([
 
       }
     ]
+  },
+  {
+    element: <PrivateRoute allowedRoles={["Contributor"]} />,
+    children: [
+      {
+        path: "/dashboard/contributor/article/editor/:articleSlug",
+        element: <ArticleEditor />,
 
+      }
+    ]
   },
   
   {

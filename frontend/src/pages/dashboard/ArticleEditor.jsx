@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams} from 'react-router-dom';
 import AxiosInstance from '../../api/axiosInstance';
 import { Slate, Editable, withReact, useSlate } from 'slate-react';
 import { Node, Text, createEditor, Editor, Range, Transforms, Element as SlateElement } from 'slate';
@@ -26,7 +26,6 @@ import { MdFormatListBulleted } from "react-icons/md";
 import { FaQuoteLeft, FaRegImage } from "react-icons/fa6";
 import { FaCaretDown, FaYoutube, FaAlignLeft, FaAlignCenter, FaAlignRight, FaAlignJustify } from "react-icons/fa";
 import { LuHeading, LuHeading1, LuHeading2, LuHeading3, LuHeading4, LuHeading5, LuHeading6 } from "react-icons/lu";
-import { Navigate } from 'react-router-dom';
 
 var INITIAL_VALUE = [
   {
@@ -42,8 +41,9 @@ const HOTKEYS = {
   'mod+`': 'code',
 };
 
-const ArticleEditor = (props) => {
+const ArticleEditor = () => {
   const editor = useMemo(() => withHistory(withReact(createEditor())), []);
+  const { articleSlug } = useParams();
   const [isLoading, setIsLoading] = useState(true);
 
   const navigate = useNavigate();
@@ -58,7 +58,7 @@ const ArticleEditor = (props) => {
 
   const [featuredImage, setFeaturedImage] = useState(null);
   const [description, setDescription] = useState('');
-  const [categories, setCategories] = useState([]);
+  const [categoryId, setCategoryId] = useState(null);
   const [tags, setTags] = useState([]);
   const [inputTag, setInputTag] = useState('');
   const [error, setError] = useState('');
@@ -76,18 +76,20 @@ const ArticleEditor = (props) => {
   const [isThumbImageDirty, setIsThumbImageDirty] = useState(false);
 
   useEffect(() => {
-    if (props.refSlug != "") {
+    if (articleSlug) {
+      console.log("Fetching Article for Editing: ", articleSlug);
+
       try {
         AxiosInstance.get('/dashboard/contri/article/fetch', {
           headers: {
-            slug: props.refSlug,
+            slug: articleSlug,
           }
         })
           .then((res) => {
             console.log(res.data);
 
             setTitle(res.data[0].title);
-            setCategories(res.data[0].category);
+            setCategoryId(res.data[0].category_id);
             setDescription(res.data[0].description);
             setSlug(res.data[0].slug);
             setValue(res.data[0].content);
@@ -140,14 +142,12 @@ const ArticleEditor = (props) => {
     setSlug(generated);
     currentSlug = generated;
 
-    console.log(props.userdata);
-
     const article = {
       currentSlug,
       title,
       description,
       currentSlug,
-      categories,
+      categoryId,
       tags,
       featuredImage,
       content: value,
@@ -156,8 +156,7 @@ const ArticleEditor = (props) => {
     try {
       if (isArticleNew) {
 
-        const response = await AxiosInstance.post("/article/save/new", {
-          user_id: props.userdata.user_id,
+        const response = await AxiosInstance.post("/dashboard/contri/article/save/new", {
           article: JSON.stringify(article),
         });
         console.log(response);
@@ -172,9 +171,8 @@ const ArticleEditor = (props) => {
         setIsTitleDirty(false);
       }
       else {
-        const response = await AxiosInstance.post("/article/save/edit", {
+        const response = await AxiosInstance.post("/dashboard/contri/article/save/edit", {
           prevSlug: prevSlug,
-          user_id: props.userdata.user_id,
           article: JSON.stringify(article),
         });
         console.log(response);
@@ -201,11 +199,9 @@ const ArticleEditor = (props) => {
   const handleSend = async () => {
     setSaveInProgress(true);
     try {
-      const response = await AxiosInstance.post("/article/send", {
+      const response = await AxiosInstance.post("/dashboard/contri/article/send", {
         slug: slug,
         title: title,
-        cont_id: props.userdata.user_id,
-        author: props.userdata.userName,
       });
       console.log(response);
 
@@ -223,7 +219,7 @@ const ArticleEditor = (props) => {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const res = await AxiosInstance.post(`${import.meta.env.VITE_API_URL}/dashboard/contributor/article/uploads/featuredimage`,
+      const res = await AxiosInstance.post(`/dashboard/contri/article/uploads/featuredimage`,
         formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -253,8 +249,8 @@ const ArticleEditor = (props) => {
   }
 
   const toggleCategory = (cat) => {
-    setCategories((prev) =>
-      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+    setCategoryId((prev) =>
+      prev === cat ? null : cat
     );
     setIsCategoryDirty(true);
     setIsSave(false);
@@ -740,9 +736,9 @@ const ArticleEditor = (props) => {
                 <label key={cat.id} className="flex items-center gap-2 text-sm text-[#1F2937] dark:text-[#F8FAFC] cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={categories.includes(cat.id)}
+                    checked={cat.id === categoryId}
                     disabled={
-                      categories.length > 0 && !categories.includes(cat.id)
+                      categoryId !== null && categoryId !== cat.id
                     }
                     onChange={() => toggleCategory(cat.id)}
                     className="h-4 w-4 rounded accent-[#1E3A5F] dark:accent-[#4F8EF7] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"

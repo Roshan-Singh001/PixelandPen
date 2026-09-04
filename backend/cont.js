@@ -74,20 +74,70 @@ contriRouter.get('/status', async (req, res) => {
 });
 
 contriRouter.post('/updateprofile', async (req, res) => {
-  const { updatedProfile } = req.body;
   const user_id = req.user.id;
+  const { updatedProfile } = req.body;
+  const ALLOWED_PROFILE_FIELDS = ['username', 'bio', 'profile_pic', 'dob', 'expertise', 'links', 'city', 'country'];
+  const JSON_PROFILE_FIELDS = ['expertise', 'links'];
 
-  console.log(updatedProfile);
+  if (!updatedProfile || typeof updatedProfile !== 'object' || Array.isArray(updatedProfile)) {
+    return res.status(400).json({ message: "Invalid request body" });
+  }
+
+  const setClauses = [];
+  const values = [];
+
+  for (const field of ALLOWED_PROFILE_FIELDS) {
+    if (!Object.prototype.hasOwnProperty.call(updatedProfile, field)) continue;
+
+    let value = updatedProfile[field];
+
+    if (field === 'username') {
+      if (typeof value !== 'string' || value.trim().length < 3) {
+        return res.status(400).json({
+          message: "Username must be at least 3 characters"
+        });
+      }
+
+      value = value.trim();
+
+      const [existingUser] = await db.query(
+        'SELECT id FROM users WHERE username = ?',
+        [value]
+      );
+
+      if (existingUser.length > 0) {
+        return res.status(409).json({
+          message: "Username is already taken"
+        });
+      }
+    }
+
+    if (field === 'bio' && typeof value === 'string' && value.length > 500) {
+      return res.status(400).json({ message: "Bio must be less than 500 characters" });
+    }
+
+    if (JSON_PROFILE_FIELDS.includes(field)) {
+      value = value == null ? null : JSON.stringify(value);
+    }
+
+    setClauses.push(`${field} = ?`);
+    values.push(value ?? null);
+  }
+
+  if (setClauses.length === 0) {
+    return res.status(400).json({ message: "No valid fields to update" });
+  }
+
+  values.push(user_id);
 
   try {
-    const fetchinfoQuery = `UPDATE contributor SET username = ?, bio = ?, profile_pic = ?, dob = ?, expertise = ?, links = ?, city = ?, country = ?  WHERE cont_id = ?`;
-    const results = await db.query(fetchinfoQuery, [updatedProfile.username, updatedProfile.bio, updatedProfile.profile_pic, updatedProfile.dob, updatedProfile.expertise || null, updatedProfile.links || null, updatedProfile.city, updatedProfile.country, user_id]);
+    const query = `UPDATE contributor SET ${setClauses.join(', ')} WHERE cont_id = ?`;
+    await db.query(query, values);
 
-    res.status(200).json({ message: "Profile Updated Successfully" });
+    res.status(200).json({ message: "Profile updated successfully" });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Error updating profile" });
-
   }
 });
 
@@ -322,7 +372,10 @@ contriRouter.get('/article/fetch/approve', async (req, res) => {
   const userId = req.user.id;
 
   try {
-    const fetchArticleQuery = `SELECT slug,title,category,approve_date,views FROM ${userId + '_articles'} WHERE article_status = 'Approved'`;
+    const fetchArticleQuery = `SELECT a.slug, a.title, c.name as category, a.approve_date, a.views 
+                                FROM ${userId + '_articles'} a
+                                LEFT JOIN categories c ON a.category_id = c.id
+                                WHERE a.article_status = 'Approved'`;
     const results = await db.query(fetchArticleQuery);
 
     const ApproveArticles = results[0];
@@ -379,8 +432,8 @@ contriRouter.post('/article/save/new', async (req, res) => {
 
   try {
     const tableName = `${user_id}` + '_articles';
-    const values = [currentSlug, title, JSON.stringify(categories), description, JSON.stringify(content), JSON.stringify(tags), featuredImage];
-    const query_insert_article = `INSERT INTO ${tableName} (slug, title, category, description, content, tags, thumbnail_url)
+    const values = [currentSlug, title, categories, description, JSON.stringify(content), JSON.stringify(tags), featuredImage];
+    const query_insert_article = `INSERT INTO ${tableName} (slug, title, category_id, description, content, tags, thumbnail_url)
                                       VALUES (?,?,?,?,?,?,?)`;
     await db.execute(query_insert_article, values);
 
@@ -392,7 +445,7 @@ contriRouter.post('/article/save/new', async (req, res) => {
 });
 
 // Edit Article Save
-contriRouter.post('/save/edit', async (req, res) => {
+contriRouter.post('/article/save/edit', async (req, res) => {
   const { prevSlug, article } = req.body;
   const user_id = req.user.id;
 
@@ -404,11 +457,11 @@ contriRouter.post('/save/edit', async (req, res) => {
 
   try {
     const tableName = `${user_id}` + '_articles';
-    const values = [currentSlug, title, JSON.stringify(categories), description, JSON.stringify(content), JSON.stringify(tags), featuredImage, prevSlug];
+    const values = [currentSlug, title, categories, description, JSON.stringify(content), JSON.stringify(tags), featuredImage, prevSlug];
     const query_insert_article = `UPDATE ${tableName}
                                       SET slug = ?,
                                           title = ?,
-                                          category = ?,
+                                          category_id = ?,
                                           description =?,  
                                           content = ?,
                                           tags = ?,
@@ -424,9 +477,10 @@ contriRouter.post('/save/edit', async (req, res) => {
 });
 
 // Send Article for Review
-contriRouter.post('/send', async (req, res) => {
-  const { slug, title, author } = req.body;
+contriRouter.post('/article/send', async (req, res) => {
+  const { slug, title} = req.body;
   const cont_id = req.user.id;
+  const author = req.user.username;
   console.log("Send Request Received: ", slug);
 
   try {
@@ -483,7 +537,6 @@ contriRouter.get('/article/fetch', async (req, res) => {
     const article = results[0];
 
     article.tags = JSON.parse(article.tags || '[]');
-    article.category = JSON.parse(article.category || '[]');
     article.content = JSON.parse(article.content || '[]');
 
     res.json(article);
@@ -497,31 +550,31 @@ contriRouter.get('/article/fetch', async (req, res) => {
 // Settings
 
 contriRouter.put("/settings/password", async (req, res) => {
-    const userId = req.user.id;
-    const { current_password, new_password } = req.body;
+  const userId = req.user.id;
+  const { current_password, new_password } = req.body;
 
-    try {
-        const oldHashedPassword = await bcrypt.hash(current_password, 10);
+  try {
+    const oldHashedPassword = await bcrypt.hash(current_password, 10);
 
-        const queryGetPassword = "SELECT password FROM users WHERE id = ?";
-        const [user] = await db.query(queryGetPassword, [userId]);
+    const queryGetPassword = "SELECT password FROM users WHERE id = ?";
+    const [user] = await db.query(queryGetPassword, [userId]);
 
-        const isPasswordCorrect = await bcrypt.compare(oldHashedPassword, user[0].password);
+    const isPasswordCorrect = await bcrypt.compare(oldHashedPassword, user[0].password);
 
-        if (!isPasswordCorrect) {
-            return res.status(400).json({ message: "Current password is incorrect" });
-        }
-
-        const newHashedPassword = await bcrypt.hash(new_password, 10);
-        const updatePasswordQuery = "UPDATE users SET password = ? WHERE id = ?";
-        await db.query(updatePasswordQuery, [newHashedPassword, userId]);
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            message: "Password update failed",
-        });
+    if (!isPasswordCorrect) {
+      return res.status(400).json({ message: "Current password is incorrect" });
     }
+
+    const newHashedPassword = await bcrypt.hash(new_password, 10);
+    const updatePasswordQuery = "UPDATE users SET password = ? WHERE id = ?";
+    await db.query(updatePasswordQuery, [newHashedPassword, userId]);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Password update failed",
+    });
+  }
 });
 
 contriRouter.get('/delete', async (req, res) => {

@@ -424,41 +424,73 @@ readRouter.put("/profile/update", upload.single("profile_pic"), async (req, res)
     const userId = req.user.id;
     const { username, bio } = req.body;
 
-    const usernameChanged = username !== undefined;
-    const bioChanged = bio !== undefined;
-    const profilePicChanged = req.file !== undefined;
-
-    console.log({
-        usernameChanged,
-        bioChanged,
-        profilePicChanged,
-    });
+    const setClauses = [];
+    const values = [];
 
     try {
-        if (usernameChanged) {
-            const checkUsernameQuery = "SELECT COUNT(*) AS count FROM users WHERE username = ?";
-            const [usernameCheckResult] = await db.query(checkUsernameQuery, [username]);
-            const usernameExists = usernameCheckResult[0].count > 0;
-            if (usernameExists) {
-                return res.status(400).json({ message: "Username already taken" });
+
+        if (username !== undefined) {
+
+            if (typeof username !== "string" || username.trim().length < 3) {
+                return res.status(400).json({
+                    message: "Username must be at least 3 characters"
+                });
             }
-            const updateUsernameQuery = "UPDATE reader SET username = ? WHERE sub_id = ?";
-            await db.query(updateUsernameQuery, [username, userId]);
-            console.log("Username should be updated:", username);
+
+            const cleanUsername = username.trim();
+
+            // Check whether another reader is already using this username
+            const checkUsernameQuery = `
+          SELECT sub_id
+          FROM reader
+          WHERE username = ?
+          AND sub_id != ?
+        `;
+
+            const [usernameResult] = await db.query(
+                checkUsernameQuery,
+                [cleanUsername, userId]
+            );
+
+            if (usernameResult.length > 0) {
+                return res.status(409).json({
+                    message: "Username already taken"
+                });
+            }
+
+            setClauses.push("username = ?");
+            values.push(cleanUsername);
         }
 
-        if (bioChanged) {
-            const updateBioQuery = "UPDATE reader SET bio = ? WHERE sub_id = ?";
-            await db.query(updateBioQuery, [bio, userId]);
-            console.log("Bio should be updated:", bio);
+        if (bio !== undefined) {
+
+            if (typeof bio !== "string") {
+                return res.status(400).json({
+                    message: "Invalid bio"
+                });
+            }
+
+            if (bio.length > 500) {
+                return res.status(400).json({
+                    message: "Bio must be less than 500 characters"
+                });
+            }
+
+            setClauses.push("bio = ?");
+            values.push(bio);
         }
 
-        if (profilePicChanged) {
-            console.log("Profile picture should be updated:", req.file.originalname);
+        if (req.file !== undefined) {
+
+            console.log(
+                "Profile picture should be updated:",
+                req.file.originalname
+            );
 
             const fileStream = fs.createReadStream(req.file.path);
 
             const form = new FormData();
+
             form.append("file", fileStream);
             form.append("name", req.file.originalname);
             form.append("network", "public");
@@ -474,6 +506,7 @@ readRouter.put("/profile/update", upload.single("profile_pic"), async (req, res)
                 }
             );
 
+            // Delete temporary uploaded file
             fs.unlinkSync(req.file.path);
 
             const imageUrl =
@@ -482,25 +515,49 @@ readRouter.put("/profile/update", upload.single("profile_pic"), async (req, res)
 
             console.log("New image:", imageUrl);
 
-            const updateProfilePicQuery = "UPDATE reader SET profile_pic = ? WHERE sub_id = ?";
-            await db.query(updateProfilePicQuery, [imageUrl, userId]);
+            setClauses.push("profile_pic = ?");
+            values.push(imageUrl);
         }
 
+        if (setClauses.length === 0) {
+            return res.status(400).json({
+                message: "No valid fields to update"
+            });
+        }
+
+        values.push(userId);
+
+        const updateProfileQuery = `
+        UPDATE reader
+        SET ${setClauses.join(", ")}
+        WHERE sub_id = ?
+      `;
+
+        await db.query(updateProfileQuery, values);
+
+
         res.status(200).json({
-            updated: {
-                username: usernameChanged,
-                bio: bioChanged,
-                profile_pic: profilePicChanged,
-            },
+            message: "Profile updated successfully"
         });
 
     } catch (error) {
         console.error(error);
+
+        if (req.file) {
+            try {
+                if (fs.existsSync(req.file.path)) {
+                    fs.unlinkSync(req.file.path);
+                }
+            } catch (fileError) {
+                console.error("Error deleting temporary file:", fileError);
+            }
+        }
+
         res.status(500).json({
-            message: "Profile update failed",
+            message: "Profile update failed"
         });
     }
-})
+});
 
 // Settings
 
@@ -532,7 +589,7 @@ readRouter.put("/settings/password", async (req, res) => {
     }
 });
 
-readRouter.delete("/delete", async (req, res) =>{
+readRouter.delete("/delete", async (req, res) => {
     const userId = req.user.id;
 
     try {

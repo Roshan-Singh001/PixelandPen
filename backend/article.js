@@ -6,7 +6,7 @@ const articleRouter = express.Router();
 // Fetch Article by Slug
 articleRouter.get('/view/:slug', authMiddleware2, async (req,res)=>{
     const { slug } = req.params;
-    const userId = req.user.id || null;
+    const userId = req?.user?.id || null;
 
     console.log("Slug: ",slug);
     try {
@@ -17,7 +17,6 @@ articleRouter.get('/view/:slug', authMiddleware2, async (req,res)=>{
         }
         const article = results[0];
         article.tags = JSON.parse(article.tags || '[]');
-        article.category = JSON.parse(article.category || '[]');
         article.content = JSON.parse(article.content || '[]');
 
         const fetchNameQuery = `SELECT username, profile_pic FROM contributor WHERE cont_id = ?`;
@@ -36,10 +35,10 @@ articleRouter.get('/view/:slug', authMiddleware2, async (req,res)=>{
             const [likeResults] = await db.query(query,[userId,article[0].article_id]);
             const isLiked = likeResults[0].isLike === 1;
 
-            return res.json({article, authName: userName, authPic: userpic, comments: comments, isLiked: isLiked, likes_count: article.likes});
+            return res.status(200).json({article, authName: userName, authPic: userpic, comments: comments, isLiked: isLiked, likes_count: article.likes});
         }
 
-        res.json({article, authName: userName, authPic: userpic, comments: comments, likes_count: article.likes});
+        res.status(200).json({article, authName: userName, authPic: userpic, comments: comments, likes_count: article.likes});
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Error Fetching Article"});

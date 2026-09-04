@@ -179,8 +179,8 @@ adminRouter.post('/article/approve', async (req,res)=>{
     let a_id = uuidv4().replaceAll("-", "_");
     const article_id = `article_${a_id}`;
 
-    const query2 = `INSERT INTO articles (article_id,slug,title,category,description,content, tags,thumbnail_url,author,cont_id,publish_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)`;
-    await db.query(query2,[article_id, article[0].slug, article[0].title, JSON.stringify(article[0].category), article[0].description, JSON.stringify(article[0].content), JSON.stringify(article[0].tags || []), article[0].thumbnail_url, author, cont_id, publish_At]);
+    const query2 = `INSERT INTO articles (article_id,slug,title,category_id,description,content, tags,thumbnail_url,author,cont_id,publish_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)`;
+    await db.query(query2,[article_id, article[0].slug, article[0].title, article[0].category_id, article[0].description, JSON.stringify(article[0].content), JSON.stringify(article[0].tags || []), article[0].thumbnail_url, author, cont_id, publish_At]);
 
     const query3 = `UPDATE ${cont_id+'_articles'} SET article_status='Approved',approve_date=NOW() WHERE slug=?`;
     await db.query(query3,[slug]);

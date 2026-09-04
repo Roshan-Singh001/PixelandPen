@@ -16,8 +16,6 @@ const linkIcons = {
   linkedin: FaLinkedin,
 };
 
-const EDITABLE_FIELDS = ['username', 'dob', 'bio', 'city', 'country', 'profile_pic'];
-
 const ContriProfile = () => {
 
   const [profile, setProfile] = useState({});
@@ -44,13 +42,15 @@ const ContriProfile = () => {
     return () => clearTimeout(timer);
   }, [saveSuccess]);
 
+  const normalizeDob = (dob) => (dob ? dob.split('T')[0] : "");
+
   const fetchProfile = async () => {
     setIsLoading(true);
     setLoadError("");
     try {
       const response = await AxiosInstance.get('/dashboard/contri/profile');
       const profileData = response.data[0] || {};
-      if (!profileData.dob) profileData.dob = "";
+      profileData.dob = normalizeDob(profileData.dob);
 
       const fetchedExpertise = Array.isArray(profileData.expertise) ? profileData.expertise : [];
       const fetchedLinks = (profileData.links && Object.keys(profileData.links).length > 0)
@@ -173,40 +173,85 @@ const ContriProfile = () => {
 
   const sanitizeString = (str) => (typeof str === 'string' ? str.trim().replace(/[<>]/g, '') : str);
 
+  const filteredLinks = (source) =>
+    Object.fromEntries(Object.entries(source).filter(([_, value]) => value.trim() !== ''));
+
+  const getProfileChanges = () => {
+    const changes = {};
+    const initial = initialRef.current;
+
+    const username = sanitizeString(profile.username || '');
+    if (username !== (initial.profile.username || '')) {
+      changes.username = username;
+    }
+
+    const bio = sanitizeString(profile.bio || '');
+    if (bio !== (initial.profile.bio || '')) {
+      changes.bio = bio;
+    }
+
+    const city = sanitizeString(profile.city || '');
+    if (city !== (initial.profile.city || '')) {
+      changes.city = city;
+    }
+
+    const country = sanitizeString(profile.country || '');
+    if (country !== (initial.profile.country || '')) {
+      changes.country = country;
+    }
+
+    const dob = normalizeDob(profile.dob);
+    if (dob !== normalizeDob(initial.profile.dob)) {
+      changes.dob = dob || null;
+    }
+
+    if ((profile.profile_pic || null) !== (initial.profile.profile_pic || null)) {
+      changes.profile_pic = profile.profile_pic || null;
+    }
+
+    if (JSON.stringify(expertise) !== JSON.stringify(initial.expertise)) {
+      changes.expertise = expertise;
+    }
+
+    const currentLinks = filteredLinks(links);
+    const initialLinks = filteredLinks(initial.links);
+    if (JSON.stringify(currentLinks) !== JSON.stringify(initialLinks)) {
+      changes.links = currentLinks;
+    }
+
+    return changes;
+  };
+
   const handleSubmit = async () => {
     if (!validateForm()) return;
+
+    const changes = getProfileChanges();
+    if (Object.keys(changes).length === 0) {
+      return;
+    }
 
     setIsSaving(true);
     setSaveSuccess(false);
     setErrors((prev) => ({ ...prev, submit: '' }));
 
-    const updatedProfile = {
-      username: sanitizeString(profile.username),
-      bio: sanitizeString(profile.bio || ''),
-      city: sanitizeString(profile.city || ''),
-      country: sanitizeString(profile.country || ''),
-      dob: profile.dob || null,
-      profile_pic: profile.profile_pic || null,
-      expertise,
-      links: Object.fromEntries(Object.entries(links).filter(([_, value]) => value.trim() !== '')),
-    };
-
     try {
       const response = await AxiosInstance.post('/dashboard/contri/updateprofile', {
-        updatedProfile,
+        updatedProfile: changes,
       });
 
-      const saved = response.data?.profile || updatedProfile;
-      setProfile((prev) => ({ ...prev, ...saved }));
+      const saved = response.data?.profile || changes;
+      const mergedProfile = { ...profile, ...saved };
+
+      setProfile(mergedProfile);
       initialRef.current = {
-        profile: { ...profile, ...saved },
+        profile: mergedProfile,
         expertise,
         links,
       };
       setSaveSuccess(true);
     } catch (error) {
       console.log(error);
-      setErrors((prev) => ({ ...prev, submit: 'Failed to update profile. Please try again.' }));
+      setErrors((prev) => ({ ...prev, submit: error.response?.data?.message || 'Failed to update profile. Please try again.' }));
     } finally {
       setIsSaving(false);
     }
@@ -220,9 +265,11 @@ const ContriProfile = () => {
     setErrors({});
   };
 
+  const hasChanges = !isLoading && Object.keys(getProfileChanges()).length > 0;
+
   if (isLoading) {
     return (
-      <div className="space-y-8 font-[Inter,system-ui,sans-serif] ">
+      <div className="space-y-8 font-[Inter,system-ui,sans-serif]">
         <div>
           <h1 className="font-[Newsreader,Georgia,serif] text-3xl sm:text-4xl font-black text-gray-900 dark:text-gray-50 mb-2">
             Profile Settings
@@ -243,7 +290,7 @@ const ContriProfile = () => {
   }
 
   return (
-    <div className="space-y-8 font-[Inter,system-ui,sans-serif] ">
+    <div className="space-y-8 font-[Inter,system-ui,sans-serif]">
 
       <div>
         <h1 className="font-[Newsreader,Georgia,serif] text-3xl sm:text-4xl font-black text-gray-900 dark:text-gray-50 mb-2">
@@ -370,7 +417,7 @@ const ContriProfile = () => {
               <input
                 type="date"
                 name="dob"
-                value={profile.dob ? profile.dob.split('T')[0] : ''}
+                value={normalizeDob(profile.dob)}
                 onChange={handleChange}
                 className="w-full pl-10 pr-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/30 dark:focus:ring-blue-500/30 focus:border-[#1E3A5F] dark:focus:border-blue-500"
               />
@@ -581,7 +628,7 @@ const ContriProfile = () => {
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={isSaving}
+          disabled={isSaving || !hasChanges}
           className="inline-flex items-center gap-1.5 px-6 py-2.5 text-sm font-semibold rounded-lg text-white bg-[#1E3A5F] hover:bg-[#16304d] transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
