@@ -41,6 +41,7 @@ import MyAnalytics from "./pages/dashboard/contri_components/MyAnalytics.jsx";
 import MyComments from "./pages/dashboard/contri_components/MyComments.jsx";
 import ContriProfile from "./pages/dashboard/contri_components/ContriProfile.jsx";
 import ContriSettings from "./pages/dashboard/contri_components/ContriSettings.jsx";
+import Followers from "./pages/dashboard/contri_components/Followers.jsx";
 
 import ArticleEditor from "./pages/dashboard/ArticleEditor.jsx";
 
@@ -254,11 +255,15 @@ const router = createBrowserRouter([
             element: <MyArticles />,
           },
           {
+            path: "followers",
+            element: <Followers />,
+          },
+          {
             path: "comments",
             element: <MyComments />,
           },
           {
-            path: "stats",
+            path: "analytics",
             element: <MyAnalytics />,
           },
           {

@@ -20,6 +20,7 @@ import { MdArticle, MdAnalytics, MdLogout } from "react-icons/md";
 import { IoPersonAdd, IoSettingsSharp } from "react-icons/io5";
 import { FaAnglesRight } from "react-icons/fa6";
 import { FaAnglesLeft } from "react-icons/fa6";
+import { FaUsers } from "react-icons/fa";
 import { IoIosAddCircle } from "react-icons/io";
 
 import PixelPenLoader from "../../components/PixelPenLoader";
@@ -70,6 +71,13 @@ const ContributorDashboard = () => {
       external: false,
     },
     {
+      label: "Followers",
+      path: "followers",
+      icon: <FaUsers size={18} />,
+      status: isAccepted,
+      external: false,
+    },
+    {
       label: "Comments",
       path: "comments",
       icon: <FaComments size={18} />,
@@ -77,8 +85,8 @@ const ContributorDashboard = () => {
       external: false,
     },
     {
-      label: "Stats",
-      path: "stats",
+      label: "Analytics",
+      path: "analytics",
       icon: <MdAnalytics size={18} />,
       status: isAccepted,
       external: false,

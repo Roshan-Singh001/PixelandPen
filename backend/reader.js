@@ -514,7 +514,7 @@ readRouter.put("/profile/update", upload.single("profile_pic"), async (req, res)
                 `https://gateway.pinata.cloud/ipfs/${pinataRes.data?.data?.cid}`;
 
             console.log("New image:", imageUrl);
-
+ 
             setClauses.push("profile_pic = ?");
             values.push(imageUrl);
         }

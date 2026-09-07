@@ -35,7 +35,11 @@ articleRouter.get('/view/:slug', authMiddleware2, async (req,res)=>{
             const [likeResults] = await db.query(query,[userId,article[0].article_id]);
             const isLiked = likeResults[0].isLike === 1;
 
-            return res.status(200).json({article, authName: userName, authPic: userpic, comments: comments, isLiked: isLiked, likes_count: article.likes});
+            const queryBookmark = `SELECT CASE WHEN EXISTS (SELECT 1 FROM bookmarks WHERE reader_id=? AND article_id=?) THEN 1 ELSE 0 END AS isBookmarked`;
+            const [bookmarkResults] = await db.query(queryBookmark,[userId,article[0].article_id]);
+            const isBookmarked = bookmarkResults[0].isBookmarked === 1;
+
+            return res.status(200).json({article, authName: userName, authPic: userpic, comments: comments, isLiked: isLiked, isBookmarked: isBookmarked, likes_count: article.likes});
         }
 
         res.status(200).json({article, authName: userName, authPic: userpic, comments: comments, likes_count: article.likes});

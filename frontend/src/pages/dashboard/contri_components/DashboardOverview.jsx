@@ -179,7 +179,7 @@ const DashboardOverview = ({ userData, status, announcements, statsData, recentA
                                 return (
                                     <div
                                         key={article.title}
-                                        className="flex items-center justify-between px-4 py-3 border border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors duration-100"
+                                        className="flex items-center justify-between px-4 py-3 border border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors duration-100 rounded-xl"
                                     >
                                         <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate mr-4">
                                             {article.title}
@@ -214,7 +214,7 @@ const DashboardOverview = ({ userData, status, announcements, statsData, recentA
                         {announcements.map((announcement) => (
                             <div
                                 key={announcement.id}
-                                className="px-4 py-4 border border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors duration-100"
+                                className="px-4 py-4 border border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors duration-100 rounded-xl"
                             >
                                 <h3 className="text-sm font-medium text-gray-800 dark:text-gray-100 mb-1.5">
                                     {announcement.title}

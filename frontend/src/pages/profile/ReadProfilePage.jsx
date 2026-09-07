@@ -78,6 +78,7 @@ const ReadProfilePage = () => {
     setTabError("");
     AxiosInstance.get(`/profile/reader/${slug.toLowerCase()}/${tab.toLowerCase()}`)
       .then((res) => {
+        console.log(`Fetched ${tab}:`, res.data);
         setTabData((prev) => ({ ...prev, [tab]: res.data }));
         setTabLoading(false);
       })

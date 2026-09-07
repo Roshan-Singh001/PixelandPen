@@ -234,6 +234,7 @@ contriRouter.get('/stat/followers', async (req, res) => {
   }
 });
 
+// Recent Articles
 contriRouter.get('/recent', async (req, res) => {
   const userId = req.user.id;
 
@@ -255,6 +256,7 @@ contriRouter.get('/recent', async (req, res) => {
   }
 });
 
+// Announcements
 contriRouter.get('/announcements', async (req, res) => {
 
   try {
@@ -274,30 +276,58 @@ contriRouter.get('/announcements', async (req, res) => {
   }
 });
 
-contriRouter.get('/fetch/comments', async (req, res) => {
+// Comments
+contriRouter.get('/comments', async (req, res) => {
   const cont_id = req.user.id;
 
   try {
-    const fetchinfoQuery = `SELECT 
-    comments.id, 
-    comments.article_id, 
-    comments.article_title, 
-    comments.user_id, 
-    comments.username, 
-    comments.content, 
-    comments.created_at, 
-    articles.slug
-FROM comments
-JOIN articles ON comments.article_id = articles.article_id
-WHERE comments.status = 'Approved' AND articles.cont_id=?`;
+    const fetchinfoQuery = `
+      SELECT 
+        c.id, 
+        c.article_id, 
+        c.article_title, 
+        c.user_id, 
+        r.username, 
+        c.content, 
+        c.created_at,
+        c.status,
+        r.profile_pic,
+        a.slug
+      FROM comments c
+      JOIN articles a
+        ON c.article_id = a.article_id
+      JOIN reader r
+        ON c.user_id = r.sub_id
+      WHERE a.cont_id=?
+    `;
     const results = await db.query(fetchinfoQuery, [cont_id]);
-
-    console.log(results);
-
     const recents = results[0];
 
-    console.log(recents);
-    res.status(200).json({ comments: recents });
+    const queryTotalComments = `SELECT COUNT(*) AS total_comments FROM comments c JOIN articles a ON c.article_id = a.article_id WHERE c.status = 'Approved' AND a.cont_id=?`;
+    const totalResults = await db.query(queryTotalComments, [cont_id]);
+    const totalComments = totalResults[0][0].total_comments;
+
+    const queryPendingComments = `SELECT COUNT(*) AS pending_comments FROM comments JOIN articles ON comments.article_id = articles.article_id WHERE comments.status = 'Pending' AND articles.cont_id=?`;
+    const pendingResults = await db.query(queryPendingComments, [cont_id]);
+    const pendingComments = pendingResults[0][0].pending_comments;
+
+    const queryDeletedComments = `SELECT COUNT(*) AS deleted_comments FROM comments JOIN articles ON comments.article_id = articles.article_id WHERE comments.status = 'Deleted' AND articles.cont_id=?`;
+    const deletedResults = await db.query(queryDeletedComments, [cont_id]);
+    const deletedComments = deletedResults[0][0].deleted_comments;
+
+    const queryApprovedComments = `SELECT COUNT(*) AS approved_comments FROM comments JOIN articles ON comments.article_id = articles.article_id WHERE comments.status = 'Approved' AND articles.cont_id=?`;
+    const approvedResults = await db.query(queryApprovedComments, [cont_id]);
+    const approvedComments = approvedResults[0][0].approved_comments;
+
+    res.status(200).json({
+      comments: recents,
+      stats: {
+        totalComments,
+        pendingComments,
+        deletedComments,
+        approvedComments
+      }
+    });
 
   } catch (error) {
     console.log(error);
@@ -306,10 +336,6 @@ WHERE comments.status = 'Approved' AND articles.cont_id=?`;
 
   }
 });
-
-
-
-
 
 // Articles APIs
 
@@ -372,7 +398,7 @@ contriRouter.get('/article/fetch/approve', async (req, res) => {
   const userId = req.user.id;
 
   try {
-    const fetchArticleQuery = `SELECT a.slug, a.title, c.name as category, a.approve_date, a.views 
+    const fetchArticleQuery = `SELECT a.slug, a.thumbnail_url, a.title, c.name as category, a.approve_date, a.views 
                                 FROM ${userId + '_articles'} a
                                 LEFT JOIN categories c ON a.category_id = c.id
                                 WHERE a.article_status = 'Approved'`;
@@ -390,7 +416,82 @@ contriRouter.get('/article/fetch/approve', async (req, res) => {
   }
 });
 
+// Fetch Article Stats by Slug for contributor
+contriRouter.get('/article/stats/:slug', async (req, res) => {
+  const slug = req.params.slug;
 
+  try {
+    const fetchArticleQuery = `
+      SELECT a.views, a.likes, COUNT(c.id) as comments , COUNT(b.id) as bookmarks
+      FROM articles a 
+      LEFT JOIN comments c 
+        ON a.article_id = c.article_id 
+      LEFT JOIN bookmarks b 
+        ON a.article_id = b.article_id 
+      WHERE a.slug = ? 
+      GROUP BY a.article_id`;
+
+    const results = await db.query(fetchArticleQuery, [slug]);
+
+    res.status(200).json(results[0]);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Article Stats" });
+  }
+})
+
+// Followers
+
+contriRouter.get('/followers', async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const queryFollowers = `
+      SELECT rf.reader_id, r.username, r.profile_pic, rf.created_at
+      FROM reader_follows rf
+      JOIN reader r 
+        ON rf.reader_id = r.sub_id
+      WHERE rf.contributor_id = ?
+    `
+
+    const results = await db.query(queryFollowers, [userId]);
+
+    res.status(200).json({ followers: results[0] });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Followers" });
+  }
+})
+
+contriRouter.get('/follower/stat/:slug', async (req, res) => {
+  const slug = req.params.slug;
+
+  try {
+    const queryFollowerStats = `
+      SELECT 
+        r.created_at,
+        COUNT(DISTINCT a.article_id) AS articles_read,
+        COUNT(DISTINCT b.id) AS bookmarks_added
+      FROM reader r
+      LEFT JOIN article_views a
+        ON r.sub_id = a.reader_id
+      LEFT JOIN bookmarks b
+        ON r.sub_id = b.reader_id
+      WHERE r.username = 'reader'
+      GROUP BY r.sub_id, r.created_at;
+    `;
+
+    const results = await db.query(queryFollowerStats, [slug]);
+
+    res.status(200).json(results[0]);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Follower Stats" });
+  }
+})
+
+
+// Article Editor
 
 // Upload Featured Image for Article
 contriRouter.post("/article/uploads/featuredimage", upload.single("file"), async (req, res) => {
@@ -478,7 +579,7 @@ contriRouter.post('/article/save/edit', async (req, res) => {
 
 // Send Article for Review
 contriRouter.post('/article/send', async (req, res) => {
-  const { slug, title} = req.body;
+  const { slug, title } = req.body;
   const cont_id = req.user.id;
   const author = req.user.username;
   console.log("Send Request Received: ", slug);
@@ -544,6 +645,56 @@ contriRouter.get('/article/fetch', async (req, res) => {
     console.log(error);
     res.status(500).json({ message: "Error Fetching Article" });
   }
+});
+
+// Analytics
+
+contriRouter.get('/analytics', async (req, res) => {
+  const userId = req.user.id;
+  const {range, granularity } = req.query;
+
+  try {
+    const queryOverview = `
+  SELECT
+    (
+      SELECT COALESCE(SUM(a.views), 0)
+      FROM articles a
+      WHERE a.cont_id = ?
+    ) AS total_views,
+
+    (
+      SELECT COALESCE(SUM(a.likes), 0)
+      FROM articles a
+      WHERE a.cont_id = ?
+    ) AS total_likes,
+
+    (
+      SELECT COUNT(*)
+      FROM comments cm
+      JOIN articles a
+        ON cm.article_id = a.article_id
+      WHERE a.cont_id = ?
+        AND cm.status = 'Approved'
+    ) AS total_comments,
+
+    (
+      SELECT followers
+      FROM contributor
+      WHERE cont_id = ?
+    ) AS total_followers
+  `;
+
+  const resultsOverview = await db.query(queryOverview, [userId, userId, userId, userId]);
+  const overview = resultsOverview[0][0];
+
+  res.status(200).json({ overview });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Analytics" });
+
+  }
+
 });
 
 

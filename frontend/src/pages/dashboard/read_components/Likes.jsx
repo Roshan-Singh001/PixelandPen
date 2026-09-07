@@ -39,11 +39,11 @@ const Likes = () => {
       ]);
 
       setStats({
-        total: statsLikes.data.total || 0,
-        week: statsWeek.data.week || 0,
-        month: statsMonth.data.month || 0,
+        total: statsLikes.data.total_likes || 0,
+        week: statsWeek.data.week_likes || 0,
+        month: statsMonth.data.month_likes || 0,
       });
-      setLikedArticles(likesRes.data);
+      setLikedArticles(likesRes.data.likes);
 
     } catch (error) {
       console.log(error);

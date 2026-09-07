@@ -82,7 +82,7 @@ const DashboardOverview = ({ userData, announcements, articlesReadCount, likedAr
                                         href={`/article/view/${article.slug}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="group flex items-center justify-between px-4 py-3 border border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors duration-100"
+                                        className="group flex items-center justify-between px-4 py-3 border border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors duration-100 rounded-xl"
                                     >
                                         <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate mr-4">
                                             {article.title}

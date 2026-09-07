@@ -40,7 +40,8 @@ const ArticlePage = () => {
           setAuthName(res.data.authName);
           setComments(res.data.comments);
           setIsLiked(res.data.isLiked);
-          setLikes_count(res.data.article[0].likes_count);
+          setIsBookmarked(res.data.isBookmarked);
+          setLikes_count(res.data.article[0].likes);
           setIsExist(true);
         })
         .catch((err) => {
@@ -304,6 +305,7 @@ const ArticlePage = () => {
       })
       setIsLiked(prev => !prev);
       setLikes_count(prev => isLiked ? prev - 1 : prev + 1);
+      console.log('Likes count before update:', likes_count);
 
     } catch (error) {
       console.log(error);

@@ -54,7 +54,7 @@ actionRouter.post('/like', async (req, res) => {
             [article_id, user_id]
         );
 
-        if (existing.length > 0) {
+        if (existing[0].length > 0) {
             // Unlike
             await db.query(
                 "DELETE FROM article_likes WHERE article_id = ? AND reader_id = ?",
@@ -66,7 +66,7 @@ actionRouter.post('/like', async (req, res) => {
                 [article_id]
             );
 
-            return res.json({ liked: false });
+            return res.status(200).json({ liked: false });
         } else {
             // Like
             await db.query(
@@ -79,7 +79,7 @@ actionRouter.post('/like', async (req, res) => {
                 [article_id]
             );
 
-            return res.json({ liked: true });
+            return res.status(200).json({ liked: true });
         }
 
     } catch (error) {
@@ -98,20 +98,21 @@ actionRouter.post('/bookmark', async (req, res) => {
             [article_id, user_id]
         );
 
-        if (existing.length > 0) {
-            // Unbookmark
+        console.log(existing);
+
+        if (existing[0].length > 0) {
             await db.query(
                 "DELETE FROM bookmarks WHERE article_id = ? AND reader_id = ?",
                 [article_id, user_id]
             );
-            res.json({ bookmarked: false });
+            res.status(200).json({ bookmarked: false });
         } else {
             // Bookmark
             await db.query(
                 "INSERT INTO bookmarks (article_id, reader_id) VALUES (?, ?)",
                 [article_id, user_id]
             );
-            res.json({ bookmarked: true });
+            res.status(200).json({ bookmarked: true });
         }
     } catch (error) {
         console.log(error);

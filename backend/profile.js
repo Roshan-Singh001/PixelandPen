@@ -154,13 +154,13 @@ profileRouter.get('/reader/:name/:tab', async (req, res) => {
         if (tab === 'following') {
             const fetchFollowingQuery = `
                 SELECT
-                    r.sub_id,
-                    r.username,
-                    r.bio,
-                    r.profile_pic
-                FROM reader r
+                    c.cont_id,
+                    c.username,
+                    c.bio,
+                    c.profile_pic
+                FROM contributor c
                 JOIN reader_follows rf 
-                    ON r.sub_id = rf.contributor_id
+                    ON c.cont_id = rf.contributor_id
                 WHERE rf.reader_id = (SELECT sub_id FROM reader WHERE username = ?)
                 ORDER BY rf.created_at DESC;
             `
