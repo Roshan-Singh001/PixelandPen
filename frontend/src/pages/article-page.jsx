@@ -1,297 +1,122 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import AxiosInstance from '../api/axiosInstance';
-import { Heart, Share2, BookmarkPlus, MessageCircle, Calendar, User, Printer, Copy, Link2, ChevronUp } from 'lucide-react';
+import {
+  Heart, Share2, BookmarkPlus, MessageCircle, Calendar, UserRound,
+  Printer, Link2, ChevronUp, Tag, FileText
+} from 'lucide-react';
 import { FaXTwitter } from "react-icons/fa6";
 import { FaFacebook } from "react-icons/fa";
 import { renderSlateToHtml } from '../utils/renderSlateToHtml';
-import { useNavigate } from 'react-router-dom';
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuth } from '../contexts/AuthContext';
+
+function formatDate(dateString) {
+  if (!dateString) return "";
+  return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function formatCommentDate(dateString) {
+  if (!dateString) return "";
+  return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function parseTags(tags) {
+  if (!tags) return [];
+  if (Array.isArray(tags)) return tags;
+  try {
+    const parsed = JSON.parse(tags);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 const ArticlePage = () => {
   const navigate = useNavigate();
   const { slug } = useParams();
   const { loggedIn, userData } = useAuth();
-  const [isExist, setIsExist] = useState(false);
+
   const [article, setArticle] = useState(null);
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [comment, setComment] = useState('');
   const [isNavVisible, setIsNavVisible] = useState(false);
-  const [featuredImage, setFeaturedImage] = useState(null);
   const [authorPic, setAuthorPic] = useState('');
   const [authorName, setAuthName] = useState('Unknown');
   const [comments, setComments] = useState([]);
-  const [likes_count, setLikes_count] = useState(0);
+  const [likesCount, setLikesCount] = useState(0);
 
   const [isLiking, setIsLiking] = useState(false);
   const [isMarking, setIsMarking] = useState(false);
+  const [isCommenting, setIsCommenting] = useState(false);
 
   useEffect(() => {
-    const articleInfo = () => {
-      AxiosInstance.get(`/article/view/${slug}`)
-        .then((res) => {
-          setArticle(res.data.article);
-          setFeaturedImage(res.data.article[0].thumbnail_url);
-          setAuthorPic(res.data.authPic);
-          setAuthName(res.data.authName);
-          setComments(res.data.comments);
-          setIsLiked(res.data.isLiked);
-          setIsBookmarked(res.data.isBookmarked);
-          setLikes_count(res.data.article[0].likes);
-          setIsExist(true);
-        })
-        .catch((err) => {
-          console.error('Error fetching article:', err);
-          navigate("/notfound");
-        });
-    }
-
-    const info = async () => {
-      if (userData?.userRole != 'Contributor') {
-        try {
-          const response = await AxiosInstance.get(`/action/islike/article/`,
-            {
-              headers: {
-                'article_id': article[0].article_id
-              }
-            })
-          setIsLiked(response.data.isLike);
-
-        } catch (error) {
-          console.log(error);
-
-        }
-      }
-    }
-    articleInfo();
-    info();
-
+    AxiosInstance.get(`/article/view/${slug}`)
+      .then((res) => {
+        setArticle(res.data.article);
+        setAuthorPic(res.data.authPic);
+        setAuthName(res.data.authName);
+        setComments(res.data.comments || []);
+        setIsLiked(res.data.isLiked);
+        setIsBookmarked(res.data.isBookmarked);
+        setLikesCount(res.data.article[0].likes || 0);
+      })
+      .catch((err) => {
+        console.error('Error fetching article:', err);
+        navigate("/notfound");
+      });
   }, [slug]);
 
   useEffect(() => {
     const handleScroll = () => {
-      const scrollPosition = window.scrollY;
-      setIsNavVisible(scrollPosition > 300);
+      setIsNavVisible(window.scrollY > 300);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (!showShareMenu) return;
+    const handleClickOutside = () => setShowShareMenu(false);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showShareMenu]);
+
   if (!article) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        {/* Article Section Skeleton */}
-        <article className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl dark:shadow-2xl overflow-hidden">
-
-          {/* Hero Image Skeleton */}
-          <div className="relative h-64 sm:h-80 lg:h-96 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient overflow-hidden">
-            <div className="absolute inset-0 bg-black/20"></div>
-            <div className="absolute bottom-4 left-4 right-4">
-              {/* Category Tags Skeleton */}
-              <div className="flex flex-wrap gap-2 mb-3 sm:mb-4">
-                {[...Array(3)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-6 w-16 bg-white/20 backdrop-blur-sm rounded-full animate-pulse"
-                    style={{ animationDelay: `${i * 0.1}s` }}
-                  ></div>
-                ))}
-              </div>
-
-              {/* Title Skeleton */}
-              <div className="space-y-2">
-                <div className="h-8 sm:h-10 lg:h-12 bg-white/30 backdrop-blur-sm rounded-lg animate-pulse"></div>
-                <div className="h-8 sm:h-10 lg:h-12 bg-white/30 backdrop-blur-sm rounded-lg w-3/4 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-              </div>
+      <div className="min-h-screen bg-[#FAFAF8] dark:bg-slate-900 font-[Inter,system-ui,sans-serif]">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+          <div className="w-full h-64 sm:h-80 rounded-xl bg-gray-100 dark:bg-slate-700 animate-pulse" />
+          <div className="space-y-3">
+            <div className="h-5 bg-gray-100 dark:bg-slate-700 rounded w-24 animate-pulse" />
+            <div className="h-9 bg-gray-100 dark:bg-slate-700 rounded w-3/4 animate-pulse" />
+            <div className="h-9 bg-gray-100 dark:bg-slate-700 rounded w-1/2 animate-pulse" />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full bg-gray-100 dark:bg-slate-700 animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-3.5 bg-gray-100 dark:bg-slate-700 rounded w-28 animate-pulse" />
+              <div className="h-3 bg-gray-100 dark:bg-slate-700 rounded w-20 animate-pulse" />
             </div>
           </div>
-
-          <div className="p-4 sm:p-6 lg:p-8">
-            {/* Author Info Skeleton */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-slate-200 dark:border-slate-700 space-y-4 sm:space-y-0">
-              <div className="flex items-center space-x-3 sm:space-x-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient flex-shrink-0"></div>
-                <div>
-                  <div className="h-5 w-24 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded mb-2"></div>
-                  <div className="h-4 w-32 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded"></div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2 ml-13 sm:ml-0">
-                <div className="w-4 h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded"></div>
-                <div className="h-4 w-24 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded"></div>
-              </div>
-            </div>
-
-            {/* Article Content Skeleton */}
-            <div className="prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert max-w-none">
-
-              {/* H1 Skeleton - Matches HeadingOneElement */}
-              <div className="mb-6 mt-8">
-                <div className="h-8 sm:h-10 lg:h-12 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded-lg"></div>
-                <div className="h-8 sm:h-10 lg:h-12 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded-lg w-2/3 mt-2" style={{ animationDelay: '0.1s' }}></div>
-              </div>
-
-              {/* Paragraph Skeletons */}
-              <div className="space-y-4 mb-6">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="space-y-3">
-                    <div className="h-4 sm:h-5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded" style={{ animationDelay: `${i * 0.1}s` }}></div>
-                    <div className="h-4 sm:h-5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded w-5/6" style={{ animationDelay: `${i * 0.15}s` }}></div>
-                    <div className="h-4 sm:h-5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded w-4/6" style={{ animationDelay: `${i * 0.2}s` }}></div>
-                  </div>
-                ))}
-              </div>
-
-              {/* H2 Skeleton - Matches HeadingTwoElement */}
-              <div className="mb-5 mt-8">
-                <div className="h-6 sm:h-8 lg:h-10 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded-lg pb-2"></div>
-                <div className="h-0.5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded mt-2"></div>
-              </div>
-
-              {/* More Paragraph Skeletons */}
-              <div className="space-y-4 mb-6">
-                {[...Array(2)].map((_, i) => (
-                  <div key={i} className="space-y-3">
-                    <div className="h-4 sm:h-5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded" style={{ animationDelay: `${i * 0.1}s` }}></div>
-                    <div className="h-4 sm:h-5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded w-4/5" style={{ animationDelay: `${i * 0.15}s` }}></div>
-                  </div>
-                ))}
-              </div>
-
-              {/* BlockQuote Skeleton - Matches BlockQuoteElement */}
-              <div className="my-6 sm:my-8 p-4 sm:p-6 bg-slate-50 dark:bg-slate-700 rounded-xl border-l-4 border-blue-500">
-                <div className="space-y-3">
-                  <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-600 dark:via-gray-500 dark:to-gray-600 bg-[length:200%_100%] article_load_gradient rounded"></div>
-                  <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-600 dark:via-gray-500 dark:to-gray-600 bg-[length:200%_100%] article_load_gradient rounded w-3/4"></div>
-                  <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-600 dark:via-gray-500 dark:to-gray-600 bg-[length:200%_100%] article_load_gradient rounded w-1/2"></div>
-                </div>
-              </div>
-
-              {/* H3 Skeleton - Matches HeadingThreeElement */}
-              <div className="mb-4 mt-6">
-                <div className="h-6 sm:h-7 lg:h-8 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded-lg w-2/3"></div>
-              </div>
-
-              {/* List Skeleton - Matches BulletListElement */}
-              <div className="space-y-2 pl-6 my-4">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <div className="flex-1">
-                      <div className="h-4 sm:h-5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded" style={{ animationDelay: `${i * 0.1}s` }}></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Code Block Skeleton */}
-              <div className="my-6 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
-                <div className="bg-gray-50 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                  <div className="flex space-x-2">
-                    <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                    <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                    <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                  </div>
-                </div>
-                <div className="bg-gray-900 dark:bg-gray-950 p-4">
-                  <div className="space-y-2">
-                    {[...Array(5)].map((_, i) => (
-                      <div key={i} className="h-4 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 bg-[length:200%_100%] article_load_gradient rounded" style={{ width: `${Math.random() * 40 + 60}%`, animationDelay: `${i * 0.1}s` }}></div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Final Paragraphs */}
-              <div className="space-y-4">
-                {[...Array(2)].map((_, i) => (
-                  <div key={i} className="space-y-3">
-                    <div className="h-4 sm:h-5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded" style={{ animationDelay: `${i * 0.1}s` }}></div>
-                    <div className="h-4 sm:h-5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded w-3/4" style={{ animationDelay: `${i * 0.15}s` }}></div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Engagement Stats Skeleton */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-8 sm:mt-12 pt-4 sm:pt-6 border-t border-slate-200 dark:border-slate-700 space-y-4 sm:space-y-0">
-                <div className="flex items-center space-x-4 sm:space-x-6">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 sm:w-5 sm:h-5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded"></div>
-                    <div className="h-4 w-8 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded"></div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 sm:w-5 sm:h-5 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded"></div>
-                    <div className="h-4 w-6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded"></div>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded-full"></div>
-                </div>
-              </div>
-            </div>
+          <div className="space-y-3 pt-4">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-4 bg-gray-100 dark:bg-slate-700 rounded animate-pulse" style={{ width: `${85 - i * 5}%` }} />
+            ))}
           </div>
-        </article>
-
-        {/* Comments Section Skeleton */}
-        <section className="mt-6 sm:mt-8 bg-white dark:bg-slate-800 rounded-2xl shadow-xl dark:shadow-2xl overflow-hidden">
-          <div className="p-4 sm:p-6 lg:p-8">
-            {/* Comments Header */}
-            <div className="flex items-center space-x-2 mb-4 sm:mb-6">
-              <div className="h-6 sm:h-8 w-32 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded"></div>
-              <div className="h-6 sm:h-8 w-12 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded"></div>
-            </div>
-
-            {/* Comment Form Skeleton */}
-            <div className="mb-6 sm:mb-8">
-              <div className="mb-4">
-                <div className="w-full h-24 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded-xl"></div>
-              </div>
-              <div className="flex justify-end">
-                <div className="h-10 w-32 bg-gradient-to-r from-blue-200 via-blue-300 to-blue-200 dark:from-blue-700 dark:via-blue-600 dark:to-blue-700 bg-[length:200%_100%] article_load_gradient rounded-xl"></div>
-              </div>
-            </div>
-
-            {/* Comments List Skeleton */}
-            <div className="space-y-4 sm:space-y-6">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="border-b border-slate-200 dark:border-slate-700 pb-4 sm:pb-6 last:border-b-0">
-                  <div className="flex items-start space-x-3 sm:space-x-4">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-green-200 via-blue-200 to-green-200 dark:from-green-700 dark:via-blue-700 dark:to-green-700 bg-[length:200%_100%] article_load_gradient flex-shrink-0"></div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div className="h-4 w-20 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded"></div>
-                        <div className="h-3 w-16 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded"></div>
-                      </div>
-                      <div className="space-y-2 mb-3">
-                        <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded"></div>
-                        <div className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded w-3/4"></div>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-1">
-                          <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded"></div>
-                          <div className="h-3 w-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded"></div>
-                        </div>
-                        <div className="h-3 w-8 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] article_load_gradient rounded"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        </div>
       </div>
     );
   }
 
+  const post = article[0];
+  const tags = parseTags(post.tags);
+
   const handleLike = async () => {
     if (isLiking) return;
-
     if (!loggedIn) {
       toast.error("This action needs log in");
       navigate("/login");
@@ -300,13 +125,9 @@ const ArticlePage = () => {
 
     setIsLiking(true);
     try {
-      await AxiosInstance.post('/action/like', {
-        article_id: article[0].article_id,
-      })
-      setIsLiked(prev => !prev);
-      setLikes_count(prev => isLiked ? prev - 1 : prev + 1);
-      console.log('Likes count before update:', likes_count);
-
+      await AxiosInstance.post('/action/like', { article_id: post.article_id });
+      setIsLiked((prev) => !prev);
+      setLikesCount((prev) => (isLiked ? prev - 1 : prev + 1));
     } catch (error) {
       console.log(error);
     }
@@ -315,294 +136,290 @@ const ArticlePage = () => {
 
   const handleBookmark = async () => {
     if (isMarking) return;
-
     if (!loggedIn) {
-      toast.error(`This action needs log in`);
+      toast.error("This action needs log in");
       navigate("/login");
       return;
     }
 
     setIsMarking(true);
-
     try {
-      await AxiosInstance.post('/action/bookmark', {
-        article_id: article[0].article_id,
-      });
-      setIsBookmarked(!isBookmarked);
-
+      await AxiosInstance.post('/action/bookmark', { article_id: post.article_id });
+      setIsBookmarked((prev) => !prev);
     } catch (error) {
       console.log(error);
-
     }
     setIsMarking(false);
   };
 
   const handleComment = async () => {
     if (!loggedIn) {
-      toast.error(`This action needs log in`);
+      toast.error("This action needs log in");
       navigate("/login");
       return;
     }
+    if (!comment.trim() || isCommenting) return;
 
-    if (comment.trim()) {
-      try {
-        await AxiosInstance.post(`/action/comment/`, {
-          article_id: article[0].article_id,
-          article_title: article[0].title,
+    setIsCommenting(true);
+    try {
+      const res = await AxiosInstance.post(`/action/comment/`, {
+        article_id: post.article_id,
+        article_title: post.title,
+        content: comment,
+      });
+
+      setComments((prev) => [
+        ...prev,
+        {
+          id: res.data?.id ?? `local-${Date.now()}`,
+          username: userData.userName,
           content: comment,
-        });
-        setComment('');
-        setComments(prev => [
-          ...prev,
-          {
-            username: userData.userName,
-            content: comment,
-            created_at: new Date().toISOString()
-          }
-        ]);
-
-      } catch (error) {
-        console.log(error);
-        toast.error(`Cannot comment yet`);
-      }
-
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      setComment('');
+    } catch (error) {
+      console.log(error);
+      toast.error("Cannot comment yet");
     }
+    setIsCommenting(false);
   };
 
-  const handleShare = () => {
-    setShowShareMenu(!showShareMenu);
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied");
+    } catch (error) {
+      console.log(error);
+    }
+    setShowShareMenu(false);
+  };
+
+  const handleShareFacebook = () => {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank', 'noopener,noreferrer');
+    setShowShareMenu(false);
+  };
+
+  const handleShareTwitter = () => {
+    window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(post.title)}`, '_blank', 'noopener,noreferrer');
+    setShowShareMenu(false);
   };
 
   const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  return (isExist &&
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
-      {/* Sticky Header Navigation */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border-b border-slate-200 dark:border-slate-700 transition-all duration-300 ${isNavVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
-        }`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex items-center justify-between">
+  return (
+    <div className="min-h-screen bg-[#FAFAF8] dark:bg-slate-900 font-[Inter,system-ui,sans-serif]">
+
+      {/* Sticky nav */}
+      <nav className={`fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-gray-200 dark:border-slate-700 transition-all duration-200 ${
+        isNavVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'
+      }`}>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+          <button
+            onClick={scrollToTop}
+            className="text-sm font-semibold text-gray-800 dark:text-gray-100 hover:text-[#1E3A5F] dark:hover:text-blue-400 transition-colors duration-100 truncate text-left"
+          >
+            {post.title}
+          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={handleLike}
+              disabled={isLiking}
+              className={`p-2 rounded-lg transition-colors duration-150 ${
+                isLiked ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700'
+              }`}
+            >
+              <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
+            </button>
+            <button
+              onClick={handleBookmark}
+              disabled={isMarking}
+              className={`p-2 rounded-lg transition-colors duration-150 ${
+                isBookmarked ? 'text-[#1E3A5F] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700'
+              }`}
+            >
+              <BookmarkPlus className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
+            </button>
+            <div className="relative">
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowShareMenu((v) => !v); }}
+                className="p-2 rounded-lg text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors duration-150"
+              >
+                <Share2 className="w-4 h-4" />
+              </button>
+              {showShareMenu && (
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute right-0 mt-2 w-44 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-lg py-1 z-10"
+                >
+                  <button onClick={handleShareFacebook} className="w-full px-3.5 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700/50 flex items-center gap-2 transition-colors duration-100">
+                    <FaFacebook className="w-3.5 h-3.5" />
+                    Facebook
+                  </button>
+                  <button onClick={handleShareTwitter} className="w-full px-3.5 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700/50 flex items-center gap-2 transition-colors duration-100">
+                    <FaXTwitter className="w-3.5 h-3.5" />
+                    X (Twitter)
+                  </button>
+                  <button onClick={handleCopyLink} className="w-full px-3.5 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700/50 flex items-center gap-2 transition-colors duration-100">
+                    <Link2 className="w-3.5 h-3.5" />
+                    Copy Link
+                  </button>
+                </div>
+              )}
+            </div>
             <button
               onClick={scrollToTop}
-              className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 truncate pr-4 flex-1 text-left"
+              className="p-2 rounded-lg text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors duration-150 hidden sm:block"
             >
-              {article[0].title}
+              <ChevronUp className="w-4 h-4" />
             </button>
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <button
-                onClick={handleLike}
-                disabled={isLiking}
-                className={`p-2 rounded-full transition-all duration-200 ${isLiked
-                  ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                  : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400'
-                  }`}
-              >
-                <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${isLiked ? 'fill-current' : ''}`} />
-              </button>
-              <button
-                onClick={handleBookmark}
-                disabled={isMarking}
-                className={`p-2 rounded-full transition-all duration-200 ${isBookmarked
-                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                  : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400'
-                  }`}
-              >
-                <BookmarkPlus className={`w-4 h-4 sm:w-5 sm:h-5 ${isBookmarked ? 'fill-current' : ''}`} />
-              </button>
-              <div className="relative">
-                <button
-                  onClick={handleShare}
-                  className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors"
-                >
-                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
-                {showShareMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 py-2 z-10">
-                    <button className="w-full px-4 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center space-x-2">
-
-                      <FaFacebook className="w-4 h-4" />
-                      <span>Facebook</span>
-                    </button>
-                    <button className="w-full px-4 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center space-x-2">
-                      <FaXTwitter className="w-4 h-4" />
-                      <span>Twitter</span>
-                    </button>
-                    <button className="w-full px-4 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center space-x-2">
-                      <Link2 className="w-4 h-4" />
-                      <span>Copy Link</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-              <button
-                onClick={scrollToTop}
-                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors hidden sm:block"
-              >
-                <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
-            </div>
           </div>
         </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        {/* Article Section */}
-        <article className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl dark:shadow-2xl overflow-hidden transition-all duration-300">
-          {/* Hero Image */}
-          <div className="relative h-64 sm:h-80 lg:h-96 bg-gradient-to-r from-blue-600 to-purple-600 overflow-hidden">
-            <div className="absolute inset-0 bg-black/10"></div>
-            <div className="">
-              {featuredImage ? (
-                <>
-                  <img
-                    src={featuredImage}
-                    alt="Featured article image"
-                    className="w-full h-[100vh] object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/30"></div>
-                </>
-              ) : (
-                <>
-                  <div className="w-full h-full bg-gradient-to-r from-blue-600 to-purple-600"></div>
-                  <div className="absolute inset-0 bg-black/20"></div>
-                </>
-              )}
-              <div className="absolute bottom-4 left-4 right-4 ">
-                <div className="flex flex-wrap gap-2 mb-3 sm:mb-4">
-                  <span className="px-2 sm:px-3 py-1 text-xs font-semibold rounded-full bg-white/20 backdrop-blur-sm text-white border border-white/30">
-                    {article[0].category_id}
-                  </span>
-                </div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
-                  {article[0].title}
-                </h1>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+
+        {/* Hero image */}
+        <div className="w-full h-64 sm:h-80 lg:h-96 rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800 mb-8">
+          {post.thumbnail_url ? (
+            <img src={post.thumbnail_url} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <FileText className="w-10 h-10 text-gray-300 dark:text-slate-500" />
+            </div>
+          )}
+        </div>
+
+        {/* Category + title */}
+        {(post.category_name || post.category_id) && (
+          <span className="inline-block px-2.5 py-1 mb-3 text-[11px] font-semibold uppercase tracking-wide rounded bg-blue-50 dark:bg-blue-900/20 text-[#1E3A5F] dark:text-blue-400">
+            {post.category_name || post.category_id}
+          </span>
+        )}
+
+        <h1 className="font-[Newsreader,Georgia,serif] text-3xl sm:text-4xl lg:text-[2.75rem] font-black leading-tight text-gray-900 dark:text-gray-50 mb-6">
+          {post.title}
+        </h1>
+
+        {/* Tags */}
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-6">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400"
+              >
+                <Tag className="w-3 h-3" />
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Author info */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-6 mb-8 border-b border-gray-200 dark:border-slate-700">
+          <div className="flex items-center gap-3">
+            {authorPic ? (
+              <img src={authorPic} alt="" className="w-11 h-11 rounded-full object-cover bg-gray-100 dark:bg-slate-700 shrink-0" />
+            ) : (
+              <div className="w-11 h-11 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
+                <UserRound className="w-5 h-5 text-gray-300 dark:text-slate-500" />
               </div>
+            )}
+            <div>
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{authorName}</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500">Contributor</p>
+            </div>
+          </div>
+          <span className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-slate-500">
+            <Calendar className="w-3.5 h-3.5" />
+            {formatDate(post.publish_at)}
+          </span>
+        </div>
+
+        {/* Article body */}
+        <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none prose-headings:font-[Newsreader,Georgia,serif]">
+          {renderSlateToHtml(post.content || [])}
+        </div>
+
+        {/* Engagement bar */}
+        <div className="flex items-center justify-between mt-10 pt-6 border-t border-gray-200 dark:border-slate-700">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleLike}
+              disabled={isLiking}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors duration-150 ${
+                isLiked ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600'
+              }`}
+            >
+              <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
+              {likesCount}
+            </button>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-700">
+              <MessageCircle className="w-4 h-4" />
+              {comments.length}
+            </span>
+          </div>
+          <button
+            onClick={() => window.print()}
+            className="p-2 rounded-lg text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors duration-150"
+          >
+            <Printer className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Comments */}
+        <section className="mt-10 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-6 sm:p-8">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-50 mb-6">
+            Comments ({comments.length})
+          </h2>
+
+          <div className="mb-8">
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              rows={4}
+              placeholder="Share your thoughts..."
+              className="w-full px-4 py-3 text-sm rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/30 dark:focus:ring-blue-500/30 focus:border-[#1E3A5F] dark:focus:border-blue-500"
+            />
+            <div className="flex justify-end mt-3">
+              <button
+                onClick={handleComment}
+                disabled={!comment.trim() || isCommenting}
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-semibold rounded-lg text-white bg-[#1E3A5F] hover:bg-[#16304d] transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isCommenting ? "Posting…" : "Post Comment"}
+              </button>
             </div>
           </div>
 
-
-          <div className="p-4 sm:p-6 lg:p-8">
-            {/* Author Info */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-slate-200 dark:border-slate-700 space-y-4 sm:space-y-0">
-              <div className="flex items-center space-x-3 sm:space-x-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
-                  {authorPic == '' ? <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" /> :
-                    <>
-                      <img
-                        src={authorPic}
-                        alt="Author Pic"
-                        className="w-full h-full rounded-full object-cover transition-shadow"
-                      />
-
-                    </>}
-                </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900 dark:text-white">{authorName}</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Contributor</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400 ml-13 sm:ml-0">
-                <Calendar className="w-4 h-4 flex-shrink-0" />
-                <span className="text-sm">{new Date(article[0].publish_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-              </div>
-            </div>
-
-            {/* Article Content */}
-            <div className="prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert max-w-none">
-              <div>{renderSlateToHtml(article[0].content || [])}</div>
-
-
-              {/* Engagement Stats */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-8 sm:mt-12 pt-4 sm:pt-6 border-t border-slate-200 dark:border-slate-700 space-y-4 sm:space-y-0">
-                <div className="flex items-center space-x-4 sm:space-x-6">
-                  <div className="flex items-center space-x-2">
-                    <button onClick={handleLike} disabled={isLiking}>
-                      <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${isLiked ? 'fill-red-500 text-red-500' : 'text-slate-400'}`} />
-                    </button>
-                    <span className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">{likes_count}</span>
+          {comments.length > 0 ? (
+            <div className="space-y-5">
+              {comments.map((c) => (
+                <div key={c.id ?? `${c.username}-${c.created_at}`} className="flex items-start gap-3 pb-5 border-b border-gray-100 dark:border-slate-700 last:border-0 last:pb-0">
+                  <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
+                    <UserRound className="w-4 h-4 text-gray-300 dark:text-slate-500" />
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
-                    <span className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">{comments.length}</span>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => window.print()}
-                    className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 transition-colors"
-                  >
-                    <Printer className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </article>
-
-        {/* Comments Section */}
-        <section className="mt-6 sm:mt-8 bg-white dark:bg-slate-800 rounded-2xl shadow-xl dark:shadow-2xl overflow-hidden">
-          <div className="p-4 sm:p-6 lg:p-8">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-4 sm:mb-6">
-              Comments ({comments.length})
-            </h2>
-
-            {/* Comment Form */}
-            <div className="mb-6 sm:mb-8">
-              <div className="mb-4">
-                <textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  className="w-full p-3 sm:p-4 border border-slate-300 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all duration-200 text-sm sm:text-base"
-                  placeholder="Share your thoughts..."
-                  rows="4"
-                />
-              </div>
-              <div className="flex justify-end">
-                <button
-                  onClick={handleComment}
-                  className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-                  disabled={!comment.trim()}
-                >
-                  Post Comment
-                </button>
-              </div>
-            </div>
-
-            {/* Comments List */}
-            <div className="space-y-4 sm:space-y-6">
-              {comments.map((comment) => (
-                <div key={comment.id} className="border-b border-slate-200 dark:border-slate-700 pb-4 sm:pb-6 last:border-b-0">
-                  <div className="flex items-start space-x-3 sm:space-x-4">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-green-500 to-blue-500 flex items-center justify-center flex-shrink-0">
-                      <User className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{c.username}</p>
+                      <span className="text-xs text-gray-400 dark:text-slate-500">{formatCommentDate(c.created_at)}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 mb-2">
-                        <h4 className="font-semibold text-slate-900 dark:text-white text-sm sm:text-base">{comment.username}</h4>
-                        <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{new Date(comment.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                      </div>
-                      <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-sm sm:text-base">{comment.content}</p>
-                      <div className="flex items-center space-x-4 mt-2 sm:mt-3">
-
-                      </div>
-                    </div>
+                    <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">{c.content}</p>
                   </div>
                 </div>
               ))}
             </div>
-
-            {comments.length === 0 && (
-              <div className="text-center py-8 sm:py-12">
-                <MessageCircle className="w-10 h-10 sm:w-12 sm:h-12 text-slate-400 mx-auto mb-3 sm:mb-4" />
-                <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">No comments yet. Be the first to share your thoughts!</p>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-12 h-12 bg-gray-100 dark:bg-slate-700 rounded-lg flex items-center justify-center mb-3">
+                <MessageCircle className="w-5 h-5 text-gray-300 dark:text-slate-500" />
               </div>
-            )}
-          </div>
+              <p className="text-sm text-gray-400 dark:text-slate-500">No comments yet. Be the first to share your thoughts.</p>
+            </div>
+          )}
         </section>
       </main>
     </div>

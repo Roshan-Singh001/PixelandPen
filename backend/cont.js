@@ -651,50 +651,285 @@ contriRouter.get('/article/fetch', async (req, res) => {
 
 contriRouter.get('/analytics', async (req, res) => {
   const userId = req.user.id;
-  const {range, granularity } = req.query;
+  const { range, granularity } = req.query;
+  const validRanges = {
+    '7d': '7',
+    '30d': '30',
+    '3m': '90',
+  };
 
   try {
+    // Overview Metrics
     const queryOverview = `
-  SELECT
-    (
-      SELECT COALESCE(SUM(a.views), 0)
+      SELECT
+        (
+          SELECT COALESCE(SUM(a.views), 0)
+          FROM articles a
+          WHERE a.cont_id = ?
+        ) AS total_views,
+
+        (
+          SELECT COALESCE(SUM(a.likes), 0)
+          FROM articles a
+          WHERE a.cont_id = ?
+        ) AS total_likes,
+
+        (
+          SELECT COUNT(*)
+          FROM comments cm
+          JOIN articles a
+            ON cm.article_id = a.article_id
+          WHERE a.cont_id = ?
+            AND cm.status = 'Approved'
+        ) AS total_comments,
+
+        (
+          SELECT COALESCE(followers, 0)
+          FROM contributor
+          WHERE cont_id = ?
+        ) AS total_followers,
+
+        (
+          SELECT COUNT(*)
+          FROM bookmarks b
+          JOIN articles a
+            ON b.article_id = a.article_id
+          WHERE a.cont_id = ?
+        ) AS total_bookmarks
+    `;
+
+    const [overviewRows] = await db.query(
+      queryOverview,
+      [userId, userId, userId, userId, userId]
+    );
+    const overview = overviewRows[0];
+
+    // Engagement Metric
+    const engageCalculation = Number(overview.total_likes) + Number(overview.total_comments) + Number(overview.total_bookmarks);
+    const totalViews = Number(overview.total_views);
+    const engagementRate = totalViews > 0 ? (engageCalculation / totalViews) * 100 : 0;
+
+    // Content Summary
+    const tableName = `${userId}_articles`;
+    const queryContentSummary = `
+      SELECT
+        SUM(CASE
+          WHEN a.article_status = 'Approved' THEN 1
+          ELSE 0
+        END) AS published,
+
+        SUM(CASE
+          WHEN a.article_status = 'Draft' THEN 1
+          ELSE 0
+        END) AS draft,
+
+        SUM(CASE
+          WHEN a.article_status = 'Pending' THEN 1
+          ELSE 0
+        END) AS pending,
+
+        SUM(CASE
+          WHEN a.article_status = 'Rejected' THEN 1
+          ELSE 0
+        END) AS rejected
+
+      FROM ${tableName} a
+    `;
+
+    const [contentSummaryRows] = await db.query(queryContentSummary);
+    const contentSummary = contentSummaryRows[0];
+
+    // Time Series Data
+
+    let dateCondition = '';
+
+    if (range !== 'all') {
+      if (!validRanges[range]) {
+        return res.status(400).json({
+          message: 'Invalid range'
+        });
+      }
+      dateCondition = `
+        AND av.created_at >= NOW() - INTERVAL ${validRanges[range]} DAY
+      `;
+    }
+    let viewTimeSeries = [];
+
+    if (granularity === 'daily') {
+
+      const queryViewTimeSeries = `
+        SELECT
+          DATE(av.created_at) AS date,
+          COUNT(*) AS views
+
+        FROM article_views av
+
+        JOIN articles a
+          ON av.article_id = a.article_id
+
+        WHERE a.cont_id = ?
+          ${dateCondition}
+
+        GROUP BY DATE(av.created_at)
+
+        ORDER BY date ASC
+      `;
+
+      const [rows] = await db.query(
+        queryViewTimeSeries,
+        [userId]
+      );
+
+      viewTimeSeries = rows;
+    }
+    else if (granularity === 'weekly') {
+      const queryViewTimeSeries = `
+        SELECT
+          DATE_SUB(
+            DATE(av.created_at),
+            INTERVAL WEEKDAY(av.created_at) DAY
+          ) AS date,
+
+          COUNT(*) AS views
+
+        FROM article_views av
+
+        JOIN articles a
+          ON av.article_id = a.article_id
+
+        WHERE a.cont_id = ?
+          ${dateCondition}
+
+        GROUP BY
+          DATE_SUB(
+            DATE(av.created_at),
+            INTERVAL WEEKDAY(av.created_at) DAY
+          )
+
+        ORDER BY date ASC
+      `;
+
+      const [rows] = await db.query(
+        queryViewTimeSeries,
+        [userId]
+      );
+
+      viewTimeSeries = rows;
+    }
+    else {
+      return res.status(400).json({
+        message: 'Invalid granularity'
+      });
+    }
+
+    // Top Performing Articles
+
+    const queryTopArticles = `
+      SELECT
+        a.article_id,
+        a.slug,
+        a.title,
+        a.views,
+        a.likes,
+        (
+          SELECT COUNT(*)
+          FROM comments c
+          WHERE c.article_id = a.article_id
+            AND c.status = 'Approved'
+        ) AS comments
       FROM articles a
       WHERE a.cont_id = ?
-    ) AS total_views,
+      ORDER BY a.views DESC
+      LIMIT 5;
+    `;
 
-    (
-      SELECT COALESCE(SUM(a.likes), 0)
-      FROM articles a
-      WHERE a.cont_id = ?
-    ) AS total_likes,
+    const [topArticlesRows] = await db.query(
+      queryTopArticles,
+      [userId]
+    );
+    const topArticles = topArticlesRows;
 
-    (
-      SELECT COUNT(*)
-      FROM comments cm
-      JOIN articles a
-        ON cm.article_id = a.article_id
-      WHERE a.cont_id = ?
-        AND cm.status = 'Approved'
-    ) AS total_comments,
+    // Engagement Series
+    const queryEngagementSeries = `
+      SELECT
+        date,
+        SUM(likes) AS likes,
+        SUM(comments) AS comments,
+        SUM(bookmarks) AS bookmarks
+      FROM (
+        -- Likes
+        SELECT
+          DATE(al.created_at) AS date,
+          COUNT(*) AS likes,
+          0 AS comments,
+          0 AS bookmarks
+        FROM article_likes al
+        JOIN articles a
+          ON al.article_id = a.article_id
+        WHERE a.cont_id = ?
+          AND al.created_at >= NOW() - INTERVAL 30 DAY
+        GROUP BY DATE(al.created_at)
+        UNION ALL
 
-    (
-      SELECT followers
-      FROM contributor
-      WHERE cont_id = ?
-    ) AS total_followers
-  `;
+        -- Comments
+        SELECT
+          DATE(c.created_at) AS date,
+          0 AS likes,
+          COUNT(*) AS comments,
+          0 AS bookmarks
+        FROM comments c
+        JOIN articles a
+          ON c.article_id = a.article_id
+        WHERE a.cont_id = ?
+          AND c.status = 'Approved'
+          AND c.created_at >= NOW() - INTERVAL 30 DAY
+        GROUP BY DATE(c.created_at)
+        UNION ALL
 
-  const resultsOverview = await db.query(queryOverview, [userId, userId, userId, userId]);
-  const overview = resultsOverview[0][0];
+        -- Bookmarks
+        SELECT
+          DATE(b.created_at) AS date,
+          0 AS likes,
+          0 AS comments,
+          COUNT(*) AS bookmarks
+        FROM bookmarks b
+        JOIN articles a
+          ON b.article_id = a.article_id
+        WHERE a.cont_id = ?
+          AND b.created_at >= NOW() - INTERVAL 30 DAY
+          GROUP BY DATE(b.created_at)
+      ) AS engagement
+      GROUP BY date
+      ORDER BY date ASC;
+    `
+    const [rows] = await db.query(queryEngagementSeries, [userId, userId,userId]);
 
-  res.status(200).json({ overview });
+const engagementSeries = rows.map(row => ({
+  date: row.date,
+  likes: Number(row.likes),
+  comments: Number(row.comments),
+  bookmarks: Number(row.bookmarks)
+}));
+
+
+
+
+
+    res.status(200).json({
+      overview,
+      contentSummary,
+      engagementRate,
+      viewTimeSeries,
+      topArticles,
+       engagementSeries
+    });
 
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Error Fetching Analytics" });
-
+    console.error(error);
+    res.status(500).json({
+      message: 'Error Fetching Analytics'
+    });
   }
-
 });
 
 
