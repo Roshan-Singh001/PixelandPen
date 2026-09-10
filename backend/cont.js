@@ -850,6 +850,21 @@ contriRouter.get('/analytics', async (req, res) => {
     const topArticles = topArticlesRows;
 
     // Engagement Series
+    let likesDateCondition = '';
+    let commentsDateCondition = '';
+    let bookmarksDateCondition = '';
+
+    if (range !== 'all') {
+      if (!validRanges[range]) {
+        return res.status(400).json({
+          message: 'Invalid range'
+        });
+      }
+      likesDateCondition = `AND al.created_at >= NOW() - INTERVAL ${validRanges[range]} DAY`;
+      commentsDateCondition = `AND c.created_at >= NOW() - INTERVAL ${validRanges[range]} DAY`;
+      bookmarksDateCondition = `AND b.created_at >= NOW() - INTERVAL ${validRanges[range]} DAY`;
+    }
+
     const queryEngagementSeries = `
       SELECT
         date,
@@ -867,7 +882,7 @@ contriRouter.get('/analytics', async (req, res) => {
         JOIN articles a
           ON al.article_id = a.article_id
         WHERE a.cont_id = ?
-          AND al.created_at >= NOW() - INTERVAL 30 DAY
+          ${likesDateCondition}
         GROUP BY DATE(al.created_at)
         UNION ALL
 
@@ -882,7 +897,7 @@ contriRouter.get('/analytics', async (req, res) => {
           ON c.article_id = a.article_id
         WHERE a.cont_id = ?
           AND c.status = 'Approved'
-          AND c.created_at >= NOW() - INTERVAL 30 DAY
+          ${commentsDateCondition}
         GROUP BY DATE(c.created_at)
         UNION ALL
 
@@ -896,23 +911,116 @@ contriRouter.get('/analytics', async (req, res) => {
         JOIN articles a
           ON b.article_id = a.article_id
         WHERE a.cont_id = ?
-          AND b.created_at >= NOW() - INTERVAL 30 DAY
+          ${bookmarksDateCondition}
           GROUP BY DATE(b.created_at)
       ) AS engagement
       GROUP BY date
       ORDER BY date ASC;
     `
-    const [rows] = await db.query(queryEngagementSeries, [userId, userId,userId]);
+    const [rows] = await db.query(queryEngagementSeries, [userId, userId, userId]);
 
-const engagementSeries = rows.map(row => ({
-  date: row.date,
-  likes: Number(row.likes),
-  comments: Number(row.comments),
-  bookmarks: Number(row.bookmarks)
-}));
+    const engagementSeries = rows.map(row => ({
+      date: row.date,
+      likes: Number(row.likes),
+      comments: Number(row.comments),
+      bookmarks: Number(row.bookmarks)
+    }));
+
+    // Followers Series
+    let followerGrowth = [];
+    let startDate = null;
+    if (range === '7d') {
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() - 7);
+
+    } else if (range === '30d') {
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() - 30);
+
+    } else if (range === '3m') {
+      startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - 3);
+    }
 
 
+    // Followers existing before selected range
+    let startingFollowers = 0;
+    if (startDate) {
+      const queryStartingFollowers = `
+        SELECT COUNT(*) AS followers
+        FROM reader_follows
+        WHERE contributor_id = ?
+          AND created_at < ?
+      `;
 
+      const [startingRows] = await db.query(
+        queryStartingFollowers,
+        [userId, startDate]
+      );
+
+      startingFollowers = Number(
+        startingRows[0].followers
+      );
+    }
+
+
+    // Determine grouping
+    let followerDateExpression = '';
+    if (granularity === 'daily') {
+      followerDateExpression = `
+        DATE(rf.created_at)
+      `;
+
+    } else {
+      followerDateExpression = `
+        DATE_SUB(
+          DATE(rf.created_at),
+          INTERVAL WEEKDAY(rf.created_at) DAY
+        )
+      `;
+    }
+
+
+    let followerDateCondition = '';
+    if (startDate) {
+      followerDateCondition = `
+        AND rf.created_at >= ?
+      `;
+    }
+    const queryFollowerGrowth = `
+      SELECT
+        ${followerDateExpression} AS date,
+        COUNT(*) AS new_followers
+      FROM reader_follows rf
+      WHERE rf.contributor_id = ?
+        ${followerDateCondition}
+      GROUP BY ${followerDateExpression}
+      ORDER BY date ASC
+    `;
+
+
+    const followerParams = startDate
+      ? [userId, startDate]
+      : [userId];
+
+
+    const [followerRows] = await db.query(
+      queryFollowerGrowth,
+      followerParams
+    );
+
+
+    // Convert new followers → cumulative followers
+    let currentFollowers = startingFollowers;
+    followerGrowth = followerRows.map(row => {
+      currentFollowers += Number(
+        row.new_followers
+      );
+      return {
+        date: row.date,
+        followers: currentFollowers
+      };
+    });
 
 
     res.status(200).json({
@@ -921,7 +1029,8 @@ const engagementSeries = rows.map(row => ({
       engagementRate,
       viewTimeSeries,
       topArticles,
-       engagementSeries
+      engagementSeries,
+      followerGrowth
     });
 
   } catch (error) {

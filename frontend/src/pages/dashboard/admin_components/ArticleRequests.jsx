@@ -1,384 +1,513 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Eye, FileText, Trash2, X, StarsIcon } from 'lucide-react';
+import {
+  CheckCircle, XCircle, Eye, FileText, Trash2, X, Star, Calendar,
+  AlertCircle, Loader2, Tag
+} from 'lucide-react';
 import AxiosInstance from '../../../api/axiosInstance';
-import PixelPenLoader from "../../../components/PixelPenLoader";
 
+function formatDate(dateString) {
+  if (!dateString) return "";
+  return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
 
 const ArticleRequests = () => {
-  const [showRejectModal, setShowRejectModal] = useState(false);
-  const [selectedArticle, setSelectedArticle] = useState(null);
-  const [rejectReason, setRejectReason] = useState('');
-  const [isloading, setLoading] = useState(true);
-  const [isRender, setRender] = useState(1);
+
   const [pendingArticles, setPendingArticles] = useState([]);
   const [rejectedArticles, setRejectedArticles] = useState([]);
   const [approvedArticles, setApprovedArticles] = useState([]);
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [isRender, setRender] = useState(1);
+
+  const [busyId, setBusyId] = useState(null);
+
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [isRejecting, setIsRejecting] = useState(false);
+
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   useEffect(() => {
-    const fetchData =  async()=>{
-      try {
-        const response1 = await AxiosInstance.get('/dashboard/admin/fetch/article/pending');
-        setPendingArticles(response1.data.pending);
-
-        const response2 = await AxiosInstance.get('/dashboard/admin/fetch/article/rejected');
-        setRejectedArticles(response2.data.rejected);
-
-        const response3 = await AxiosInstance.get('/dashboard/admin/fetch/article/published');
-        setApprovedArticles(response3.data.published);
-      } catch (error) {
-        console.log(error);
-        
-      }
-    }
     fetchData();
-    setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRender]);
 
-  if (isloading) return <PixelPenLoader/>
-
-  const handlePreview = (slug)=>{
-    window.open(`/preview/${slug}`, '_blank');
-  }
-
-  const handleView = (slug)=>{
-    window.open(`/view/${slug}`, '_blank');
-  }
-
-  const handleDelete = async(article)=>{
+  const fetchData = async () => {
+    setIsLoading(true);
+    setLoadError("");
     try {
-      await AxiosInstance.delete('/dashboard/admin/article/delete', {
-        data: {
-          slug: article.slug,
-          article_id: article.article_id,
-          cont_id: article.cont_id,
-          review_id: article.review_id,
-        }
-      });
-      setRender(isRender+1);
+      const [pendingRes, rejectedRes, approvedRes] = await Promise.allSettled([
+        AxiosInstance.get('/dashboard/admin/fetch/article/pending'),
+        AxiosInstance.get('/dashboard/admin/fetch/article/rejected'),
+        AxiosInstance.get('/dashboard/admin/fetch/article/published'),
+      ]);
+
+      setPendingArticles(pendingRes.status === 'fulfilled' ? (pendingRes.value.data.pending || []) : []);
+      setRejectedArticles(rejectedRes.status === 'fulfilled' ? (rejectedRes.value.data.rejected || []) : []);
+      setApprovedArticles(approvedRes.status === 'fulfilled' ? (approvedRes.value.data.published || []) : []);
+
+      if ([pendingRes, rejectedRes, approvedRes].every(r => r.status === 'rejected')) {
+        setLoadError("Couldn't load articles. Please refresh.");
+      }
     } catch (error) {
       console.log(error);
+      setLoadError("Couldn't load articles. Please refresh.");
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
-  const handleFeatured = async(slug,article_id,is_featured)=>{
-    try {
-      await AxiosInstance.post('/dashboard/admin/article/feature', {
-          slug: slug,
-          article_id: article_id,
-          is_featured: is_featured?false:true
-      });
-      setRender(isRender+1);
-    } catch (error) {
-      console.log(error)
-      
-    }
-  }
+  const handlePreview = (slug) => {
+    window.open(`/preview/${slug}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleView = (slug) => {
+    window.open(`/view/${slug}`, '_blank', 'noopener,noreferrer');
+  };
 
   const handleApprove = async (article) => {
+    setBusyId(article.review_id);
     try {
       const date = new Date().toISOString().slice(0, 19).replace('T', ' ');
-      await AxiosInstance.post('/dashboard/admin/article/approve',{
+      await AxiosInstance.post('/dashboard/admin/article/approve', {
         slug: article.slug,
         cont_id: article.cont_id,
         review_id: article.review_id,
         author: article.author,
-        publish_At: date
+        publish_At: date,
       });
-      setRender(isRender+1);
-
-      
+      setRender((r) => r + 1);
     } catch (error) {
       console.log(error);
-      
+    } finally {
+      setBusyId(null);
     }
-  }
-  
-  const handleReject = async (article) => {
+  };
+
+  const handleReject = (article) => {
     setSelectedArticle(article);
+    setRejectReason('');
     setShowRejectModal(true);
   };
 
   const confirmReject = async () => {
-    console.log(`Rejecting article: ${selectedArticle.title} with reason: ${rejectReason}`);
-
+    if (!rejectReason.trim() || isRejecting) return;
+    setIsRejecting(true);
     try {
-      await AxiosInstance.post('/dashboard/admin/article/reject',{
+      await AxiosInstance.post('/dashboard/admin/article/reject', {
         slug: selectedArticle.slug,
         cont_id: selectedArticle.cont_id,
         review_id: selectedArticle.review_id,
         rejectReason: rejectReason,
-        rejectAt: new Date().toISOString().slice(0, 19).replace('T', ' ')
+        rejectAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
       });
-      setRender(isRender+1);
-      
+      setRender((r) => r + 1);
+      setShowRejectModal(false);
+      setRejectReason('');
+      setSelectedArticle(null);
     } catch (error) {
       console.log(error);
-      
+    } finally {
+      setIsRejecting(false);
     }
-
-    setShowRejectModal(false);
-    setRejectReason('');
-    setSelectedArticle(null);
   };
 
+  const handleFeatured = async (article) => {
+    setBusyId(article.article_id);
+    try {
+      await AxiosInstance.post('/dashboard/admin/article/feature', {
+        slug: article.slug,
+        article_id: article.article_id,
+        is_featured: !article.is_featured,
+      });
+      setRender((r) => r + 1);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setBusyId(null);
+    }
+  };
 
-  const StatusBadge = ({ status, count }) => (
-    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-sky-500/10 to-blue-500/10 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800">
-      <div className="w-2 h-2 rounded-full bg-sky-500"></div>
-      {status} ({count})
-    </div>
-  );
+  const confirmDelete = async () => {
+    if (!deleteTarget || isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await AxiosInstance.delete('/dashboard/admin/article/delete', {
+        data: {
+          slug: deleteTarget.slug,
+          article_id: deleteTarget.article_id,
+          cont_id: deleteTarget.cont_id,
+          review_id: deleteTarget.review_id,
+        }
+      });
+      setRender((r) => r + 1);
+      setDeleteTarget(null);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
-  return (
-    <div className="min-h-screen p-2">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 dark:from-sky-400 dark:to-blue-400 bg-clip-text text-transparent mb-2">
+  const statsData = [
+    { label: "Pending", value: pendingArticles.length, color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-900/20", icon: FileText },
+    { label: "Published", value: approvedArticles.length, color: "text-green-700 dark:text-green-400", bg: "bg-green-50 dark:bg-green-900/20", icon: CheckCircle },
+    { label: "Rejected", value: rejectedArticles.length, color: "text-red-700 dark:text-red-400", bg: "bg-red-50 dark:bg-red-900/20", icon: XCircle },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8 font-[Inter,system-ui,sans-serif]">
+        <div>
+          <h1 className="font-[Newsreader,Georgia,serif] text-3xl sm:text-4xl font-black text-gray-900 dark:text-gray-50 mb-2">
             Article Management
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-lg">Manage article submissions and publications</p>
+          <p className="text-gray-500 dark:text-slate-400">Manage article submissions and publications</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-6 animate-pulse">
+              <div className="h-8 bg-gray-100 dark:bg-slate-700 rounded w-12 mb-3" />
+              <div className="h-3 bg-gray-100 dark:bg-slate-700 rounded w-20" />
+            </div>
+          ))}
+        </div>
+        {[0, 1].map((i) => (
+          <div key={i} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-5 animate-pulse">
+            <div className="h-4 bg-gray-100 dark:bg-slate-700 rounded w-1/3 mb-3" />
+            <div className="h-3 bg-gray-100 dark:bg-slate-700 rounded w-1/4" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8 font-[Inter,system-ui,sans-serif]">
+
+      {/* Header */}
+      <div>
+        <h1 className="font-[Newsreader,Georgia,serif] text-3xl sm:text-4xl font-black text-gray-900 dark:text-gray-50 mb-2">
+          Article Management
+        </h1>
+        <p className="text-gray-500 dark:text-slate-400">Manage article submissions and publications</p>
+      </div>
+
+      {loadError && (
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" />
+          <p className="text-sm text-red-700 dark:text-red-300">{loadError}</p>
+        </div>
+      )}
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-gray-200 dark:bg-slate-700 rounded-xl overflow-hidden">
+        {statsData.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div key={stat.label} className="bg-white dark:bg-slate-800 p-6">
+              <div className="flex items-start justify-between mb-4">
+                <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${stat.bg}`}>
+                  <Icon className={`w-5 h-5 ${stat.color}`} />
+                </div>
+              </div>
+              <p className="text-xs font-semibold tracking-widest uppercase text-gray-400 dark:text-slate-500">{stat.label}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Pending Review */}
+      <div>
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-50">Pending Review</h2>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            {pendingArticles.length} awaiting review
+          </span>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pending</p>
-                <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{pendingArticles.length}</p>
-              </div>
-              <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-full">
-                <FileText className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Approved</p>
-                <p className="text-3xl font-bold text-green-600 dark:text-green-400">{approvedArticles.length}</p>
-              </div>
-              <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
-                <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Rejected</p>
-                <p className="text-3xl font-bold text-red-600 dark:text-red-400">{rejectedArticles.length}</p>
-              </div>
-              <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
-                <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Pending Articles */}
-        <section className="mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Pending Review</h2>
-            <StatusBadge status="Awaiting Review" count={pendingArticles.length} />
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-auto">
-            {pendingArticles.length > 0 ? (
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                {pendingArticles.map((article) => (
-                  <div key={article.review_id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{article.title}</h3>
-                        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                          <span>By {article.author}</span>
-                          <span>•</span>
-                          <span>Submitted {new Date(article.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 ml-4">
-                        <button onClick={()=>handlePreview(article.slug)} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors">
-                          <Eye size={16} />
-                          Preview
-                        </button>
-                        <button onClick={()=> handleApprove(article)} className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-lg transition-colors">
-                          <CheckCircle size={16} />
-                          Approve
-                        </button>
-                        <button 
-                          onClick={() => handleReject(article)}
-                          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-colors"
-                        >
-                          <XCircle size={16} />
-                          Reject
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-12 text-center">
-                <FileText className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-500 dark:text-gray-400 text-lg">No pending requests</p>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Rejected Articles */}
-        <section className="mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Rejected Articles</h2>
-            <StatusBadge status="Rejected" count={rejectedArticles.length} />
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-            {rejectedArticles.length > 0 ? (
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                {rejectedArticles.map((article) => (
-                  <div key={article.review_id} className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{article.title}</h3>
-                    <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-2">
+        {pendingArticles.length > 0 ? (
+          <div className="space-y-3">
+            {pendingArticles.map((article) => (
+              <div key={article.review_id} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate mb-1.5">{article.title}</h3>
+                    <div className="flex items-center gap-2.5 text-xs text-gray-400 dark:text-slate-500">
                       <span>By {article.author}</span>
-                      <span>•</span>
-                      <span>Rejected {new Date(article.reject_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                    </div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full text-sm">
-                      <XCircle size={14} />
-                      {article.reject_reason}
+                      <span>·</span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        Submitted {formatDate(article.created_at)}
+                      </span>
                     </div>
                   </div>
-                ))}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => handlePreview(article.slug)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded text-[#1E3A5F] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors duration-150"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      Preview
+                    </button>
+                    <button
+                      onClick={() => handleApprove(article)}
+                      disabled={busyId === article.review_id}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors duration-150 disabled:opacity-50"
+                    >
+                      {busyId === article.review_id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleReject(article)}
+                      disabled={busyId === article.review_id}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors duration-150 disabled:opacity-50"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      Reject
+                    </button>
+                  </div>
+                </div>
               </div>
-            ) : (
-              <div className="p-12 text-center">
-                <XCircle className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-500 dark:text-gray-400 text-lg">No rejected articles</p>
-              </div>
-            )}
+            ))}
           </div>
-        </section>
-
-        {/* Approved Articles */}
-        <section>
-      <div className="flex items-center gap-3 mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Published Articles</h2>
-        <StatusBadge status="Published" count={approvedArticles.length} />
+        ) : (
+          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl flex flex-col items-center justify-center py-14 text-center">
+            <div className="w-12 h-12 bg-gray-100 dark:bg-slate-700 rounded-lg flex items-center justify-center mb-3">
+              <FileText className="w-5 h-5 text-gray-300 dark:text-slate-500" />
+            </div>
+            <p className="text-sm text-gray-400 dark:text-slate-500">No pending requests</p>
+          </div>
+        )}
       </div>
-      
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-900/50">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Article</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Author</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Published</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Views</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {approvedArticles.length > 0 ? (
-                approvedArticles.map((article) => (
-                  <tr key={article.article_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">{article.title}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
-                        {article.category}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{article.author}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{new Date(article.publish_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white font-medium">{article.views?.toLocaleString()}</td>
-                    <td className="">
-                      <div className="flex items-center gap-1">
-                        <button title='View' onClick={()=>handleView(article.slug)} className="inline-flex items-center gap-1 px-2 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors">
-                          <Eye size={14} />
-                        </button>
-                        <button title='Delete' onClick={()=>handleDelete(article)} className="inline-flex items-center gap-1 px-2 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors">
-                          <Trash2 size={14} />
-                        </button>
-                        <button title={article.is_featured?'Remove as Featured':'Set as Featured'} onClick={()=>handleFeatured(article.slug,article.article_id,article.is_featured)} className={`inline-flex items-center gap-1 px-2 py-2 text-sm font-medium text-yellow-600 ${article.is_featured?'bg-yellow-100 dark:bg-yellow-900/70':''} dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/30 rounded-md transition-colors`}>
-                          <StarsIcon size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center">
-                    <FileText className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-500 dark:text-gray-400 text-lg">No articles published yet</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+
+      {/* Rejected */}
+      <div>
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-50">Rejected Articles</h2>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+            {rejectedArticles.length}
+          </span>
         </div>
-      </div>
-    </section>
+
+        {rejectedArticles.length > 0 ? (
+          <div className="space-y-3">
+            {rejectedArticles.map((article) => (
+              <div key={article.review_id} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-5">
+                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-1.5">{article.title}</h3>
+                <div className="flex items-center gap-2.5 text-xs text-gray-400 dark:text-slate-500 mb-3">
+                  <span>By {article.author}</span>
+                  <span>·</span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    Rejected {formatDate(article.reject_at)}
+                  </span>
+                </div>
+                <div className="px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border-l-2 border-red-300 dark:border-red-700">
+                  <p className="text-xs text-red-700 dark:text-red-300">
+                    <span className="font-semibold">Reason: </span>
+                    {article.reject_reason}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl flex flex-col items-center justify-center py-14 text-center">
+            <div className="w-12 h-12 bg-gray-100 dark:bg-slate-700 rounded-lg flex items-center justify-center mb-3">
+              <XCircle className="w-5 h-5 text-gray-300 dark:text-slate-500" />
+            </div>
+            <p className="text-sm text-gray-400 dark:text-slate-500">No rejected articles</p>
+          </div>
+        )}
       </div>
 
-      {/* Reject Modal */}
+      {/* Published */}
+      <div>
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-50">Published Articles</h2>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+            {approvedArticles.length}
+          </span>
+        </div>
+
+        {approvedArticles.length > 0 ? (
+          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 dark:border-slate-700">
+                    <th className="px-5 py-3 text-left text-[11px] font-semibold tracking-widest uppercase text-gray-400 dark:text-slate-500">Article</th>
+                    <th className="px-5 py-3 text-left text-[11px] font-semibold tracking-widest uppercase text-gray-400 dark:text-slate-500">Category</th>
+                    <th className="px-5 py-3 text-left text-[11px] font-semibold tracking-widest uppercase text-gray-400 dark:text-slate-500">Author</th>
+                    <th className="px-5 py-3 text-left text-[11px] font-semibold tracking-widest uppercase text-gray-400 dark:text-slate-500">Published</th>
+                    <th className="px-5 py-3 text-right text-[11px] font-semibold tracking-widest uppercase text-gray-400 dark:text-slate-500">Views</th>
+                    <th className="px-5 py-3 text-right text-[11px] font-semibold tracking-widest uppercase text-gray-400 dark:text-slate-500">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
+                  {approvedArticles.map((article) => (
+                    <tr key={article.article_id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors duration-100">
+                      <td className="px-5 py-4 font-medium text-gray-800 dark:text-gray-100 max-w-xs truncate">{article.title}</td>
+                      <td className="px-5 py-4">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded bg-blue-50 dark:bg-blue-900/20 text-[#1E3A5F] dark:text-blue-400">
+                          <Tag className="w-3 h-3" />
+                          {article.category}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-gray-600 dark:text-slate-300">{article.author}</td>
+                      <td className="px-5 py-4 text-gray-500 dark:text-slate-400">{formatDate(article.publish_at)}</td>
+                      <td className="px-5 py-4 text-right font-medium text-gray-800 dark:text-gray-100">{(article.views ?? 0).toLocaleString()}</td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            title="View"
+                            onClick={() => handleView(article.slug)}
+                            className="p-1.5 rounded text-gray-400 dark:text-slate-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-[#1E3A5F] dark:hover:text-blue-400 transition-colors duration-100"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            title={article.is_featured ? 'Remove as Featured' : 'Set as Featured'}
+                            onClick={() => handleFeatured(article)}
+                            disabled={busyId === article.article_id}
+                            className={`p-1.5 rounded transition-colors duration-100 disabled:opacity-50 ${
+                              article.is_featured
+                                ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20'
+                                : 'text-gray-400 dark:text-slate-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:text-amber-600 dark:hover:text-amber-400'
+                            }`}
+                          >
+                            <Star className={`w-4 h-4 ${article.is_featured ? 'fill-current' : ''}`} />
+                          </button>
+                          <button
+                            title="Delete"
+                            onClick={() => setDeleteTarget(article)}
+                            className="p-1.5 rounded text-gray-400 dark:text-slate-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors duration-100"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl flex flex-col items-center justify-center py-14 text-center">
+            <div className="w-12 h-12 bg-gray-100 dark:bg-slate-700 rounded-lg flex items-center justify-center mb-3">
+              <FileText className="w-5 h-5 text-gray-300 dark:text-slate-500" />
+            </div>
+            <p className="text-sm text-gray-400 dark:text-slate-500">No articles published yet</p>
+          </div>
+        )}
+      </div>
+
+      {/* Reject modal */}
       {showRejectModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Reject Article</h3>
+        <div
+          className="!m-0 fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => !isRejecting && setShowRejectModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-slate-800 rounded-xl w-full max-w-md p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Reject Article</h3>
               <button
                 onClick={() => setShowRejectModal(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                disabled={isRejecting}
+                className="p-1 rounded text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-600 dark:hover:text-slate-300 transition-colors duration-100 disabled:opacity-50"
               >
-                <X size={20} />
+                <X className="w-4 h-4" />
               </button>
             </div>
-            
-            <div className="p-6">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                You are about to reject "<strong>{selectedArticle?.title}</strong>" by {selectedArticle?.author}.
-              </p>
-              
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Reason for rejection <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Please provide a clear reason for rejecting this article..."
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white resize-none"
-                rows={4}
-                required
-              />
-            </div>
-            
-            <div className="flex gap-3 p-6 pt-0">
+
+            <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
+              You're about to reject <span className="font-semibold text-gray-700 dark:text-gray-200">"{selectedArticle?.title}"</span> by {selectedArticle?.author}.
+            </p>
+
+            <label className="block text-xs font-semibold tracking-wide uppercase text-gray-400 dark:text-slate-500 mb-1.5">
+              Reason for rejection *
+            </label>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              rows={4}
+              placeholder="Please provide a clear reason for rejecting this article..."
+              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-red-400/30 focus:border-red-400"
+            />
+
+            <div className="flex gap-2 mt-5">
               <button
                 onClick={() => setShowRejectModal(false)}
-                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                disabled={isRejecting}
+                className="flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors duration-150 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmReject}
-                disabled={!rejectReason.trim()}
-                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed rounded-lg transition-colors"
+                disabled={!rejectReason.trim() || isRejecting}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Reject Article
+                {isRejecting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                {isRejecting ? "Rejecting…" : "Reject Article"}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Delete confirm modal */}
+      {deleteTarget && (
+        <div
+          className="!m-0 fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => !isDeleting && setDeleteTarget(null)}
+        >
+          <div
+            className="bg-white dark:bg-slate-800 rounded-xl w-full max-w-sm p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Delete Article</h3>
+            </div>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mb-5">
+              Permanently delete <span className="font-semibold text-gray-700 dark:text-gray-200">"{deleteTarget.title}"</span>? This cannot be undone.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors duration-150 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 disabled:opacity-50"
+              >
+                {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                {isDeleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

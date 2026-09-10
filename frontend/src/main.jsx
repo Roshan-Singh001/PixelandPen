@@ -184,9 +184,7 @@ const router = createBrowserRouter([
         path: "/preview/:slug",
         element: (
           <>
-            <Navbar />
             <PreviewArticlePage />
-            <Footer />
           </>
         ),
       }

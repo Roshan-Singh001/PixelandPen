@@ -66,6 +66,25 @@ actionRouter.post('/like', async (req, res) => {
                 [article_id]
             );
 
+            const queryTableName = `
+                SELECT CONCAT(cont_id, '_articles') AS table_name, slug
+                FROM articles
+                WHERE article_id = ?
+            `;
+            const [tableResults] = await db.query(queryTableName, [article_id]);
+
+            if (tableResults.length > 0) {
+                const tableName = tableResults[0].table_name;
+                const slug = tableResults[0].slug;
+
+                const queryUpdate2 = `
+                    UPDATE ${tableName} c
+                    SET c.likes = c.likes - 1
+                    WHERE slug = ?
+                `;
+                await db.query(queryUpdate2, [slug]);
+            }
+
             return res.status(200).json({ liked: false });
         } else {
             // Like
@@ -78,6 +97,25 @@ actionRouter.post('/like', async (req, res) => {
                 "UPDATE articles SET likes = likes + 1 WHERE article_id = ?",
                 [article_id]
             );
+
+            const queryTableName = `
+                SELECT CONCAT(cont_id, '_articles') AS table_name, slug
+                FROM articles
+                WHERE article_id = ?
+            `;
+            const [tableResults] = await db.query(queryTableName, [article_id]);
+
+            if (tableResults.length > 0) {
+                const tableName = tableResults[0].table_name;
+                const slug = tableResults[0].slug;
+
+                const queryUpdate2 = `
+                    UPDATE ${tableName} c
+                    SET c.likes = c.likes + 1
+                    WHERE slug = ?
+                `;
+                await db.query(queryUpdate2, [slug]);
+            }
 
             return res.status(200).json({ liked: true });
         }
@@ -174,6 +212,53 @@ actionRouter.post('/comment', async (req, res) => {
         console.log(error);
         res.status(500).json({ message: "Error while commenting" });
 
+    }
+});
+
+actionRouter.post('/view', async (req, res) => {
+    const { article_id } = req.body;
+    const user_id = req.user.id;
+
+    try {
+        const queryCheck = `
+            SELECT * FROM article_views WHERE article_id = ? AND reader_id = ?
+        `;
+        const [existing] = await db.query(queryCheck, [article_id, user_id]);
+        console.log(existing);
+        if (existing.length === 0) {
+            const queryInsert = `
+                INSERT INTO article_views (article_id, reader_id) VALUES (?, ?)
+            `;
+            await db.query(queryInsert, [article_id, user_id]);
+            const queryUpdate = `
+                UPDATE articles SET views = views + 1 WHERE article_id = ?
+            `;
+            await db.query(queryUpdate, [article_id]);
+
+            const queryTableName = `
+                SELECT CONCAT(cont_id, '_articles') AS table_name, slug
+                FROM articles
+                WHERE article_id = ?
+            `;
+            const [tableResult] = await db.query(queryTableName, [article_id]);
+            const tableName = tableResult[0].table_name;
+
+            const queryUpdate2 = `
+                UPDATE ${tableName} c
+                SET c.views = c.views + 1
+                WHERE c.slug = ?
+            `;
+            await db.query(queryUpdate2, [tableResult[0].slug]);
+
+            res.status(200).json({ message: "View Count Updated" });
+        }
+
+        res.status(200).json({ message: "View Count Not Updated" });
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error while updating view count" });
+        
     }
 });
 

@@ -57,7 +57,7 @@ adminRouter.get('/stat/readers',async (req, res) => {
         const results = await db.query(fetchinfoQuery);
     
         const readers = results[0];
-        res.status(200).json({total_r: readers[0].Readers});
+        res.status(200).json({total_r: readers[0].Total_Readers});
         
       } catch (error) {
         console.log(error);
@@ -537,7 +537,7 @@ adminRouter.get('/fetch/category', async (req, res) => {
     console.log(error);
     res.status(500).json({ message: "Error Fetching Categories" });
   }
-})
+});
 
 adminRouter.post('/category/add', async (req, res) => {
   const { name, description } = req.body;
@@ -552,7 +552,7 @@ adminRouter.post('/category/add', async (req, res) => {
     console.log(error);
     res.status(500).json({ message: "Error adding category" });
   }
-})
+});
 
 adminRouter.post('/category/edit', async (req, res) => {
   const { id, name, description } = req.body;
@@ -566,7 +566,56 @@ adminRouter.post('/category/edit', async (req, res) => {
     console.log(error);
     res.status(500).json({ message: "Error updating category" });
   }
-})
+});
+
+// Settings
+
+adminRouter.put("/settings/password", async (req, res) => {
+  const userId = req.user.id;
+  const { current_password, new_password } = req.body;
+
+  try {
+    const oldHashedPassword = await bcrypt.hash(current_password, 10);
+
+    const queryGetPassword = "SELECT password FROM users WHERE id = ?";
+    const [user] = await db.query(queryGetPassword, [userId]);
+
+    const isPasswordCorrect = await bcrypt.compare(oldHashedPassword, user[0].password);
+
+    if (!isPasswordCorrect) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    const newHashedPassword = await bcrypt.hash(new_password, 10);
+    const updatePasswordQuery = "UPDATE users SET password = ? WHERE id = ?";
+    await db.query(updatePasswordQuery, [newHashedPassword, userId]);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Password update failed",
+    });
+  }
+});
+
+adminRouter.get('/delete', async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+
+    const dropQuery2 = `DELETE FROM admin WHERE admin_id=?`;
+    await db.query(dropQuery2, userId);
+    
+    const dropQuery4 = `DELETE FROM users WHERE id=?`;
+    await db.query(dropQuery4, userId);
+
+    res.status(200).json({ message: "Success" });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
+  }
+});
 
 
 

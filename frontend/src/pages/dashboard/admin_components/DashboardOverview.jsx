@@ -25,7 +25,7 @@ const DashboardOverview = ({ userData, statsData, articleRequests, contributorRe
     <div className="space-y-5 font-[Inter,system-ui,sans-serif]">
 
         {/* Welcome banner */}
-        <div className="bg-[#1E3A5F] p-6 sm:p-8 relative overflow-hidden">
+        <div className="bg-[#1E3A5F] p-6 sm:p-8 relative overflow-hidden rounded-xl">
             <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
@@ -52,7 +52,7 @@ const DashboardOverview = ({ userData, statsData, articleRequests, contributorRe
         </div>
 
         {/* Stat cards — gap-px mosaic */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-gray-200 dark:bg-slate-700">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-gray-200 dark:bg-slate-700 rounded-xl overflow-hidden">
             {statsData.length > 0
                 ? statsData.map((stat, i) => (
                     <StatCard
@@ -81,7 +81,7 @@ const DashboardOverview = ({ userData, statsData, articleRequests, contributorRe
                     {articleRequests.map(article => (
                         <div
                             key={article.slug}
-                            className="flex items-center justify-between px-4 py-3 border border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors duration-100"
+                            className="flex items-center justify-between px-4 py-3 border border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors duration-100 rounded-xl"
                         >
                             <div className="min-w-0 flex-1 mr-4">
                                 <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{article.title}</p>
@@ -103,7 +103,7 @@ const DashboardOverview = ({ userData, statsData, articleRequests, contributorRe
                     {contributorRequests.map(cont => (
                         <div
                             key={cont.cont_id}
-                            className="flex items-center justify-between px-4 py-3 border border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors duration-100"
+                            className="flex items-center justify-between px-4 py-3 border border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors duration-100 rounded-xl"
                         >
                             <div className="min-w-0 flex-1 mr-4">
                                 <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{cont.username}</p>
@@ -122,7 +122,7 @@ const DashboardOverview = ({ userData, statsData, articleRequests, contributorRe
 );
 
 const StatCard = ({ title, value, Icon, accent }) => (
-    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 p-6 hover:shadow-sm transition-shadow duration-150">
+    <div className="bg-white dark:bg-slate-800 p-6 hover:shadow-sm transition-shadow duration-150">
         <div className={`inline-flex p-2.5 rounded mb-4 ${accent.bg}`}>
             <Icon className={`w-5 h-5 ${accent.icon}`} />
         </div>
@@ -132,8 +132,8 @@ const StatCard = ({ title, value, Icon, accent }) => (
 );
 
 const SectionCard = ({ title, Icon, children }) => (
-    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700">
-        <div className="flex items-center gap-2.5 px-6 py-4 border-b border-gray-200 dark:border-slate-700">
+    <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden">
+        <div className="flex items-center gap-2.5 px-6 py-4 border-b border-gray-200 dark:border-slate-700 ">
             <Icon className="w-4 h-4 text-[#1E3A5F] dark:text-blue-400  " />
             <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">{title}</h2>
         </div>
@@ -152,7 +152,7 @@ const StatusBadge = ({ status }) => {
 };
 
 const EmptyState = ({ label }) => (
-    <div className="flex flex-col items-center justify-center py-10 text-center">
+    <div className="flex flex-col items-center justify-center py-10 text-center rounded-xl overflow-hidden">
         <div className="w-10 h-10 bg-gray-100 dark:bg-slate-700 rounded flex items-center justify-center mb-3">
             <XCircle className="w-5 h-5 text-gray-300 dark:text-slate-500" />
         </div>

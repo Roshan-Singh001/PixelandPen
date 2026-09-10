@@ -85,6 +85,21 @@ const ArticlePage = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [showShareMenu]);
 
+  const handleView = () => {
+    if (loggedIn) {
+      setTimeout(() => {
+        AxiosInstance.post('/action/view', { article_id: article[0].article_id })
+          .then((res) => {
+            console.log('View recorded:', res.data);
+          })
+          .catch((err) => {
+            console.error('Error recording view:', err);
+          });
+      }, 10000);
+    }
+  }
+  handleView();
+
   if (!article) {
     return (
       <div className="min-h-screen bg-[#FAFAF8] dark:bg-slate-900 font-[Inter,system-ui,sans-serif]">

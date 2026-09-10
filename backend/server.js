@@ -575,7 +575,7 @@ app.post("/validate", async (req, res) => {
       const token = jwt.sign(
         { id: user_id, role: role, username: userName },
         JWT_SECRET,
-        { expiresIn: "1h" }
+        { expiresIn: "2h" }
       );
 
       console.log("Generated JWT token:", token);

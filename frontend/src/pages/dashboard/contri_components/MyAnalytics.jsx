@@ -177,7 +177,7 @@ const Analytics = () => {
       comments: data.overview?.total_comments || 0,
       followers: data.overview?.total_followers || 0,
     });
-    setViewsSeries(data.viewsTimeSeries || []);
+    setViewsSeries(data.viewTimeSeries || []);
     setEngagementSeries(data.engagementSeries || []);
     setEngagementTotals({
       likes: data.overview?.total_likes || 0,

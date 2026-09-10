@@ -78,7 +78,7 @@ function Login_Page() {
 
 
       <main className="flex-1 flex items-center justify-center p-4 sm:p-8">
-        <div className="w-full max-w-5xl border border-gray-200 dark:border-slate-700 grid grid-cols-1 lg:grid-cols-[2fr_3fr] bg-white dark:bg-slate-800 shadow-sm">
+        <div className="w-full max-w-5xl border border-gray-200 dark:border-slate-700 grid grid-cols-1 lg:grid-cols-[2fr_3fr] bg-white dark:bg-slate-800 shadow-sm rounded-xl overflow-hidden">
 
           {/* ── Left panel ──────────────────────────────────────────────── */}
           <div className="relative flex flex-col justify-between bg-[#1E3A5F] p-10 lg:p-12 overflow-hidden">
