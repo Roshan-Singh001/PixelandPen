@@ -96,7 +96,7 @@ async function connectToDatabase() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`;
     await db.execute(query_user_table);
-    
+
     const query_admin_table = `CREATE TABLE IF NOT EXISTS admin (
       admin_id VARCHAR(255) PRIMARY KEY,
       username VARCHAR(100) NOT NULL,
@@ -137,6 +137,15 @@ async function connectToDatabase() {
     )`;
     await db.execute(query_reader_table);
 
+    const query_category = `CREATE TABLE IF NOT EXISTS categories (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`;
+
+    await db.execute(query_category);
+
     const query_articles_table = `CREATE TABLE IF NOT EXISTS articles (
       article_id VARCHAR(255) PRIMARY KEY,
       slug VARCHAR(255) UNIQUE,
@@ -169,7 +178,7 @@ async function connectToDatabase() {
     )`;
 
     await db.execute(query_likes_table);
-    
+
     const query_view_table = `CREATE TABLE IF NOT EXISTS article_views (
       id INT AUTO_INCREMENT PRIMARY KEY,
       reader_id VARCHAR(255),
@@ -206,7 +215,7 @@ async function connectToDatabase() {
 
     await db.execute(query_bookmark_table);
 
-    
+
 
     const query_review_article = `CREATE TABLE IF NOT EXISTS review_articles (
       review_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -252,26 +261,25 @@ async function connectToDatabase() {
 
     await db.execute(query_announce);
 
-    const query_category = `CREATE TABLE IF NOT EXISTS categories (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      name VARCHAR(255) NOT NULL,
-      description TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`;
 
-    await db.execute(query_category);
 
 
   } catch (error) {
     console.error("Database connection error:", error.message);
+    throw error;
   }
 }
 
-connectToDatabase().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+connectToDatabase()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  })
+  .catch(() => {
+    console.error("Server startup failed.");
+    process.exit(1);
   });
-});
 
 app.use(bodyParser.json());
 
@@ -433,39 +441,39 @@ app.post("/OtpVerification", async (req, res) => {
     await db.beginTransaction();
 
     let a_id = uuidv4();
-    const user_id = a_id.replaceAll("-","_");
+    const user_id = a_id.replaceAll("-", "_");
     if (role == "Admin") {
       const moveUserQuery = `
         INSERT INTO users (id) VALUES (?)
       `;
-      await db.execute(moveUserQuery, [`${'admin_'+user_id}`]);
-      
+      await db.execute(moveUserQuery, [`${'admin_' + user_id}`]);
+
       const updatequery = `UPDATE users
                            SET username = ?, email = ?, password = ?, role = ?
                            WHERE id = ?`;
-      await db.execute(updatequery, [username,email,password,role,`${'admin_'+user_id}`]);
+      await db.execute(updatequery, [username, email, password, role, `${'admin_' + user_id}`]);
 
       const finalSetAdmin = `INSERT INTO admin (admin_id,username, email, password) VALUES (?,?,?,?)`;
-      await db.execute(finalSetAdmin, [`${'admin_'+user_id}`,username, email, password]);
-    } 
+      await db.execute(finalSetAdmin, [`${'admin_' + user_id}`, username, email, password]);
+    }
     else if (role == "Contributor") {
       const moveUserQuery = `
         INSERT INTO users (id) VALUES (?)
       `;
-      await db.execute(moveUserQuery, [`${'cont_'+user_id}`]);
-      
+      await db.execute(moveUserQuery, [`${'cont_' + user_id}`]);
+
       const updatequery = `UPDATE users
                            SET username = ?, email = ?, password = ?, role = ?
                            WHERE id = ?`;
-      await db.execute(updatequery, [username,email,password,role,`${'cont_'+user_id}`]);
+      await db.execute(updatequery, [username, email, password, role, `${'cont_' + user_id}`]);
 
       const slug = username.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
 
 
       const finalSetContri = `INSERT INTO contributor (cont_id,username,slug, email, password) VALUES (?,?,?,?,?)`;
-      await db.execute(finalSetContri, [`${'cont_'+user_id}`,username,slug, email, password]);
+      await db.execute(finalSetContri, [`${'cont_' + user_id}`, username, slug, email, password]);
 
-      const tableName = `${'cont_'+user_id}` + '_articles';
+      const tableName = `${'cont_' + user_id}` + '_articles';
 
       const query_cont_articles_table = `CREATE TABLE IF NOT EXISTS ${tableName} (
         slug VARCHAR(255) PRIMARY KEY,
@@ -483,27 +491,27 @@ app.post("/OtpVerification", async (req, res) => {
         approve_date TIMESTAMP DEFAULT NULL,
         pending_date TIMESTAMP DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
         FOREIGN KEY (category_id) REFERENCES categories(id)
       )`;
       await db.execute(query_cont_articles_table);
 
-    } 
+    }
     else if (role == "Reader") {
       const moveUserQuery = `
         INSERT INTO users (id) VALUES (?)
       `;
-      await db.execute(moveUserQuery, [`${'sub_'+user_id}`]);
-      
+      await db.execute(moveUserQuery, [`${'sub_' + user_id}`]);
+
       const updatequery = `UPDATE users
                            SET username = ?, email = ?, password = ?, role = ?
                            WHERE id = ?`;
-      await db.execute(updatequery, [username,email,password,role,`${'sub_'+user_id}`]);
+      await db.execute(updatequery, [username, email, password, role, `${'sub_' + user_id}`]);
 
 
       const finalSetSubs = `INSERT INTO reader (sub_id,username, email, password) VALUES (?,?,?,?)`;
-      await db.execute(finalSetSubs, [`${'sub_'+user_id}`,username, email, password]);
+      await db.execute(finalSetSubs, [`${'sub_' + user_id}`, username, email, password]);
     }
 
     const deleteTempUserQuery = "DELETE FROM temp_users WHERE email = ?";
@@ -549,7 +557,7 @@ app.post("/validate", async (req, res) => {
       if (result.length === 0) {
         return res.status(401).json({ message: "Invalid username or role." });
       }
-      console.log("hello",result[0])
+      console.log("hello", result[0])
       user_id = result[0].cont_id;
     }
     else if (role == 'Reader') {
@@ -561,7 +569,7 @@ app.post("/validate", async (req, res) => {
       }
       user_id = result[0].sub_id;
     }
-    
+
 
 
     const {
@@ -587,7 +595,7 @@ app.post("/validate", async (req, res) => {
         maxAge: 3600000,
       });
 
-      res.status(200).json({ message: "Login successful",user_id: user_id, role: role});
+      res.status(200).json({ message: "Login successful", user_id: user_id, role: role });
     } else {
       res.status(401).json({ message: "Incorrect password." });
     }

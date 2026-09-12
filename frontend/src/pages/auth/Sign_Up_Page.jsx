@@ -6,7 +6,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import LogoDark from "../../assets/images/Pixel & Pen(B&W).png";
+import LogoDark from "../../assets/images/Pixel & Pen(Main-B&W-New).png";
 
 function evalPasswordStrength(pw) {
   if (!pw) return null;
@@ -130,8 +130,8 @@ function Sign_Up_Page() {
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAF8] dark:bg-slate-900 font-[Inter,system-ui,sans-serif] antialiased">
 
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-8">
-        <div className="w-full max-w-5xl border border-gray-200 dark:border-slate-700 grid grid-cols-1 lg:grid-cols-[2fr_3fr] bg-white dark:bg-slate-800 shadow-sm rounded-xl overflow-hidden">
+      <main className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-5xl h-[90vh] border border-gray-200 dark:border-slate-700 grid grid-cols-1 lg:grid-cols-[2fr_3fr] bg-white dark:bg-slate-800 shadow-sm rounded-xl overflow-hidden">
 
           {/* ── Left panel ──────────────────────────────────────────────── */}
           <div className="relative flex flex-col justify-between bg-[#1E3A5F] p-10 lg:p-12 overflow-hidden">
@@ -142,7 +142,7 @@ function Sign_Up_Page() {
                 <img
                   src={LogoDark}
                   alt="Pixel & Pen"
-                  className="h-7 brightness-0 invert opacity-90"
+                  className="h-10"
                 />
               </div>
 
@@ -188,7 +188,7 @@ function Sign_Up_Page() {
           </div>
 
           {/* ── Right panel — form ──────────────────────────────────────── */}
-          <div className="p-8 sm:p-12 bg-white dark:bg-slate-800">
+          <div className="p-8 bg-white dark:bg-slate-800 overflow-scroll">
             <div className="max-w-md mx-auto">
 
               {/* Header */}

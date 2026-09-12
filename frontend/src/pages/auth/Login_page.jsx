@@ -4,7 +4,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import LogoDark from "../../assets/images/Pixel & Pen(B&W).png";
+import LogoDark from "../../assets/images/Pixel & Pen(Main-B&W-New).png";
 import PixelPenLoader from "../../components/PixelPenLoader";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -77,7 +77,7 @@ function Login_Page() {
     <div className="min-h-screen flex flex-col bg-[#FAFAF8] dark:bg-slate-900 font-[Inter,system-ui,sans-serif] antialiased">
 
 
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-8">
+      <main className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-5xl border border-gray-200 dark:border-slate-700 grid grid-cols-1 lg:grid-cols-[2fr_3fr] bg-white dark:bg-slate-800 shadow-sm rounded-xl overflow-hidden">
 
           {/* ── Left panel ──────────────────────────────────────────────── */}
@@ -90,7 +90,7 @@ function Login_Page() {
                 <img
                   src={LogoDark}
                   alt="Pixel & Pen"
-                  className="h-7 brightness-0 invert opacity-90"
+                  className="h-10"
                 />
               </div>
 

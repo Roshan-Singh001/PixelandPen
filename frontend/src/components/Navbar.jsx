@@ -21,6 +21,8 @@ import {
   FiGrid,
 } from "react-icons/fi";
 
+import { UserRound } from "lucide-react";
+
 
 const NAV_LINKS = [
   { label: "Home", to: "/" },
@@ -96,14 +98,6 @@ const Navbar = () => {
 
         {/* Right cluster — actions */}
         <div className="hidden items-center gap-2 lg:flex">
-          <button
-            aria-label="Change language"
-            className="rounded-full p-2 text-[#6B7280] transition-colors duration-200
-              hover:bg-[#1E3A5F]/5 hover:text-[#1E3A5F]
-              dark:text-[#AAB4C5] dark:hover:bg-white/5 dark:hover:text-[#4F8EF7]"
-          >
-            <FiGlobe className="h-5 w-5" />
-          </button>
 
           <button
             aria-label="Toggle dark mode"
@@ -127,7 +121,7 @@ const Navbar = () => {
                   dark:border-[#243247] dark:bg-[#162033] dark:text-[#F8FAFC] dark:hover:border-[#4F8EF7]/40"
               >
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1E3A5F] text-xs font-semibold text-white dark:bg-[#4F8EF7] dark:text-[#0B1220]">
-                  {(userData?.name || "U").charAt(0).toUpperCase()}
+                  <UserRound className="w-4 h-4 text-gray-300 dark:text-slate-500" />
                 </span>
                 Account
                 <FiChevronDown
@@ -152,7 +146,7 @@ const Navbar = () => {
                     <FiGrid className="h-4 w-4 text-[#6B7280] dark:text-[#AAB4C5]" />
                     Dashboard
                   </Link>
-                  <Link
+                  {userData.role === 'admin' && <Link
                     to="/profile"
                     onClick={() => setMenuOpen(false)}
                     className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#1F2937] transition-colors
@@ -160,7 +154,7 @@ const Navbar = () => {
                   >
                     <FiUser className="h-4 w-4 text-[#6B7280] dark:text-[#AAB4C5]" />
                     Profile
-                  </Link>
+                  </Link>}
                   <div className="h-px bg-[#E5E7EB] dark:bg-[#243247]" />
                   <button
                     onClick={() => {

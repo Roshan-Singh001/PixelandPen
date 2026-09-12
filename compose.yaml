@@ -1,0 +1,40 @@
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - 5173:5173
+    depends_on:
+      - server
+    env_file:
+      - ./frontend/.env
+  server:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - 3000:3000
+    env_file:
+      - ./backend/.env
+    environment:
+      DB_HOST: mysql
+      DB_USER: ${MYSQL_USER}
+      DATABASE_PASS: ${MYSQL_PASSWORD}
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 10
+      interval: 5s
+volumes:
+  mysql_data:

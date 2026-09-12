@@ -415,7 +415,7 @@ const ArticlePage = () => {
               {comments.map((c) => (
                 <div key={c.id ?? `${c.username}-${c.created_at}`} className="flex items-start gap-3 pb-5 border-b border-gray-100 dark:border-slate-700 last:border-0 last:pb-0">
                   <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
-                    <UserRound className="w-4 h-4 text-gray-300 dark:text-slate-500" />
+                    <img src={c.profile_pic} alt={c.username} className="w-full h-full object-cover rounded-full" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1">

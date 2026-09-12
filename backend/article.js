@@ -25,7 +25,12 @@ articleRouter.get('/view/:slug', authMiddleware2, async (req,res)=>{
         const userName = result2[0][0].username;
         const userpic = result2[0][0].profile_pic;
 
-        const fetchCommentsQuery = `SELECT id,user_id, username, content, created_at FROM comments WHERE article_id = ? AND status = 'Approved'`;
+        const fetchCommentsQuery = `
+            SELECT c.id , c.user_id, r.profile_pic, r.username, c.content, c.created_at 
+            FROM comments c 
+            JOIN reader r ON c.user_id = r.sub_id
+            WHERE c.article_id = ? 
+            AND c.status = 'Approved'`;
         const result3 = await db.query(fetchCommentsQuery,[article[0].article_id]);
         const comments = result3[0];
 

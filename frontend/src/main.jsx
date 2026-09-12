@@ -28,6 +28,7 @@ import Admin from "./pages/dashboard/admin_dashboard.jsx";
 import DashboardHome from "./pages/dashboard/admin_components/Dashboard_Home.jsx";
 import ArticleRequests from "./pages/dashboard/admin_components/ArticleRequests.jsx";
 import ContriRequest from "./pages/dashboard/admin_components/ContriRequest.jsx";
+import ReaderManage from "./pages/dashboard/admin_components/ReaderManage.jsx";
 import Announcements from "./pages/dashboard/admin_components/Annoucements.jsx";
 import CommentsManage from "./pages/dashboard/admin_components/CommentsManage.jsx";
 import CategoryManage from "./pages/dashboard/admin_components/CategoryManage.jsx";
@@ -208,6 +209,10 @@ const router = createBrowserRouter([
           {
             path: "contributor",
             element: <ContriRequest />,
+          },
+          {
+            path: "reader",
+            element: <ReaderManage />,
           },
           {
             path: "announcements",

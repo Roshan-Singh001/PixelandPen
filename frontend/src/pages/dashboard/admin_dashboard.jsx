@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react";
 import {
-  UserCheck, FileText, Eye, Users, FolderCog,
+  UserCheck, FileText, Eye, Users,
 } from "lucide-react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import AxiosInstance from "../../api/axiosInstance";
 import { FaBars } from "react-icons/fa";
-import { BiComment, BiSolidDashboard } from "react-icons/bi";
+import { BiSolidDashboard, BiSolidCommentDetail } from "react-icons/bi";
 import { MdArticle, MdAnalytics, MdLogout } from "react-icons/md";
 import { IoPersonAdd, IoSettingsSharp } from "react-icons/io5";
-import { FaAnglesRight, FaAnglesLeft } from "react-icons/fa6";
-import { GrAnnounce } from "react-icons/gr";
+import { FaAnglesRight, FaAnglesLeft, FaBullhorn, FaTags  } from "react-icons/fa6";
+import { FaBookReader } from "react-icons/fa";
 
 import { useAuth } from "../../contexts/AuthContext";
 import PixelPenLoader from "../../components/PixelPenLoader";
@@ -31,19 +31,24 @@ const NAV_ITEMS = [
     icon: <IoPersonAdd size={18} />,
   },
   {
+    label: "Reader",
+    path: "reader",
+    icon: <FaBookReader  size={18} />,
+  },
+  {
     label: "Announcements",
     path: "announcements",
-    icon: <GrAnnounce size={18} />,
+    icon: <FaBullhorn  size={18} />,
   },
   {
     label: "Comments",
     path: "comments",
-    icon: <BiComment size={18} />,
+    icon: <BiSolidCommentDetail size={18} />,
   },
   {
     label: "Category",
     path: "category",
-    icon: <FolderCog size={18} />,
+    icon: <FaTags  size={18} />,
   },
   {
     label: "Analytics",

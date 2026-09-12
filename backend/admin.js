@@ -65,13 +65,45 @@ adminRouter.get('/stat/readers',async (req, res) => {
       }
 });
 
-adminRouter.get('/stat/category/highest', async (req, res) =>{
+adminRouter.get('/stat/readers/new', async (req, res) => {
   try {
-    
+    const queryReader = `
+      SELECT COUNT(sub_id) AS "New_Readers"
+      FROM reader
+      WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+    `;
+    const results = await db.query(queryReader);
+    res.status(200).json({total_new_readers: results[0][0].New_Readers});
+
   } catch (error) {
-    
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
   }
-})
+
+});
+
+adminRouter.get('/stat/likes',async (req, res) => {
+    try {
+        const fetchinfoQuery = `SELECT SUM(likes) AS "Total_Likes" FROM articles`;
+        const results = await db.query(fetchinfoQuery);
+
+        res.status(200).json({total_likes: results[0][0].Total_Likes});
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error Fetching Data"});
+      }
+});
+
+adminRouter.get('/stat/bookmarks',async (req, res) => {
+    try {
+        const fetchinfoQuery = `SELECT COUNT(id) AS "Total_Bookmarks" FROM bookmarks`;
+        const results = await db.query(fetchinfoQuery);
+        res.status(200).json({total_bookmarks: results[0][0].Total_Bookmarks});
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Error Fetching Data"});
+      }
+});
 
 // RECENTS
 
@@ -352,6 +384,80 @@ adminRouter.post('/cont/status',async (req, res) => {
     }
 });
 
+// Readers
+
+adminRouter.get('/fetch/reader/list', async (req, res) => {
+  try {
+    const queryReaders = `
+      SELECT r.sub_id, r.username, r.email, r.profile_pic, r.created_at, COUNT(v.id) AS total_view, COUNT(l.id) AS total_like
+      FROM reader r
+      LEFT JOIN article_views v ON r.sub_id = v.reader_id
+      LEFT JOIN article_likes l ON r.sub_id = l.reader_id
+      GROUP BY r.sub_id
+    `
+
+    const results = await db.query(queryReaders);
+    const readers = results[0];
+
+    res.status(200).json({ readers });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error Fetching Reader Data" });
+  }
+
+});
+
+adminRouter.get('/fetch/reader/detail/:slug', async (req, res) => {
+  try {
+    const readerId = req.params.slug;
+    const queryBookmarks = `
+      SELECT COUNT(*) AS total_bookmarks
+      FROM bookmarks
+      WHERE reader_id = ?
+    `
+    const readerBookmarks = await db.query(queryBookmarks, [readerId]);
+
+    const queryComments = `
+      SELECT COUNT(*) AS total_comments
+      FROM comments
+      WHERE user_id = ?
+    `
+    const readerComments = await db.query(queryComments, [readerId]);
+
+    const queryRecentArticles = `
+      SELECT a.article_id, a.title, a.slug, a.publish_at
+      FROM articles a
+      JOIN article_views v ON a.article_id = v.article_id
+      WHERE v.reader_id = ?
+      ORDER BY a.publish_at DESC
+      LIMIT 5
+    `
+    const readerRecentArticles = await db.query(queryRecentArticles, [readerId]);
+
+    const queryRecentComments = `
+      SELECT c.id ,c.content, c.created_at
+      FROM comments c
+      JOIN articles a ON c.article_id = a.article_id
+      WHERE c.user_id = ?
+      ORDER BY c.created_at DESC
+      LIMIT 5
+    `
+    const readerRecentComments = await db.query(queryRecentComments, [readerId]);
+
+    res.status(200).json({
+      bookmarked: readerBookmarks[0][0].total_bookmarks || 0,
+      comments: readerComments[0][0].total_comments || 0,
+      recent_articles: readerRecentArticles[0] || [],
+      recent_comments: readerRecentComments[0] || []
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error Fetching Reader Detail" });
+    
+  }
+
+});
+
 // ANNOUNCEMENT
 
 adminRouter.get('/fetch/announcement/draft',async (req, res) => {
@@ -447,12 +553,15 @@ adminRouter.get('/fetch/comments/approved',async (req, res) => {
     comments.article_id, 
     comments.article_title, 
     comments.user_id, 
-    comments.username, 
+    reader.username,
+    reader.profile_pic,
     comments.content, 
     comments.created_at, 
+    comments.status, 
     articles.slug
 FROM comments
 JOIN articles ON comments.article_id = articles.article_id
+JOIN reader ON comments.user_id = reader.sub_id
 WHERE comments.status = 'Approved';
 `;
       const results = await db.query(fetchinfoQuery);
@@ -469,7 +578,21 @@ WHERE comments.status = 'Approved';
 
 adminRouter.get('/fetch/comments/pending',async (req, res) => {
   try {
-      const fetchinfoQuery = `SELECT * FROM comments WHERE status="Pending"`;
+      const fetchinfoQuery = `SELECT 
+    comments.id, 
+    comments.article_id, 
+    comments.article_title, 
+    comments.user_id, 
+    reader.username,
+    reader.profile_pic,
+    comments.content, 
+    comments.created_at, 
+    comments.status,
+    articles.slug
+FROM comments
+JOIN articles ON comments.article_id = articles.article_id
+JOIN reader ON comments.user_id = reader.sub_id
+WHERE comments.status = 'Pending';`;
       const results = await db.query(fetchinfoQuery);
   
       const recents = results[0];
@@ -484,7 +607,21 @@ adminRouter.get('/fetch/comments/pending',async (req, res) => {
 
 adminRouter.get('/fetch/comments/deleted',async (req, res) => {
   try {
-      const fetchinfoQuery = `SELECT * FROM comments WHERE status="Deleted"`;
+      const fetchinfoQuery = `SELECT 
+    comments.id, 
+    comments.article_id, 
+    comments.article_title, 
+    comments.user_id, 
+    reader.username,
+    reader.profile_pic,
+    comments.content, 
+    comments.created_at, 
+    comments.status,
+    articles.slug
+FROM comments
+JOIN articles ON comments.article_id = articles.article_id
+JOIN reader ON comments.user_id = reader.sub_id
+WHERE comments.status = 'Deleted';`;
       const results = await db.query(fetchinfoQuery);
   
       const recents = results[0];
