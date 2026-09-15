@@ -140,6 +140,7 @@ async function connectToDatabase() {
     const query_category = `CREATE TABLE IF NOT EXISTS categories (
       id INT AUTO_INCREMENT PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
+      slug VARCHAR(255) UNIQUE NOT NULL DEFAULT 'Unknown',
       description TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`;

@@ -16,9 +16,6 @@ const RANGE_OPTIONS = [
   { value: 'all', label: 'All Time' },
 ];
 
-const RANGE_DAYS = { '7d': 7, '30d': 30, '3m': 90, 'all': 180 };
-const RANGE_MULTIPLIER = { '7d': 0.14, '30d': 1, '3m': 2.8, 'all': 4.6 };
-
 const CATEGORY_COLORS = ["#1E3A5F", "#3B82F6", "#8B5CF6", "#EC4899", "#94A3B8"];
 
 function formatNumber(num) {
@@ -32,60 +29,6 @@ function formatAxisDate(dateString) {
   if (!dateString) return "";
   return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
-
-function toDateStr(date) {
-  return date.toISOString().split('T')[0];
-}
-
-function generateDemoData(range) {
-  const days = RANGE_DAYS[range];
-  const multiplier = RANGE_MULTIPLIER[range];
-  const today = new Date();
-
-  const viewsSeries = Array.from({ length: days }).map((_, i) => {
-    const date = new Date(today);
-    date.setDate(date.getDate() - (days - 1 - i));
-    const progress = i / days;
-    const base = 280 + progress * 620;
-    const wave = Math.sin(i / 2.5) * 90;
-    const noise = (Math.random() - 0.5) * 100;
-    return { date: toDateStr(date), views: Math.max(40, Math.round(base + wave + noise)) };
-  });
-
-  const overview = {
-    views: Math.round(24842),
-    likes: Math.round(2431),
-    bookmarks: Math.round(842),
-    comments: Math.round(387),
-  };
-
-  const topArticles = [
-    { article_id: 'demo-1', slug: 'future-of-artificial-ai', title: 'The Future of Artificial AI', views: Math.round(4821 * multiplier), likes: Math.round(342 * multiplier), comments: Math.round(51 * multiplier) },
-    { article_id: 'demo-2', slug: 'understanding-websockets', title: 'Understanding WebSockets', views: Math.round(3912 * multiplier), likes: Math.round(287 * multiplier), comments: Math.round(39 * multiplier) },
-    { article_id: 'demo-3', slug: 'rise-of-modern-web-apps', title: 'The Rise of Modern Web Apps', views: Math.round(2841 * multiplier), likes: Math.round(201 * multiplier), comments: Math.round(27 * multiplier) },
-    { article_id: 'demo-4', slug: 'css-grid-vs-flexbox', title: 'CSS Grid vs Flexbox: When to Use Which', views: Math.round(1980 * multiplier), likes: Math.round(148 * multiplier), comments: Math.round(19 * multiplier) },
-    { article_id: 'demo-5', slug: 'practical-guide-to-webhooks', title: 'A Practical Guide to Webhooks', views: Math.round(1204 * multiplier), likes: Math.round(89 * multiplier), comments: Math.round(12 * multiplier) },
-  ];
-
-  const categoryBreakdown = [
-    { name: "Technology", count: 32 },
-    { name: "AI", count: 24 },
-    { name: "Programming", count: 18 },
-    { name: "Business", count: 15 },
-    { name: "Other", count: 11 },
-  ];
-
-  const topContributors = [
-    { cont_id: 'demo-c1', username: 'Roshan', slug: 'roshan', profile_pic: null, articles: 18, views: Math.round(8421 * multiplier) },
-    { cont_id: 'demo-c2', username: 'Aman', slug: 'aman', profile_pic: null, articles: 14, views: Math.round(6213 * multiplier) },
-    { cont_id: 'demo-c3', username: 'Priya', slug: 'priya', profile_pic: null, articles: 11, views: Math.round(4820 * multiplier) },
-    { cont_id: 'demo-c4', username: 'Kavya', slug: 'kavya', profile_pic: null, articles: 8, views: Math.round(3140 * multiplier) },
-    { cont_id: 'demo-c5', username: 'Rahul', slug: 'rahul', profile_pic: null, articles: 6, views: Math.round(2205 * multiplier) },
-  ];
-
-  return { overview, viewsSeries, topArticles, categoryBreakdown, topContributors };
-}
-/* --------------------------- END DEMO DATA --------------------------- */
 
 const ChartTooltip = ({ active, payload, label }) => {
   if (!active || !payload || payload.length === 0) return null;
@@ -119,7 +62,6 @@ const AdminAnalytics = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefetching, setIsRefetching] = useState(false);
   const [loadError, setLoadError] = useState("");
-  const [isDemoData, setIsDemoData] = useState(false);
 
   const [overview, setOverview] = useState({ views: 0, likes: 0, bookmarks: 0, comments: 0 });
   const [viewsSeries, setViewsSeries] = useState([]);
@@ -135,14 +77,19 @@ const AdminAnalytics = () => {
 
   const applyData = (data) => {
     setOverview({
-      views: data.overview?.views || 0,
-      likes: data.overview?.likes || 0,
-      bookmarks: data.overview?.bookmarks || 0,
-      comments: data.overview?.comments || 0,
+      views: data.overview?.total_views || 0,
+      likes: data.overview?.total_likes || 0,
+      bookmarks: data.overview?.total_bookmarks || 0,
+      comments: data.overview?.total_comments || 0,
     });
-    setViewsSeries(data.viewsSeries || []);
+    setViewsSeries(data.viewTimeSeries || []);
     setTopArticles(data.topArticles || []);
-    setCategoryBreakdown(data.categoryBreakdown || []);
+    setCategoryBreakdown(
+      (data.maxCategory || []).map(({ category, article_count }) => ({
+        name: category,
+        count: Number(article_count)
+      }))
+    );
     setTopContributors(data.topContributors || []);
   };
 
@@ -157,13 +104,9 @@ const AdminAnalytics = () => {
     AxiosInstance.get('/dashboard/admin/analytics', { params: { range: dateRange } })
       .then((res) => {
         applyData(res.data);
-        setIsDemoData(false);
       })
       .catch((err) => {
         console.log(err);
-        // TEMPORARY
-        applyData(generateDemoData(dateRange));
-        setIsDemoData(true);
       })
       .finally(() => {
         setIsLoading(false);
@@ -187,8 +130,7 @@ const AdminAnalytics = () => {
     { label: "Comments", value: overview.comments, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/20", icon: MessageSquare },
   ];
 
-  const maxCategoryCount = Math.max(...categoryBreakdown.map((c) => c.count), 1);
-  const maxContributorViews = Math.max(...topContributors.map((c) => c.views), 1);
+  const maxContributorViews = Math.max(...topContributors.map((c) => c.total_views), 1);
 
   if (isLoading) {
     return (
@@ -262,11 +204,10 @@ const AdminAnalytics = () => {
                 <button
                   key={opt.value}
                   onClick={() => setDateRange(opt.value)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap transition-colors duration-150 ${
-                    dateRange === opt.value
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap transition-colors duration-150 ${dateRange === opt.value
                       ? 'bg-white dark:bg-slate-700 text-[#1E3A5F] dark:text-blue-400 shadow-sm'
                       : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'
-                  }`}
+                    }`}
                 >
                   {opt.label}
                 </button>
@@ -342,7 +283,7 @@ const AdminAnalytics = () => {
                         <td className="px-5 py-4 font-medium text-gray-800 dark:text-gray-100 max-w-xs truncate">{article.title}</td>
                         <td className="px-5 py-4 text-right text-gray-600 dark:text-slate-300">{formatNumber(article.views)}</td>
                         <td className="px-5 py-4 text-right text-gray-600 dark:text-slate-300">{formatNumber(article.likes)}</td>
-                        <td className="px-5 py-4 text-right text-gray-600 dark:text-slate-300">{formatNumber(article.comments)}</td>
+                        <td className="px-5 py-4 text-right text-gray-600 dark:text-slate-300">{formatNumber(article.comment_count)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -422,13 +363,13 @@ const AdminAnalytics = () => {
                       <div className="w-full h-1 bg-gray-100 dark:bg-slate-700 rounded-full mt-1.5 overflow-hidden">
                         <div
                           className="h-full bg-[#1E3A5F] dark:bg-blue-400 rounded-full"
-                          style={{ width: `${(contributor.views / maxContributorViews) * 100}%` }}
+                          style={{ width: `${(contributor.total_views / maxContributorViews) * 100}%` }}
                         />
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{formatNumber(contributor.views)}</p>
-                      <p className="text-[11px] text-gray-400 dark:text-slate-500">{contributor.articles} articles</p>
+                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{formatNumber(contributor.total_views)}</p>
+                      <p className="text-[11px] text-gray-400 dark:text-slate-500">{contributor.article_count} articles</p>
                     </div>
                   </button>
                 ))}

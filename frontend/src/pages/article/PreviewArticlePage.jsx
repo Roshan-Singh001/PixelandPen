@@ -1,25 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import AxiosInstance from '../api/axiosInstance';
+import AxiosInstance from '../../api/axiosInstance';
 import {
   Heart, Share2, BookmarkPlus, MessageCircle, Calendar, UserRound,
-  Printer, Link2, ChevronUp, Tag, FileText
+  Printer, Link2, ChevronUp, Tag, FileText, Eye
 } from 'lucide-react';
 import { FaXTwitter } from "react-icons/fa6";
 import { FaFacebook } from "react-icons/fa";
-import { renderSlateToHtml } from '../utils/renderSlateToHtml';
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { useAuth } from '../contexts/AuthContext';
+import { renderSlateToHtml } from '../../utils/renderSlateToHtml';
+import { useAuth } from "../../contexts/AuthContext";
 
 function formatDate(dateString) {
   if (!dateString) return "";
   return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-}
-
-function formatCommentDate(dateString) {
-  if (!dateString) return "";
-  return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 function parseTags(tags) {
@@ -33,7 +26,7 @@ function parseTags(tags) {
   }
 }
 
-const ArticlePage = () => {
+const PreviewArticlePage = () => {
   const navigate = useNavigate();
   const { slug } = useParams();
   const { loggedIn, userData } = useAuth();
@@ -42,33 +35,27 @@ const ArticlePage = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
-  const [comment, setComment] = useState('');
   const [isNavVisible, setIsNavVisible] = useState(false);
   const [authorPic, setAuthorPic] = useState('');
   const [authorName, setAuthName] = useState('Unknown');
-  const [comments, setComments] = useState([]);
-  const [likesCount, setLikesCount] = useState(0);
-
-  const [isLiking, setIsLiking] = useState(false);
-  const [isMarking, setIsMarking] = useState(false);
-  const [isCommenting, setIsCommenting] = useState(false);
 
   useEffect(() => {
-    AxiosInstance.get(`/article/view/${slug}`)
+    if (!loggedIn) {
+      navigate("/login");
+      return;
+    }
+
+    AxiosInstance.get(`/article/preview/${slug}`)
       .then((res) => {
         setArticle(res.data.article);
         setAuthorPic(res.data.authPic);
         setAuthName(res.data.authName);
-        setComments(res.data.comments || []);
-        setIsLiked(res.data.isLiked);
-        setIsBookmarked(res.data.isBookmarked);
-        setLikesCount(res.data.article[0].likes || 0);
       })
       .catch((err) => {
         console.error('Error fetching article:', err);
         navigate("/notfound");
       });
-  }, [slug]);
+  }, [slug, loggedIn]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -85,20 +72,7 @@ const ArticlePage = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [showShareMenu]);
 
-  const handleView = () => {
-    if (loggedIn) {
-      setTimeout(() => {
-        AxiosInstance.post('/action/view', { article_id: article[0].article_id })
-          .then((res) => {
-            console.log('View recorded:', res.data);
-          })
-          .catch((err) => {
-            console.error('Error recording view:', err);
-          });
-      }, 10000);
-    }
-  }
-  handleView();
+  if (!loggedIn) return null;
 
   if (!article) {
     return (
@@ -130,93 +104,15 @@ const ArticlePage = () => {
   const post = article[0];
   const tags = parseTags(post.tags);
 
-  const handleLike = async () => {
-    if (isLiking) return;
-    if (!loggedIn) {
-      toast.error("This action needs log in");
-      navigate("/login");
-      return;
-    }
-
-    setIsLiking(true);
-    try {
-      await AxiosInstance.post('/action/like', { article_id: post.article_id });
-      setIsLiked((prev) => !prev);
-      setLikesCount((prev) => (isLiked ? prev - 1 : prev + 1));
-    } catch (error) {
-      console.log(error);
-    }
-    setIsLiking(false);
-  };
-
-  const handleBookmark = async () => {
-    if (isMarking) return;
-    if (!loggedIn) {
-      toast.error("This action needs log in");
-      navigate("/login");
-      return;
-    }
-
-    setIsMarking(true);
-    try {
-      await AxiosInstance.post('/action/bookmark', { article_id: post.article_id });
-      setIsBookmarked((prev) => !prev);
-    } catch (error) {
-      console.log(error);
-    }
-    setIsMarking(false);
-  };
-
-  const handleComment = async () => {
-    if (!loggedIn) {
-      toast.error("This action needs log in");
-      navigate("/login");
-      return;
-    }
-    if (!comment.trim() || isCommenting) return;
-
-    setIsCommenting(true);
-    try {
-      const res = await AxiosInstance.post(`/action/comment/`, {
-        article_id: post.article_id,
-        article_title: post.title,
-        content: comment,
-      });
-
-      setComments((prev) => [
-        ...prev,
-        {
-          id: res.data?.id ?? `local-${Date.now()}`,
-          username: userData.userName,
-          content: comment,
-          created_at: new Date().toISOString(),
-        },
-      ]);
-      setComment('');
-    } catch (error) {
-      console.log(error);
-      toast.error("Cannot comment yet");
-    }
-    setIsCommenting(false);
-  };
+  const handleLike = () => setIsLiked((prev) => !prev);
+  const handleBookmark = () => setIsBookmarked((prev) => !prev);
 
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      toast.success("Link copied");
     } catch (error) {
       console.log(error);
     }
-    setShowShareMenu(false);
-  };
-
-  const handleShareFacebook = () => {
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank', 'noopener,noreferrer');
-    setShowShareMenu(false);
-  };
-
-  const handleShareTwitter = () => {
-    window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(post.title)}`, '_blank', 'noopener,noreferrer');
     setShowShareMenu(false);
   };
 
@@ -227,8 +123,18 @@ const ArticlePage = () => {
   return (
     <div className="min-h-screen bg-[#FAFAF8] dark:bg-slate-900 font-[Inter,system-ui,sans-serif]">
 
+      {/* Preview banner */}
+      <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-2.5 flex items-center gap-2">
+          <Eye className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
+          <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+            Preview mode — this article hasn't been published yet. Likes, bookmarks, and comments aren't saved here.
+          </p>
+        </div>
+      </div>
+
       {/* Sticky nav */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-gray-200 dark:border-slate-700 transition-all duration-200 ${
+      <nav className={`fixed top-9 left-0 right-0 z-50 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-gray-200 dark:border-slate-700 transition-all duration-200 ${
         isNavVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'
       }`}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
@@ -241,7 +147,6 @@ const ArticlePage = () => {
           <div className="flex items-center gap-1 shrink-0">
             <button
               onClick={handleLike}
-              disabled={isLiking}
               className={`p-2 rounded-lg transition-colors duration-150 ${
                 isLiked ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700'
               }`}
@@ -250,7 +155,6 @@ const ArticlePage = () => {
             </button>
             <button
               onClick={handleBookmark}
-              disabled={isMarking}
               className={`p-2 rounded-lg transition-colors duration-150 ${
                 isBookmarked ? 'text-[#1E3A5F] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700'
               }`}
@@ -269,11 +173,11 @@ const ArticlePage = () => {
                   onClick={(e) => e.stopPropagation()}
                   className="absolute right-0 mt-2 w-44 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-lg py-1 z-10"
                 >
-                  <button onClick={handleShareFacebook} className="w-full px-3.5 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700/50 flex items-center gap-2 transition-colors duration-100">
+                  <button disabled className="w-full px-3.5 py-2 text-left text-xs font-medium text-gray-300 dark:text-slate-600 flex items-center gap-2 cursor-not-allowed">
                     <FaFacebook className="w-3.5 h-3.5" />
                     Facebook
                   </button>
-                  <button onClick={handleShareTwitter} className="w-full px-3.5 py-2 text-left text-xs font-medium text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700/50 flex items-center gap-2 transition-colors duration-100">
+                  <button disabled className="w-full px-3.5 py-2 text-left text-xs font-medium text-gray-300 dark:text-slate-600 flex items-center gap-2 cursor-not-allowed">
                     <FaXTwitter className="w-3.5 h-3.5" />
                     X (Twitter)
                   </button>
@@ -307,11 +211,15 @@ const ArticlePage = () => {
           )}
         </div>
 
-        {/* Category + title */}
-        {(post.category_name || post.category_id) && (
-          <span className="inline-block px-2.5 py-1 mb-3 text-[11px] font-semibold uppercase tracking-wide rounded bg-blue-50 dark:bg-blue-900/20 text-[#1E3A5F] dark:text-blue-400">
-            {post.category_name || post.category_id}
-          </span>
+        {/* Categories + title */}
+        {post.category && (
+          <div className="flex flex-wrap gap-2 mb-3">
+              <span
+                className="inline-block px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide rounded bg-blue-50 dark:bg-blue-900/20 text-[#1E3A5F] dark:text-blue-400"
+              >
+                {post.category}
+              </span>
+          </div>
         )}
 
         <h1 className="font-[Newsreader,Georgia,serif] text-3xl sm:text-4xl lg:text-[2.75rem] font-black leading-tight text-gray-900 dark:text-gray-50 mb-6">
@@ -350,7 +258,7 @@ const ArticlePage = () => {
           </div>
           <span className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-slate-500">
             <Calendar className="w-3.5 h-3.5" />
-            {formatDate(post.publish_at)}
+            Last updated {formatDate(post.updated_at)}
           </span>
         </div>
 
@@ -364,17 +272,16 @@ const ArticlePage = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={handleLike}
-              disabled={isLiking}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors duration-150 ${
                 isLiked ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600'
               }`}
             >
               <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
-              {likesCount}
+              {(post.likes || 0) + (isLiked ? 1 : 0)}
             </button>
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-700">
               <MessageCircle className="w-4 h-4" />
-              {comments.length}
+              0
             </span>
           </div>
           <button
@@ -387,58 +294,40 @@ const ArticlePage = () => {
 
         {/* Comments */}
         <section className="mt-10 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-6 sm:p-8">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-50 mb-6">
-            Comments ({comments.length})
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-50 mb-2">
+            Comments
           </h2>
+          <p className="text-xs text-gray-400 dark:text-slate-500 mb-6">
+            Comments open once this article is published.
+          </p>
 
           <div className="mb-8">
             <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
+              disabled
               rows={4}
-              placeholder="Share your thoughts..."
-              className="w-full px-4 py-3 text-sm rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/30 dark:focus:ring-blue-500/30 focus:border-[#1E3A5F] dark:focus:border-blue-500"
+              placeholder="Comments aren't available in preview"
+              className="w-full px-4 py-3 text-sm rounded-lg border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 text-gray-400 dark:text-slate-500 resize-none cursor-not-allowed"
             />
             <div className="flex justify-end mt-3">
               <button
-                onClick={handleComment}
-                disabled={!comment.trim() || isCommenting}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-semibold rounded-lg text-white bg-[#1E3A5F] hover:bg-[#16304d] transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-semibold rounded-lg text-white bg-gray-300 dark:bg-slate-700 cursor-not-allowed"
               >
-                {isCommenting ? "Posting…" : "Post Comment"}
+                Post Comment
               </button>
             </div>
           </div>
 
-          {comments.length > 0 ? (
-            <div className="space-y-5">
-              {comments.map((c) => (
-                <div key={c.id ?? `${c.username}-${c.created_at}`} className="flex items-start gap-3 pb-5 border-b border-gray-100 dark:border-slate-700 last:border-0 last:pb-0">
-                  <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
-                    <img src={c.profile_pic} alt={c.username} className="w-full h-full object-cover rounded-full" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{c.username}</p>
-                      <span className="text-xs text-gray-400 dark:text-slate-500">{formatCommentDate(c.created_at)}</span>
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed">{c.content}</p>
-                  </div>
-                </div>
-              ))}
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="w-12 h-12 bg-gray-100 dark:bg-slate-700 rounded-lg flex items-center justify-center mb-3">
+              <MessageCircle className="w-5 h-5 text-gray-300 dark:text-slate-500" />
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-12 h-12 bg-gray-100 dark:bg-slate-700 rounded-lg flex items-center justify-center mb-3">
-                <MessageCircle className="w-5 h-5 text-gray-300 dark:text-slate-500" />
-              </div>
-              <p className="text-sm text-gray-400 dark:text-slate-500">No comments yet. Be the first to share your thoughts.</p>
-            </div>
-          )}
+            <p className="text-sm text-gray-400 dark:text-slate-500">No comments yet. Be the first to share your thoughts!</p>
+          </div>
         </section>
       </main>
     </div>
   );
 };
 
-export default ArticlePage;
+export default PreviewArticlePage;

@@ -5,8 +5,8 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 
 // Images
-import LogoLight from "../assets/images/Pixel & Pen.png";
-import LogoDark from "../assets/images/Pixel & Pen(B&W).png";
+import LogoLight from "../assets/images/Pixel & Pen(Main-New).png";
+import LogoDark from "../assets/images/Pixel & Pen(Main-B&W-New).png";
 
 // Icons — swapped to a single consistent set (Feather via react-icons)
 import {
@@ -26,8 +26,7 @@ import { UserRound } from "lucide-react";
 
 const NAV_LINKS = [
   { label: "Home", to: "/" },
-  { label: "Blog", to: "/blog" },
-  { label: "Categories", to: "/category" },
+  { label: "Explore", to: "/articles" },
   { label: "About us", to: "/about" },
   { label: "Contact us", to: "/contact" },
 ];
@@ -71,6 +70,11 @@ const Navbar = () => {
             src={isDarkMode ? LogoDark : LogoLight}
             alt="Pixel & Pen"
           />
+          <span className="text-xl font-bold text-[#1F2937] dark:text-[#F8FAFC]">
+            Pixel 
+            <span className="font-[Newsreader,Georgia,serif] text-[#F97316] dark:text-[#FF8A3D]"> & </span>  
+            Pen
+          </span>
         </Link>
 
         {/* Nav links — true center, classic SaaS layout */}

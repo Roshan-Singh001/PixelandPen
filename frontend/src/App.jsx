@@ -176,6 +176,9 @@ function HeroDemoCard() {
 }
 
 function Hero() {
+    useEffect(() => {
+      document.title = 'Home · Pixel & Pen';
+    }, []);
   return (
     <section id="top" className="relative overflow-hidden px-6 pb-24 pt-8 lg:px-8 lg:pb-32 lg:pt-16">
       <PixelGrid className="text-[#1E3A5F]/[0.05] dark:text-[#4F8EF7]/[0.06]" />

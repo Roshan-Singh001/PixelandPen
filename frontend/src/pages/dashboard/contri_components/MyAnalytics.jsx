@@ -16,9 +16,6 @@ const RANGE_OPTIONS = [
   { value: 'all', label: 'All Time' },
 ];
 
-const RANGE_DAYS = { '7d': 7, '30d': 30, '3m': 90, 'all': 180 };
-const RANGE_MULTIPLIER = { '7d': 0.18, '30d': 1, '3m': 2.6, 'all': 4.4 };
-
 function formatNumber(num) {
   const n = num || 0;
   if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
@@ -30,93 +27,6 @@ function formatAxisDate(dateString) {
   if (!dateString) return "";
   return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
-
-function toDateStr(date) {
-  return date.toISOString().split('T')[0];
-}
-
-/* ---------------------------------------------------------------------
- * TEMPORARY DEMO DATA
- * ------------------------------------------------------------------- */
-function generateDemoData(range, granularity) {
-  const days = RANGE_DAYS[range];
-  const multiplier = RANGE_MULTIPLIER[range];
-  const today = new Date();
-
-  const dailyPoints = Array.from({ length: days }).map((_, i) => {
-    const date = new Date(today);
-    date.setDate(date.getDate() - (days - 1 - i));
-    return date;
-  });
-
-  const viewsDaily = dailyPoints.map((date, i) => {
-    const progress = i / days;
-    const base = 150 + progress * 450;
-    const wave = Math.sin(i / 3) * 60;
-    const noise = (Math.random() - 0.5) * 80;
-    return { date: toDateStr(date), views: Math.max(20, Math.round(base + wave + noise)) };
-  });
-
-  let viewsSeries = viewsDaily;
-  if (granularity === 'weekly') {
-    const weeks = [];
-    for (let i = 0; i < viewsDaily.length; i += 7) {
-      const chunk = viewsDaily.slice(i, i + 7);
-      const total = chunk.reduce((sum, p) => sum + p.views, 0);
-      weeks.push({ date: chunk[chunk.length - 1].date, views: total });
-    }
-    viewsSeries = weeks;
-  }
-
-  const engagementSeries = dailyPoints.map((date, i) => {
-    const progress = i / days;
-    const likes = Math.max(0, Math.round((8 + progress * 20) + (Math.random() - 0.5) * 8));
-    const comments = Math.max(0, Math.round((2 + progress * 6) + (Math.random() - 0.5) * 3));
-    const bookmarks = Math.max(0, Math.round((1.5 + progress * 4) + (Math.random() - 0.5) * 2));
-    return { date: toDateStr(date), likes, comments, bookmarks };
-  });
-
-  const followerGrowth = dailyPoints.map((date, i) => {
-    const progress = i / days;
-    const base = 980 + progress * 260;
-    const noise = (Math.random() - 0.3) * 12;
-    return { date: toDateStr(date), followers: Math.max(0, Math.round(base + noise)) };
-  });
-
-  const overview = {
-    views: 12482,
-    likes: 846,
-    comments: 248,
-    followers: 1240,
-  };
-
-  const engagementTotals = { bookmarks: Math.round(132 * multiplier) };
-
-  const rawRate = ((overview.likes + overview.comments + engagementTotals.bookmarks) / overview.views) * 100;
-  const engagementRate = Number(rawRate.toFixed(1));
-
-  const topArticles = [
-    { article_id: 'demo-1', slug: 'understanding-http-3', title: 'Understanding HTTP/3', views: Math.round(4820 * multiplier), likes: Math.round(312 * multiplier), comments: Math.round(48 * multiplier) },
-    { article_id: 'demo-2', slug: 'how-apis-actually-work', title: 'How APIs Actually Work', views: Math.round(3640 * multiplier), likes: Math.round(241 * multiplier), comments: Math.round(31 * multiplier) },
-    { article_id: 'demo-3', slug: 'getting-started-with-nodejs', title: 'Getting Started with Node.js', views: Math.round(2210 * multiplier), likes: Math.round(154 * multiplier), comments: Math.round(22 * multiplier) },
-    { article_id: 'demo-4', slug: 'css-grid-vs-flexbox', title: 'CSS Grid vs Flexbox: When to Use Which', views: Math.round(1480 * multiplier), likes: Math.round(97 * multiplier), comments: Math.round(15 * multiplier) },
-    { article_id: 'demo-5', slug: 'a-practical-guide-to-webhooks', title: 'A Practical Guide to Webhooks', views: Math.round(980 * multiplier), likes: Math.round(63 * multiplier), comments: Math.round(9 * multiplier) },
-  ];
-
-  const contentSummary = { published: 24, draft: 5, pending: 2, rejected: 1 };
-
-  return {
-    overview,
-    viewsSeries,
-    engagementSeries,
-    engagementTotals,
-    engagementRate,
-    topArticles,
-    followerGrowth,
-    contentSummary,
-  };
-}
-/* --------------------------- END DEMO DATA --------------------------- */
 
 const ChartTooltip = ({ active, payload, label, formatters }) => {
   if (!active || !payload || payload.length === 0) return null;
@@ -211,9 +121,6 @@ const Analytics = () => {
       })
       .catch((err) => {
         console.log(err);
-        // TEMPORARY: fall back to generated demo data until the
-        // analytics endpoint is live, instead of showing an error.
-        applyData(generateDemoData(dateRange, granularity));
       })
       .finally(() => {
         setIsLoading(false);

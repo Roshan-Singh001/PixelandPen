@@ -9,60 +9,60 @@ adminRouter.use(authorizeAdmin);
 
 // STATS
 
-adminRouter.get('/stat/posts',async (req, res) => {
+adminRouter.get('/stat/posts', async (req, res) => {
   try {
     const fetchinfoQuery = `SELECT COUNT(*) AS "Total_Posts" FROM articles`;
     const results = await db.query(fetchinfoQuery);
 
     const total_posts = results[0];
-    res.status(200).json({total_p: total_posts[0].Total_Posts});
-    
+    res.status(200).json({ total_p: total_posts[0].Total_Posts });
+
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Error Fetching Data"});
+    res.status(500).json({ message: "Error Fetching Data" });
   }
 });
 
-adminRouter.get('/stat/views',async (req, res) => {
+adminRouter.get('/stat/views', async (req, res) => {
   try {
-      const fetchinfoQuery = `SELECT SUM(views) AS "Total_Views" FROM articles`;
-      const results = await db.query(fetchinfoQuery);
-  
-      const total_views = results[0];
-      res.status(200).json({total_v: total_views[0].Total_Views});
-      
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Error Fetching Data"});
-    }
+    const fetchinfoQuery = `SELECT SUM(views) AS "Total_Views" FROM articles`;
+    const results = await db.query(fetchinfoQuery);
+
+    const total_views = results[0];
+    res.status(200).json({ total_v: total_views[0].Total_Views });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
+  }
 });
 
-adminRouter.get('/stat/contributors',async (req, res) => {
-    try {
-        const fetchinfoQuery = `SELECT COUNT(cont_id) AS "Total_Contributors" FROM contributor WHERE status='Approved' OR status='Block'`;
-        const results = await db.query(fetchinfoQuery);
-    
-        const contributor = results[0];
-        res.status(200).json({total_c: contributor[0].Total_Contributors});
-        
-      } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Error Fetching Data"});
-      }
+adminRouter.get('/stat/contributors', async (req, res) => {
+  try {
+    const fetchinfoQuery = `SELECT COUNT(cont_id) AS "Total_Contributors" FROM contributor WHERE status='Approved' OR status='Block'`;
+    const results = await db.query(fetchinfoQuery);
+
+    const contributor = results[0];
+    res.status(200).json({ total_c: contributor[0].Total_Contributors });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
+  }
 });
 
-adminRouter.get('/stat/readers',async (req, res) => {
-    try {
-        const fetchinfoQuery = `SELECT COUNT(sub_id) AS "Total_Readers" FROM reader`;
-        const results = await db.query(fetchinfoQuery);
-    
-        const readers = results[0];
-        res.status(200).json({total_r: readers[0].Total_Readers});
-        
-      } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Error Fetching Data"});
-      }
+adminRouter.get('/stat/readers', async (req, res) => {
+  try {
+    const fetchinfoQuery = `SELECT COUNT(sub_id) AS "Total_Readers" FROM reader`;
+    const results = await db.query(fetchinfoQuery);
+
+    const readers = results[0];
+    res.status(200).json({ total_r: readers[0].Total_Readers });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
+  }
 });
 
 adminRouter.get('/stat/readers/new', async (req, res) => {
@@ -73,7 +73,7 @@ adminRouter.get('/stat/readers/new', async (req, res) => {
       WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
     `;
     const results = await db.query(queryReader);
-    res.status(200).json({total_new_readers: results[0][0].New_Readers});
+    res.status(200).json({ total_new_readers: results[0][0].New_Readers });
 
   } catch (error) {
     console.log(error);
@@ -82,129 +82,129 @@ adminRouter.get('/stat/readers/new', async (req, res) => {
 
 });
 
-adminRouter.get('/stat/likes',async (req, res) => {
-    try {
-        const fetchinfoQuery = `SELECT SUM(likes) AS "Total_Likes" FROM articles`;
-        const results = await db.query(fetchinfoQuery);
+adminRouter.get('/stat/likes', async (req, res) => {
+  try {
+    const fetchinfoQuery = `SELECT SUM(likes) AS "Total_Likes" FROM articles`;
+    const results = await db.query(fetchinfoQuery);
 
-        res.status(200).json({total_likes: results[0][0].Total_Likes});
-      } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Error Fetching Data"});
-      }
+    res.status(200).json({ total_likes: results[0][0].Total_Likes });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
+  }
 });
 
-adminRouter.get('/stat/bookmarks',async (req, res) => {
-    try {
-        const fetchinfoQuery = `SELECT COUNT(id) AS "Total_Bookmarks" FROM bookmarks`;
-        const results = await db.query(fetchinfoQuery);
-        res.status(200).json({total_bookmarks: results[0][0].Total_Bookmarks});
-      } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Error Fetching Data"});
-      }
+adminRouter.get('/stat/bookmarks', async (req, res) => {
+  try {
+    const fetchinfoQuery = `SELECT COUNT(id) AS "Total_Bookmarks" FROM bookmarks`;
+    const results = await db.query(fetchinfoQuery);
+    res.status(200).json({ total_bookmarks: results[0][0].Total_Bookmarks });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
+  }
 });
 
 // RECENTS
 
-adminRouter.get('/recent/article',async (req, res) => {
-    try {
-        const fetchinfoQuery = `SELECT slug,title,author,status FROM review_articles LIMIT 5`;
-        const results = await db.query(fetchinfoQuery);
-    
-        const recents = results[0];
-        res.status(200).json({recents: recents});
-        
-      } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Error Fetching Data"});
-      }
+adminRouter.get('/recent/article', async (req, res) => {
+  try {
+    const fetchinfoQuery = `SELECT slug,title,author,status FROM review_articles LIMIT 5`;
+    const results = await db.query(fetchinfoQuery);
+
+    const recents = results[0];
+    res.status(200).json({ recents: recents });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
+  }
 });
 
-adminRouter.get('/recent/contributor',async (req, res) => {
-    try {
-        const fetchinfoQuery = `SELECT cont_id,username,email,status FROM contributor LIMIT 5`;
-        const results = await db.query(fetchinfoQuery);
-    
-        const recents = results[0];
-        res.status(200).json({recents: recents});
-        
-      } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Error Fetching Data"});
-      }
+adminRouter.get('/recent/contributor', async (req, res) => {
+  try {
+    const fetchinfoQuery = `SELECT cont_id,username,email,status FROM contributor LIMIT 5`;
+    const results = await db.query(fetchinfoQuery);
+
+    const recents = results[0];
+    res.status(200).json({ recents: recents });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
+  }
 });
 
 // ARTICLE
 
-adminRouter.get('/fetch/article/pending',async (req, res) => {
-    try {
-        const fetchinfoQuery = `SELECT review_id,slug,title,author,cont_id,created_at FROM review_articles WHERE status="Pending"`;
-        const results = await db.query(fetchinfoQuery);
-    
-        const recents = results[0];
-        res.status(200).json({pending: recents});
-        
-      } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Error Fetching Data"});
-      }
+adminRouter.get('/fetch/article/pending', async (req, res) => {
+  try {
+    const fetchinfoQuery = `SELECT review_id,slug,title,author,cont_id,created_at FROM review_articles WHERE status="Pending"`;
+    const results = await db.query(fetchinfoQuery);
+
+    const recents = results[0];
+    res.status(200).json({ pending: recents });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
+  }
 });
 
-adminRouter.get('/fetch/article/rejected',async (req, res) => {
-    try {
-        const fetchinfoQuery = `SELECT review_id,slug,title,author,cont_id,reject_reason,reject_at FROM review_articles WHERE status="Rejected"`;
-        const results = await db.query(fetchinfoQuery);
-    
-        const recents = results[0];
-        res.status(200).json({rejected: recents});
-        
-      } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Error Fetching Data"});
-      }
+adminRouter.get('/fetch/article/rejected', async (req, res) => {
+  try {
+    const fetchinfoQuery = `SELECT review_id,slug,title,author,cont_id,reject_reason,reject_at FROM review_articles WHERE status="Rejected"`;
+    const results = await db.query(fetchinfoQuery);
+
+    const recents = results[0];
+    res.status(200).json({ rejected: recents });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
+  }
 });
 
-adminRouter.get('/fetch/article/published',async (req, res) => {
-    try {
-        const fetchinfoQuery = `SELECT a.article_id, a.slug, a.title, c.name as category, a.author, a.cont_id, a.views, a.is_featured, a.publish_at FROM articles a LEFT JOIN categories c ON a.category_id = c.id WHERE a.publish_at IS NOT NULL`;
-        const results = await db.query(fetchinfoQuery);
-    
-        const recents = results[0];
-        res.status(200).json({published: recents});
-        
-      } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Error Fetching Data"});
-      }
+adminRouter.get('/fetch/article/published', async (req, res) => {
+  try {
+    const fetchinfoQuery = `SELECT a.article_id, a.slug, a.title, c.name as category, a.author, a.cont_id, a.views, a.is_featured, a.publish_at FROM articles a LEFT JOIN categories c ON a.category_id = c.id WHERE a.publish_at IS NOT NULL`;
+    const results = await db.query(fetchinfoQuery);
+
+    const recents = results[0];
+    res.status(200).json({ published: recents });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
+  }
 });
 
-adminRouter.post('/article/reject',async (req, res) => {
-  const {slug,cont_id,review_id,rejectReason, rejectAt} = req.body;
+adminRouter.post('/article/reject', async (req, res) => {
+  const { slug, cont_id, review_id, rejectReason, rejectAt } = req.body;
 
   try {
-      const query1 = `UPDATE review_articles SET status='Rejected',reject_reason=?,reject_at=? WHERE review_id=?`;
-      await db.query(query1,[rejectReason, rejectAt, review_id]);
+    const query1 = `UPDATE review_articles SET status='Rejected',reject_reason=?,reject_at=? WHERE review_id=?`;
+    await db.query(query1, [rejectReason, rejectAt, review_id]);
 
-      const query2 = `UPDATE ${cont_id+'_articles'} SET article_status='Rejected',reject_reason=?,reject_date=NOW() WHERE slug=?`;
-      await db.query(query2,[rejectReason, slug]);
+    const query2 = `UPDATE ${cont_id + '_articles'} SET article_status='Rejected',reject_reason=?,reject_date=NOW() WHERE slug=?`;
+    await db.query(query2, [rejectReason, slug]);
 
-      res.status(200).json({message: "Rejected Successfully"});
-      
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Error in Rejecting"});
-    }
+    res.status(200).json({ message: "Rejected Successfully" });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error in Rejecting" });
+  }
 });
 
-adminRouter.post('/article/approve', async (req,res)=>{
-  const {slug,author,cont_id,review_id, publish_At} = req.body;
+adminRouter.post('/article/approve', async (req, res) => {
+  const { slug, author, cont_id, review_id, publish_At } = req.body;
 
   try {
     const query1 = `UPDATE review_articles SET status='Approved' WHERE review_id=?`;
-    await db.query(query1,[review_id]);
+    await db.query(query1, [review_id]);
 
-    const fetchArticleQuery = `SELECT * FROM ${cont_id+'_articles'} WHERE slug = ?`;
+    const fetchArticleQuery = `SELECT * FROM ${cont_id + '_articles'} WHERE slug = ?`;
     const results = await db.query(fetchArticleQuery, [slug]);
     const article = results[0];
 
@@ -212,176 +212,176 @@ adminRouter.post('/article/approve', async (req,res)=>{
     const article_id = `article_${a_id}`;
 
     const query2 = `INSERT INTO articles (article_id,slug,title,category_id,description,content, tags,thumbnail_url,author,cont_id,publish_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)`;
-    await db.query(query2,[article_id, article[0].slug, article[0].title, article[0].category_id, article[0].description, JSON.stringify(article[0].content), JSON.stringify(article[0].tags || []), article[0].thumbnail_url, author, cont_id, publish_At]);
+    await db.query(query2, [article_id, article[0].slug, article[0].title, article[0].category_id, article[0].description, JSON.stringify(article[0].content), JSON.stringify(article[0].tags || []), article[0].thumbnail_url, author, cont_id, publish_At]);
 
-    const query3 = `UPDATE ${cont_id+'_articles'} SET article_status='Approved',approve_date=NOW() WHERE slug=?`;
-    await db.query(query3,[slug]);
+    const query3 = `UPDATE ${cont_id + '_articles'} SET article_status='Approved',approve_date=NOW() WHERE slug=?`;
+    await db.query(query3, [slug]);
 
-    res.status(200).json({message: "Approved Successfully"});
-    
+    res.status(200).json({ message: "Approved Successfully" });
+
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Error in Approving"});
-    
+    res.status(500).json({ message: "Error in Approving" });
+
   }
 });
 
-adminRouter.post('/article/feature', async (req,res)=>{
-  const {slug,article_id, is_featured} = req.body;
+adminRouter.post('/article/feature', async (req, res) => {
+  const { slug, article_id, is_featured } = req.body;
 
   try {
     const query1 = `UPDATE articles SET is_featured=? WHERE article_id=?`;
-    await db.query(query1,[is_featured,article_id]);
+    await db.query(query1, [is_featured, article_id]);
 
     const query2 = `UPDATE review_articles SET is_featured=? WHERE slug=?`;
-    await db.query(query2,[is_featured,slug]);
+    await db.query(query2, [is_featured, slug]);
 
-    if (is_featured) res.status(200).json({message: "Article is set to featured"});
-    else res.status(200).json({message: "Article is removed from featured"});
-    
+    if (is_featured) res.status(200).json({ message: "Article is set to featured" });
+    else res.status(200).json({ message: "Article is removed from featured" });
+
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Error in Approving"});
-    
+    res.status(500).json({ message: "Error in Approving" });
+
   }
 });
 
-adminRouter.delete('/article/delete', async (req,res)=>{
-  const {slug,article_id,cont_id,review_id} = req.body;
+adminRouter.delete('/article/delete', async (req, res) => {
+  const { slug, article_id, cont_id, review_id } = req.body;
 
   try {
     const query1 = `DELETE FROM review_articles WHERE review_id=?`;
-    await db.query(query1,[review_id]);
+    await db.query(query1, [review_id]);
 
     const query2 = `DELETE FROM articles WHERE article_id=?`;
-    await db.query(query2,[article_id]);
+    await db.query(query2, [article_id]);
 
-    const query3 = `DELETE FROM ${cont_id+'_articles'} WHERE slug=?`;
-    await db.query(query3,[slug]);
+    const query3 = `DELETE FROM ${cont_id + '_articles'} WHERE slug=?`;
+    await db.query(query3, [slug]);
 
-    res.status(200).json({message: "Deleted Successfully"});
-    
+    res.status(200).json({ message: "Deleted Successfully" });
+
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Error in Deleting"});
-    
+    res.status(500).json({ message: "Error in Deleting" });
+
   }
 });
 
 // CONTRIBUTOR
 
-adminRouter.get('/fetch/cont/pending',async (req, res) => {
+adminRouter.get('/fetch/cont/pending', async (req, res) => {
   try {
-      const fetchinfoQuery = `SELECT cont_id, username, email, bio, profile_pic, dob, expertise, links, city, country, created_at FROM contributor WHERE status="Pending"`;
-      const results = await db.query(fetchinfoQuery);
-  
-      const recents = results[0];
+    const fetchinfoQuery = `SELECT cont_id, username, email, bio, profile_pic, dob, expertise, links, city, country, created_at FROM contributor WHERE status="Pending"`;
+    const results = await db.query(fetchinfoQuery);
 
-      recents.expertise = JSON.parse(recents.expertise || '[]');
-      recents.links = JSON.parse(recents.links || '[]');
+    const recents = results[0];
 
-      res.status(200).json({pending: recents});
-      
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Error Fetching Data"});
-    }
+    recents.expertise = JSON.parse(recents.expertise || '[]');
+    recents.links = JSON.parse(recents.links || '[]');
+
+    res.status(200).json({ pending: recents });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
+  }
 });
 
-adminRouter.get('/fetch/cont/approved',async (req, res) => {
+adminRouter.get('/fetch/cont/approved', async (req, res) => {
   try {
-      const fetchinfoQuery = `SELECT cont_id, username, email, profile_pic, created_at, status FROM contributor WHERE status="Approved" OR status="Block"`;
-      const results = await db.query(fetchinfoQuery);
-  
-      const recents = results[0];
+    const fetchinfoQuery = `SELECT cont_id, username, email, profile_pic, created_at, status FROM contributor WHERE status="Approved" OR status="Block"`;
+    const results = await db.query(fetchinfoQuery);
 
-      res.status(200).json({approved: recents});
-      
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Error Fetching Data"});
-    }
+    const recents = results[0];
+
+    res.status(200).json({ approved: recents });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
+  }
 });
 
-adminRouter.get('/fetch/cont/rejected',async (req, res) => {
+adminRouter.get('/fetch/cont/rejected', async (req, res) => {
   try {
-      const fetchinfoQuery = `SELECT cont_id, username, email, profile_pic, reject_reason, status FROM contributor WHERE status="Rejected"`;
-      const results = await db.query(fetchinfoQuery);
-  
-      const recents = results[0];
+    const fetchinfoQuery = `SELECT cont_id, username, email, profile_pic, reject_reason, status FROM contributor WHERE status="Rejected"`;
+    const results = await db.query(fetchinfoQuery);
 
-      res.status(200).json({rejected: recents});
-      
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Error Fetching Data"});
-    }
+    const recents = results[0];
+
+    res.status(200).json({ rejected: recents });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
+  }
 });
 
-adminRouter.post('/cont/approve',async (req, res) => {
-  const {cont_id} = req.body;
+adminRouter.post('/cont/approve', async (req, res) => {
+  const { cont_id } = req.body;
   try {
-      const Query = `UPDATE contributor SET status='Approved' WHERE cont_id=?`;
-      await db.query(Query,[cont_id]);
+    const Query = `UPDATE contributor SET status='Approved' WHERE cont_id=?`;
+    await db.query(Query, [cont_id]);
 
-      res.status(200).json({message: 'Contributor is approved successfully'});
-      
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Error in approving contributor"});
-    }
+    res.status(200).json({ message: 'Contributor is approved successfully' });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error in approving contributor" });
+  }
 });
 
-adminRouter.post('/cont/reject',async (req, res) => {
-  const {cont_id, reject_reason} = req.body;
+adminRouter.post('/cont/reject', async (req, res) => {
+  const { cont_id, reject_reason } = req.body;
   try {
-      const Query = `UPDATE contributor SET status='Rejected', reject_reason=? WHERE cont_id=?`;
-      await db.query(Query,[reject_reason,cont_id]);
+    const Query = `UPDATE contributor SET status='Rejected', reject_reason=? WHERE cont_id=?`;
+    await db.query(Query, [reject_reason, cont_id]);
 
-      res.status(200).json({message: 'Contributor is Rejected successfully'});
-      
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Error in Rejecting contributor"});
-    }
+    res.status(200).json({ message: 'Contributor is Rejected successfully' });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error in Rejecting contributor" });
+  }
 });
 
-adminRouter.post('/cont/delete',async (req, res) => {
-  const {cont_id} = req.body;
+adminRouter.post('/cont/delete', async (req, res) => {
+  const { cont_id } = req.body;
   try {
     const tableName = `${cont_id}` + '_articles';
     const dropQuery = `DROP TABLE IF EXISTS ${tableName}`;
     await db.query(dropQuery);
 
     const dropQuery2 = `DELETE FROM contributor WHERE cont_id=?`;
-    await db.query(dropQuery2,cont_id);
+    await db.query(dropQuery2, cont_id);
 
     const dropQuery4 = `DELETE FROM users WHERE username=?`;
-    await db.query(dropQuery4,cont_id);
+    await db.query(dropQuery4, cont_id);
 
     const dropQuery5 = `DELETE FROM review_articles WHERE cont_id=?`;
-    await db.query(dropQuery5,cont_id);
+    await db.query(dropQuery5, cont_id);
 
-    res.status(200).json({message: "Success"});
-      
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Error in Rejecting contributor"});
-    }
+    res.status(200).json({ message: "Success" });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error in Rejecting contributor" });
+  }
 });
 
-adminRouter.post('/cont/status',async (req, res) => {
-  const {cont_id, set_status} = req.body;
+adminRouter.post('/cont/status', async (req, res) => {
+  const { cont_id, set_status } = req.body;
   try {
-      const Query = `UPDATE contributor SET status=? WHERE cont_id=?`;
-      await db.query(Query,[set_status,cont_id]);
+    const Query = `UPDATE contributor SET status=? WHERE cont_id=?`;
+    await db.query(Query, [set_status, cont_id]);
 
-      res.status(200).json({message: 'Contributor status changes successfully'});
-      
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Error in status change of contributor"});
-    }
+    res.status(200).json({ message: 'Contributor status changes successfully' });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error in status change of contributor" });
+  }
 });
 
 // Readers
@@ -453,102 +453,102 @@ adminRouter.get('/fetch/reader/detail/:slug', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error Fetching Reader Detail" });
-    
+
   }
 
 });
 
 // ANNOUNCEMENT
 
-adminRouter.get('/fetch/announcement/draft',async (req, res) => {
+adminRouter.get('/fetch/announcement/draft', async (req, res) => {
   try {
-      const fetchinfoQuery = `SELECT * FROM announcements WHERE status="Draft"`;
-      const results = await db.query(fetchinfoQuery);
-  
-      const recents = results[0];
+    const fetchinfoQuery = `SELECT * FROM announcements WHERE status="Draft"`;
+    const results = await db.query(fetchinfoQuery);
 
-      res.status(200).json({drafts: recents});
-      
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Error Fetching Data"});
-    }
+    const recents = results[0];
+
+    res.status(200).json({ drafts: recents });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
+  }
 });
 
-adminRouter.get('/fetch/announcement/published',async (req, res) => {
+adminRouter.get('/fetch/announcement/published', async (req, res) => {
   try {
-      const fetchinfoQuery = `SELECT * FROM announcements WHERE status="Published"`;
-      const results = await db.query(fetchinfoQuery);
-  
-      const recents = results[0];
+    const fetchinfoQuery = `SELECT * FROM announcements WHERE status="Published"`;
+    const results = await db.query(fetchinfoQuery);
 
-      res.status(200).json({published: recents});
-      
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Error Fetching Data"});
-    }
+    const recents = results[0];
+
+    res.status(200).json({ published: recents });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
+  }
 });
 
-adminRouter.post('/announcement/add',async (req, res) => {
-  const {announce} = req.body;
+adminRouter.post('/announcement/add', async (req, res) => {
+  const { announce } = req.body;
   try {
     if (announce.status == "Draft") {
       const Query = `INSERT INTO announcements (title, content, audience, status) VALUES (?,?,?,?)`;
-      await db.query(Query,[announce.title,announce.content,announce.audience,"Draft"]);
+      await db.query(Query, [announce.title, announce.content, announce.audience, "Draft"]);
     }
-    else{
+    else {
       const Query = `INSERT INTO announcements (title, content, audience, status, published_at) VALUES (?,?,?,?,?)`;
-      await db.query(Query,[announce.title,announce.content,announce.audience,"Published",new Date()]);
+      await db.query(Query, [announce.title, announce.content, announce.audience, "Published", new Date()]);
     }
 
-    res.status(200).json({message: 'Announcement saved Successfully'});
-      
+    res.status(200).json({ message: 'Announcement saved Successfully' });
+
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Error in saving annoucement"});
+    res.status(500).json({ message: "Error in saving annoucement" });
   }
 });
 
-adminRouter.post('/announcement/edit',async (req, res) => {
-  const {announce, announce_id} = req.body;
+adminRouter.post('/announcement/edit', async (req, res) => {
+  const { announce, announce_id } = req.body;
   try {
     if (announce.status == "Draft") {
       const Query = `UPDATE announcements SET title=?, content=?, audience=? WHERE id=?`;
-      await db.query(Query,[announce.title,announce.content,announce.audience,announce_id]);
+      await db.query(Query, [announce.title, announce.content, announce.audience, announce_id]);
     }
-    else{
+    else {
       const Query = `UPDATE announcements SET title=?, content=?, audience=?, status=?, published_at=? WHERE id=?`;
-      await db.query(Query,[announce.title,announce.content,announce.audience,"Published",new Date(),announce_id]);
+      await db.query(Query, [announce.title, announce.content, announce.audience, "Published", new Date(), announce_id]);
     }
 
-    res.status(200).json({message: 'Announcement saved Successfully'});
-      
+    res.status(200).json({ message: 'Announcement saved Successfully' });
+
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Error in saving annoucement"});
+    res.status(500).json({ message: "Error in saving annoucement" });
   }
 });
 
-adminRouter.delete('/announcement/delete',async (req, res) => {
-  const {announce_id} = req.body;
+adminRouter.delete('/announcement/delete', async (req, res) => {
+  const { announce_id } = req.body;
   try {
     const Query = `DELETE FROM announcements WHERE id=?`;
-    await db.query(Query,[announce_id]);
-    
-    res.status(200).json({message: 'Announcements deleted successfully'});
-      
+    await db.query(Query, [announce_id]);
+
+    res.status(200).json({ message: 'Announcements deleted successfully' });
+
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Error in deleting the annoucement"});
+    res.status(500).json({ message: "Error in deleting the annoucement" });
   }
 });
 
 // COMMENTS
 
-adminRouter.get('/fetch/comments/approved',async (req, res) => {
+adminRouter.get('/fetch/comments/approved', async (req, res) => {
   try {
-      const fetchinfoQuery = `SELECT 
+    const fetchinfoQuery = `SELECT 
     comments.id, 
     comments.article_id, 
     comments.article_title, 
@@ -564,21 +564,21 @@ JOIN articles ON comments.article_id = articles.article_id
 JOIN reader ON comments.user_id = reader.sub_id
 WHERE comments.status = 'Approved';
 `;
-      const results = await db.query(fetchinfoQuery);
-  
-      const recents = results[0];
+    const results = await db.query(fetchinfoQuery);
 
-      res.status(200).json({approved: recents});
-      
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Error Fetching Data"});
-    }
+    const recents = results[0];
+
+    res.status(200).json({ approved: recents });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
+  }
 });
 
-adminRouter.get('/fetch/comments/pending',async (req, res) => {
+adminRouter.get('/fetch/comments/pending', async (req, res) => {
   try {
-      const fetchinfoQuery = `SELECT 
+    const fetchinfoQuery = `SELECT 
     comments.id, 
     comments.article_id, 
     comments.article_title, 
@@ -593,21 +593,21 @@ FROM comments
 JOIN articles ON comments.article_id = articles.article_id
 JOIN reader ON comments.user_id = reader.sub_id
 WHERE comments.status = 'Pending';`;
-      const results = await db.query(fetchinfoQuery);
-  
-      const recents = results[0];
+    const results = await db.query(fetchinfoQuery);
 
-      res.status(200).json({pending: recents});
-      
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Error Fetching Data"});
-    }
+    const recents = results[0];
+
+    res.status(200).json({ pending: recents });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error Fetching Data" });
+  }
 });
 
-adminRouter.get('/fetch/comments/deleted',async (req, res) => {
+adminRouter.get('/fetch/comments/deleted', async (req, res) => {
   try {
-      const fetchinfoQuery = `SELECT 
+    const fetchinfoQuery = `SELECT 
     comments.id, 
     comments.article_id, 
     comments.article_title, 
@@ -622,43 +622,43 @@ FROM comments
 JOIN articles ON comments.article_id = articles.article_id
 JOIN reader ON comments.user_id = reader.sub_id
 WHERE comments.status = 'Deleted';`;
-      const results = await db.query(fetchinfoQuery);
-  
-      const recents = results[0];
+    const results = await db.query(fetchinfoQuery);
 
-      res.status(200).json({deleted: recents});
-      
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Error Fetching Data"});
-    }
-});
+    const recents = results[0];
 
-adminRouter.post('/comment/status',async (req, res) => {
-  const {id, status} = req.body;
-  try {
-    const Query = `UPDATE comments SET status=? WHERE id=?`;
-    await db.query(Query,[status,id]);
+    res.status(200).json({ deleted: recents });
 
-    res.status(200).json({message: 'Comments Status Changed'});
-      
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Error in changing the status of the comment"});
+    res.status(500).json({ message: "Error Fetching Data" });
   }
 });
 
-adminRouter.delete('/comment/delete', async(req,res)=>{
-  const {id} = req.body;
+adminRouter.post('/comment/status', async (req, res) => {
+  const { id, status } = req.body;
   try {
-    const Query = `DELETE FROM comments WHERE id=?`;
-    await db.query(Query,[id]);
+    const Query = `UPDATE comments SET status=? WHERE id=?`;
+    await db.query(Query, [status, id]);
 
-    res.status(200).json({message: 'Comment deleted permanently'});    
+    res.status(200).json({ message: 'Comments Status Changed' });
+
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Error while deleting comment"});
-    
+    res.status(500).json({ message: "Error in changing the status of the comment" });
+  }
+});
+
+adminRouter.delete('/comment/delete', async (req, res) => {
+  const { id } = req.body;
+  try {
+    const Query = `DELETE FROM comments WHERE id=?`;
+    await db.query(Query, [id]);
+
+    res.status(200).json({ message: 'Comment deleted permanently' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error while deleting comment" });
+
   }
 
 });
@@ -680,8 +680,10 @@ adminRouter.post('/category/add', async (req, res) => {
   const { name, description } = req.body;
 
   try {
-    const insertQuery = `INSERT INTO categories (name, description) VALUES (?, ?)`;
-    await db.query(insertQuery, [name, description]);
+    const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+
+    const insertQuery = `INSERT INTO categories (name, description, slug) VALUES (?, ?, ?)`;
+    await db.query(insertQuery, [name, description, slug]);
 
     res.status(200).json({ message: "Category added successfully" });
   } catch (error) {
@@ -695,8 +697,9 @@ adminRouter.post('/category/edit', async (req, res) => {
   const { id, name, description } = req.body;
 
   try {
-    const updateQuery = `UPDATE categories SET description = ?, name = ? WHERE id = ?`;
-    await db.query(updateQuery, [description, name, id]);
+    const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+    const updateQuery = `UPDATE categories SET description = ?, name = ?, slug = ? WHERE id = ?`;
+    await db.query(updateQuery, [description, name, slug, id]);
 
     res.status(200).json({ message: "Category updated successfully" });
   } catch (error) {
@@ -742,7 +745,7 @@ adminRouter.get('/delete', async (req, res) => {
 
     const dropQuery2 = `DELETE FROM admin WHERE admin_id=?`;
     await db.query(dropQuery2, userId);
-    
+
     const dropQuery4 = `DELETE FROM users WHERE id=?`;
     await db.query(dropQuery4, userId);
 
@@ -754,8 +757,126 @@ adminRouter.get('/delete', async (req, res) => {
   }
 });
 
+// Analytics
+
+adminRouter.get('/analytics', async (req, res) => {
+  const { range } = req.query;
+  const validRanges = {
+    '7d': '7',
+    '30d': '30',
+    '3m': '90',
+  };
+
+  try {
+    // Overview
+
+    const queryOverview = `
+      SELECT
+        (
+          SELECT COALESCE(SUM(a.views), 0)
+          FROM articles a
+        ) AS total_views,
+
+        (
+          SELECT COALESCE(SUM(a.likes), 0)
+          FROM articles a
+        ) AS total_likes,
+
+        (
+          SELECT COUNT(*)
+          FROM comments cm
+          JOIN articles a
+            ON cm.article_id = a.article_id
+          WHERE cm.status = 'Approved'
+        ) AS total_comments,
+
+        (
+          SELECT COUNT(*)
+          FROM bookmarks b
+        ) AS total_bookmarks
+    `;
+
+    const [overview] = await db.query(queryOverview);
+
+    // Views Series based on the selected range
+    let dateCondition = '';
+
+    if (range !== 'all') {
+      if (!validRanges[range]) {
+        return res.status(400).json({
+          message: 'Invalid range'
+        });
+      }
+      dateCondition = `
+        WHERE av.created_at >= NOW() - INTERVAL ${validRanges[range]} DAY
+      `;
+    }
+    let viewTimeSeries = [];
+    const queryViewTimeSeries = `
+        SELECT
+          DATE_SUB(
+            DATE(av.created_at),
+            INTERVAL WEEKDAY(av.created_at) DAY
+          ) AS date,
+
+          COUNT(*) AS views
+
+        FROM article_views av
+
+        JOIN articles a
+          ON av.article_id = a.article_id
+
+          ${dateCondition}
+
+        GROUP BY
+          DATE_SUB(
+            DATE(av.created_at),
+            INTERVAL WEEKDAY(av.created_at) DAY
+          )
+
+        ORDER BY date ASC
+      `;
+      viewTimeSeries = await db.query(queryViewTimeSeries);
+
+    // Number of articles in each category
+    const queryMaxCategory = `
+      SELECT c.name AS category, COUNT(a.article_id) AS article_count
+      FROM categories c
+      LEFT JOIN articles a ON c.id = a.category_id
+      GROUP BY c.id, c.name
+    `;
+    const [maxCategory] = await db.query(queryMaxCategory);
+
+    // Top Contributors based on number of articles published
+    const queryTopContributors = `
+      SELECT c.cont_id, c.profile_pic, c.username, COUNT(a.article_id) AS article_count, COALESCE(SUM(a.views), 0) AS total_views
+      FROM contributor c
+      LEFT JOIN articles a ON c.cont_id = a.cont_id
+      GROUP BY c.cont_id, c.profile_pic, c.username
+    `;
+    const [topContributors] = await db.query(queryTopContributors);
+
+    // Top Articles based on views
+    const queryTopArticles = `
+      SELECT a.article_id, a.title, a.slug, a.views, c.name AS category, a.likes, COUNT(cm.id) AS comment_count
+      FROM articles a
+      LEFT JOIN categories c ON a.category_id = c.id
+      LEFT JOIN comments cm ON a.article_id = cm.article_id
+      GROUP BY a.article_id, a.title, a.slug, a.views, c.name, a.likes
+      ORDER BY a.views DESC
+      LIMIT 5
+    `;
+    const [topArticles] = await db.query(queryTopArticles);
+
+    res.status(200).json({ overview: overview[0], maxCategory: maxCategory, topContributors: topContributors, topArticles: topArticles, viewTimeSeries: viewTimeSeries[0] });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching analytics" });
+  }
+})
 
 
 
-  
+
+
 export default adminRouter;

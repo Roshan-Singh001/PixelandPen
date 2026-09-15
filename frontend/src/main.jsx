@@ -14,8 +14,8 @@ import { AuthProvider } from "./contexts/AuthContext.jsx";
 
 
 import App from "./App.jsx";
-import Blog from "./pages/Blog";
-import Category from "./pages/Category";
+import Articles from "./pages/Articles";
+import CategoryPage from "./pages/article/CategoryDetail.jsx";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Footer from "./components/Footer.jsx";
@@ -58,8 +58,8 @@ import ReadSettings from "./pages/dashboard/read_components/ReadSettings.jsx";
 import ReadProfilePage from "./pages/profile/ReadProfilePage.jsx";
 
 import Profile from "./pages/profile/profilePage.jsx";
-import ArticlePage from "./pages/article-page.jsx";
-import PreviewArticlePage from "./pages/Preview-Article-Page.jsx";
+import ArticlePage from "./pages/article/ArticlePage.jsx";
+import PreviewArticlePage from "./pages/article/PreviewArticlePage.jsx";
 
 const router = createBrowserRouter([
   {
@@ -73,21 +73,21 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/blog",
+    path: "/articles",
     element: (
       <>
         <Navbar />
-        <Blog />
+        <Articles />
         <Footer />
       </>
     ),
   },
   {
-    path: "/category",
+    path: "/category/:slug",
     element: (
       <>
         <Navbar />
-        <Category />
+        < CategoryPage />
         <Footer />
       </>
     ),
