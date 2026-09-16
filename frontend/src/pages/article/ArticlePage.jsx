@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import AxiosInstance from '../../api/axiosInstance';
 import {
   Heart, Share2, BookmarkPlus, MessageCircle, Calendar, UserRound,
@@ -36,6 +37,7 @@ function parseTags(tags) {
 const ArticlePage = () => {
   const navigate = useNavigate();
   const { slug } = useParams();
+  const SITE_URL = import.meta.env.VITE_SITE_URL;
   const { loggedIn, userData } = useAuth();
 
   const [article, setArticle] = useState(null);
@@ -71,6 +73,23 @@ const ArticlePage = () => {
   }, [slug]);
 
   useEffect(() => {
+    if (!loggedIn || !article) return;
+    const timer = setTimeout(() => {
+      AxiosInstance.post('/action/view', {
+        article_id: article[0].article_id
+      })
+        .then((res) => {
+          console.log('View recorded:', res.data);
+        })
+        .catch((err) => {
+          console.error('Error recording view:', err);
+        });
+    }, 10000);
+
+    return () => clearTimeout(timer);
+  }, [loggedIn, article]);
+
+  useEffect(() => {
     const handleScroll = () => {
       setIsNavVisible(window.scrollY > 300);
     };
@@ -84,21 +103,6 @@ const ArticlePage = () => {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [showShareMenu]);
-
-  const handleView = () => {
-    if (loggedIn) {
-      setTimeout(() => {
-        AxiosInstance.post('/action/view', { article_id: article[0].article_id })
-          .then((res) => {
-            console.log('View recorded:', res.data);
-          })
-          .catch((err) => {
-            console.error('Error recording view:', err);
-          });
-      }, 10000);
-    }
-  }
-  handleView();
 
   if (!article) {
     return (
@@ -129,6 +133,24 @@ const ArticlePage = () => {
 
   const post = article[0];
   const tags = parseTags(post.tags);
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.description,
+    image: post.thumbnail_url ? [post.thumbnail_url] : [],
+    datePublished: post.publish_at,
+    dateModified: post?.updated_at || post.publish_at,
+    author: {
+      "@type": "Person",
+      name: post.author
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Pixel & Pen"
+    }
+  };
+
 
   const handleLike = async () => {
     if (isLiking) return;
@@ -216,7 +238,7 @@ const ArticlePage = () => {
   };
 
   const handleShareTwitter = () => {
-    window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(post.title)}`, '_blank', 'noopener,noreferrer');
+    window.open(`https://x.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(post.title)}`, '_blank', 'noopener,noreferrer');
     setShowShareMenu(false);
   };
 
@@ -227,10 +249,43 @@ const ArticlePage = () => {
   return (
     <div className="min-h-screen bg-[#FAFAF8] dark:bg-slate-900 font-[Inter,system-ui,sans-serif]">
 
+      <Helmet>
+        <title>{post.title} | Pixel & Pen</title>
+
+        <meta
+          name="description"
+          content={post.description}
+        />
+
+        <link
+          rel="canonical"
+          href={`${SITE_URL}/view/${post.slug}`}
+        />
+
+        {/* Open Graph */}
+        <meta property="og:title" content={post.title} />
+        <meta property="og:description" content={post.description} />
+        <meta property="og:image" content={post.thumbnail_url} />
+        <meta
+          property="og:url"
+          content={`${SITE_URL}/view/${post.slug}`}
+        />
+        <meta property="og:type" content="article" />
+
+        {/* Twitter / X */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={post.title} />
+        <meta name="twitter:description" content={post.description} />
+        <meta name="twitter:image" content={post.thumbnail_url} />
+
+        <script type="application/ld+json">
+          {JSON.stringify(articleSchema)}
+        </script>
+      </Helmet>
+
       {/* Sticky nav */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-gray-200 dark:border-slate-700 transition-all duration-200 ${
-        isNavVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'
-      }`}>
+      <nav className={`fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-gray-200 dark:border-slate-700 transition-all duration-200 ${isNavVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'
+        }`}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <button
             onClick={scrollToTop}
@@ -242,18 +297,16 @@ const ArticlePage = () => {
             <button
               onClick={handleLike}
               disabled={isLiking}
-              className={`p-2 rounded-lg transition-colors duration-150 ${
-                isLiked ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700'
-              }`}
+              className={`p-2 rounded-lg transition-colors duration-150 ${isLiked ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700'
+                }`}
             >
               <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
             </button>
             <button
               onClick={handleBookmark}
               disabled={isMarking}
-              className={`p-2 rounded-lg transition-colors duration-150 ${
-                isBookmarked ? 'text-[#1E3A5F] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700'
-              }`}
+              className={`p-2 rounded-lg transition-colors duration-150 ${isBookmarked ? 'text-[#1E3A5F] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-400 dark:text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700'
+                }`}
             >
               <BookmarkPlus className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
             </button>
@@ -299,7 +352,7 @@ const ArticlePage = () => {
         {/* Hero image */}
         <div className="w-full h-64 sm:h-80 lg:h-96 rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800 mb-8">
           {post.thumbnail_url ? (
-            <img src={post.thumbnail_url} alt="" className="w-full h-full object-cover" />
+            <img src={post.thumbnail_url} alt={post.title} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <FileText className="w-10 h-10 text-gray-300 dark:text-slate-500" />
@@ -337,7 +390,7 @@ const ArticlePage = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-6 mb-8 border-b border-gray-200 dark:border-slate-700">
           <div className="flex items-center gap-3">
             {authorPic ? (
-              <img src={authorPic} alt="" className="w-11 h-11 rounded-full object-cover bg-gray-100 dark:bg-slate-700 shrink-0" />
+              <img src={authorPic} alt={authorName} className="w-11 h-11 rounded-full object-cover bg-gray-100 dark:bg-slate-700 shrink-0" />
             ) : (
               <div className="w-11 h-11 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
                 <UserRound className="w-5 h-5 text-gray-300 dark:text-slate-500" />
@@ -365,9 +418,8 @@ const ArticlePage = () => {
             <button
               onClick={handleLike}
               disabled={isLiking}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors duration-150 ${
-                isLiked ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600'
-              }`}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors duration-150 ${isLiked ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20' : 'text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600'
+                }`}
             >
               <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
               {likesCount}

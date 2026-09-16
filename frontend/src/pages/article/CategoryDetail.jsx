@@ -64,7 +64,7 @@ const ArticleCard = ({ article, onRead }) => (
 
 const CategoryPage = () => {
 
-  const { categorySlug } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
 
   const [category, setCategory] = useState(null);
@@ -75,57 +75,41 @@ const CategoryPage = () => {
   const [loadError, setLoadError] = useState("");
   const [notFound, setNotFound] = useState(false);
 
-  const [offset, setOffset] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-
   useEffect(() => {
     fetchCategory(true);
     window.scrollTo({ top: 0 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categorySlug]);
+  }, [slug]);
 
   useEffect(() => {
     document.title = category ? `${category.name} · Pixel & Pen` : 'Pixel & Pen';
   }, [category]);
 
-  const fetchCategory = (reset) => {
-    if (reset) {
-      setIsLoading(true);
-      setLoadError("");
-      setNotFound(false);
-    } else {
-      setIsLoadingMore(true);
-    }
+  const fetchCategory = () => {
+    setIsLoading(true);
+    setLoadError("");
+    setNotFound(false);
 
-    const currentOffset = reset ? 0 : offset;
-
-    AxiosInstance.get(`/category/${categorySlug}`, {
-      params: { limit: PAGE_SIZE, offset: currentOffset },
-    })
+    AxiosInstance.get(`/article/category/${slug}`)
       .then((res) => {
-        if (reset) {
-          setCategory({
-            name: res.data.name,
-            description: res.data.description,
-            article_count: res.data.article_count,
-          });
-        }
+        console.log(res.data);
+        setCategory({
+          name: res.data.category[0].name,
+          description: res.data.category[0].description,
+          article_count: res.data.category[0].article_count,
+        });
         const rows = res.data.articles || [];
-        setArticles((prev) => (reset ? rows : [...prev, ...rows]));
-        setOffset(currentOffset + rows.length);
-        setHasMore(rows.length === PAGE_SIZE);
+        setArticles(rows);
       })
       .catch((err) => {
         console.log(err);
         if (err.response?.status === 404) {
           setNotFound(true);
-        } else if (reset) {
+        } else {
           setLoadError("Couldn't load this category. Please refresh.");
         }
       })
       .finally(() => {
         setIsLoading(false);
-        setIsLoadingMore(false);
       });
   };
 
@@ -239,7 +223,7 @@ const CategoryPage = () => {
           <div className="mb-14 p-4 bg-[#DC2626]/10 dark:bg-[#EF4444]/10 border border-[#DC2626]/20 dark:border-[#EF4444]/20 rounded-xl text-center">
             <p className="text-sm font-medium text-[#DC2626] dark:text-[#EF4444] mb-3">{loadError}</p>
             <button
-              onClick={() => fetchCategory(true)}
+              onClick={() => fetchCategory()}
               className="px-4 py-2 text-xs font-semibold rounded-full text-white bg-[#1E3A5F] dark:bg-[#4F8EF7] dark:text-[#0B1220] hover:bg-[#16304f] dark:hover:bg-[#3f7de0] transition-colors"
             >
               Try Again
@@ -266,28 +250,6 @@ const CategoryPage = () => {
                   <ArticleCard key={article.article_id} article={article} onRead={handleReadArticle} />
                 ))}
               </div>
-
-              {hasMore && (
-                <div className="flex justify-center">
-                  <button
-                    onClick={() => fetchCategory(false)}
-                    disabled={isLoadingMore}
-                    className="inline-flex items-center gap-1.5 px-6 py-3 text-sm font-semibold rounded-full border-2 border-[#1E3A5F] dark:border-[#4F8EF7] text-[#1E3A5F] dark:text-[#4F8EF7] hover:bg-[#1E3A5F] hover:text-white dark:hover:bg-[#4F8EF7] dark:hover:text-[#0B1220] transition-colors disabled:opacity-50"
-                  >
-                    {isLoadingMore ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Loading…
-                      </>
-                    ) : (
-                      <>
-                        Load More
-                        <ChevronRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
             </>
           ) : (
             <div className="text-center py-16 border border-dashed border-[#E5E7EB] dark:border-[#243247] rounded-2xl">

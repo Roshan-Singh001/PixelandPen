@@ -110,7 +110,7 @@ const HomePage = () => {
   };
 
   const handleViewAll = () => {
-    window.open('/articles', '_blank', 'noopener,noreferrer');
+    window.open('/article/latest', '_blank', 'noopener,noreferrer');
   };
 
   const handleCategoryClick = (categorySlug) => {

@@ -1,146 +1,135 @@
-import React from "react";
 import { Link } from "react-router-dom";
+import {
+  Mail, ArrowUpRight
+} from "lucide-react";
+import { FaXTwitter } from "react-icons/fa6";
+import { FaGithub, FaLinkedin, FaFacebook } from "react-icons/fa";
+import LogoDark from "../assets/images/Pixel & Pen(Main-B&W-New).png";
+
+const FOOTER_LINKS = {
+  Explore: [
+    { label: "Main", to: "/articles" },
+    { label: "Latest", to: "/article/latest" },
+  ],
+  Company: [
+    { label: "About", to: "/about" },
+    { label: "Contact", to: "/contact" },
+    { label: "Become a Contributor", to: "/register" },
+  ],
+  Legal: [
+    { label: "Privacy Policy", to: "/privacy" },
+    { label: "Terms of Service", to: "/terms" },
+    { label: "Cookie Policy", to: "/cookies" },
+  ],
+};
+
+const SOCIAL_LINKS = [
+  { icon: FaXTwitter, href: "https://twitter.com", label: "X (Twitter)" },
+  { icon: FaGithub, href: "https://github.com", label: "GitHub" },
+  { icon: FaLinkedin, href: "https://linkedin.com", label: "LinkedIn" },
+  { icon: FaFacebook, href: "https://facebook.com", label: "Facebook" },
+];
 
 const Footer = () => {
-  const categories = [
-    "Lifestyle",
-    "Technology",
-    "Travel",
-    "Business",
-    "Economy",
-    "Sports",
-  ];
-  const socialLinks = ["GitHub", "LinkedIn", "Twitter"];
+  const year = new Date().getFullYear();
 
   return (
-    <footer className="dark:bg-gray-800 bg-gray-200  text-black dark:text-white py-12">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* About Section */}
-          <div className="flex-1">
-            <h4 className="text-xl font-bold mb-4">Pixel and Pen</h4>
-            <p className="mb-4">
-              Empowering writers, inspiring readers. Join our community today.
-            </p>
-            <div className="space-y-2">
-              <p>
-                <b>Email:</b> example123@gmail.com
-              </p>
-              <p>
-                <b>Phone:</b> 112233445566
-              </p>
-            </div>
-          </div>
+    <footer className="bg-[#1E3A5F] dark:bg-[#0B1220] font-['Inter',sans-serif] relative overflow-hidden">
 
-          {/* Quick Links Section */}
-          <div className="flex-1">
-            <h4 className="text-xl font-bold mb-4">Quick Links</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  to="/"
-                  className="hover:text-blue-300 transition duration-300"
-                >
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/blog"
-                  className="hover:text-blue-300 transition duration-300"
-                >
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/category"
-                  className="hover:text-blue-300 transition duration-300"
-                >
-                  Categories
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/about"
-                  className="hover:text-blue-300 transition duration-300"
-                >
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/contact"
-                  className="hover:text-blue-300 transition duration-300"
-                >
-                  Contact
-                </Link>
-              </li>
-            </ul>
-          </div>
+      {/* Dotted texture */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: "radial-gradient(circle, rgba(255,255,255,.07) 1px, transparent 1px)",
+          backgroundSize: "26px 26px",
+        }}
+      />
 
-          {/* Categories Section */}
-          <div className="flex-1">
-            <h4 className="text-xl font-bold mb-4">Categories</h4>
-            <ul className="space-y-2">
-              {categories.map((category) => (
-                <li key={category}>
-                  <a
-                    href="#"
-                    className="hover:text-blue-300 transition duration-300"
-                  >
-                    {category}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
 
-          {/* Newsletter & Social Section */}
-          <div className="flex-1">
-            <h4 className="text-xl font-bold mb-4">Weekly Newsletter</h4>
-            <p className="mb-4">Get blog articles and offers via email</p>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                // Add newsletter submission logic here
-              }}
-            >
-              <input
-                type="email"
-                placeholder="Your email"
-                className="w-[80%] p-3 text-sm outline-none bg-gray-700 border border-gray-600 rounded-md mb-2 text-white placeholder-gray-400 mx-auto"
-                required
+        {/* Main footer content */}
+        <div className="pt-16 pb-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
+
+          {/* Brand */}
+          <div className="sm:col-span-2">
+            <Link to="/" className="inline-flex items-center gap-2.5 mb-5">
+              <img
+                className="h-8 w-auto sm:h-9"
+                src={LogoDark}
+                alt="Pixel & Pen"
               />
-              <button
-                type="submit"
-                className="w-[80%] p-3 text-sm bg-blue-600 text-white font-bold rounded-md cursor-pointer hover:bg-blue-700 transition duration-300 mx-auto"
-              >
-                Subscribe
-              </button>
-            </form>
+              <span className="text-xl font-bold text-[#F8FAFC]">
+                Pixel
+                <span className="font-[Newsreader,Georgia,serif] text-[#FF8A3D]"> & </span>
+                Pen
+              </span>
+            </Link>
+            <p className="text-sm text-white/50 leading-relaxed max-w-xs mb-6">
+              A platform for thoughtful writing on technology, design, and the way we work — built for readers who think deeply.
+            </p>
 
-            <div className="mt-6">
-              <h4 className="text-xl font-bold mb-4">Connect With Us</h4>
-              <div className="flex space-x-4">
-                {socialLinks.map((social) => (
-                  <a
-                    key={social}
-                    href="#"
-                    className="text-white hover:text-blue-300 transition duration-300"
-                  >
-                    {social}
-                  </a>
-                ))}
-              </div>
+            {/* Social links */}
+            <div className="flex items-center gap-2">
+              {SOCIAL_LINKS.map(({ icon: Icon, href, label }) => (
+                <a
+
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 hover:text-white transition-colors duration-150"
+                >
+                  <Icon className="w-4 h-4" />
+                </a>
+              ))}
+              <a
+
+                href="mailto:pixelandpenteam@gmail.com"
+                aria-label="Email"
+                className="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 hover:text-white transition-colors duration-150"
+              >
+                <Mail className="w-4 h-4" />
+              </a>
             </div>
           </div>
+
+          {/* Link columns */}
+          {Object.entries(FOOTER_LINKS).map(([heading, links]) => (
+            <div key={heading}>
+              <h3 className="text-[11px] font-semibold tracking-[0.18em] uppercase text-white/30 mb-4">
+                {heading}
+              </h3>
+              <ul className="space-y-2.5">
+                {links.map(({ label, to }) => (
+                  <li key={label}>
+                    <Link
+                      to={to}
+                      className="text-sm text-white/55 hover:text-white transition-colors duration-150 inline-flex items-center gap-1 group"
+                    >
+                      {label}
+                      <ArrowUpRight className="w-3 h-3 opacity-0 -translate-y-0.5 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
-        {/* Copyright Section */}
-        <div className="text-center mt-8 pt-8 border-t border-gray-700">
-          © {new Date().getFullYear()} Pixel and Pen. All Rights Reserved.
+        {/* Divider */}
+        <div className="h-px bg-white/10" />
+
+        {/* Bottom bar */}
+        <div className="py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-xs text-white/30 text-center sm:text-left">
+            © {year} Pixel &amp; Pen. All rights reserved.
+          </p>
+          <p className="text-xs text-white/20 text-center sm:text-right">
+            Built with care for curious minds.
+          </p>
         </div>
+
       </div>
     </footer>
   );

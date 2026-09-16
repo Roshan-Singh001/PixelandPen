@@ -93,10 +93,10 @@ const MyArticles = () => {
     AxiosInstance.get(`/dashboard/contri/article/stats/${article.slug}`)
       .then((res) => {
         setPerformanceData({
-          views: res.data.views || 0,
-          likes: res.data.likes || 0,
-          bookmarks: res.data.bookmarks || 0,
-          comments: res.data.comments || 0,
+          views: res.data[0].views || 0,
+          likes: res.data[0].likes || 0,
+          bookmarks: res.data[0].bookmarks || 0,
+          comments: res.data[0].comments || 0,
         });
         setPerformanceLoading(false);
       })
@@ -323,7 +323,7 @@ const MyArticles = () => {
       {/* Performance modal */}
       {performanceArticle && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          className="!m-0 fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
           onClick={closePerformance}
         >
           <div

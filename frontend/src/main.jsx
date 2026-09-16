@@ -6,6 +6,7 @@ import "./index.css";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { ToastContainer, toast } from "react-toastify";
+import { HelmetProvider } from "react-helmet-async";
 import "react-toastify/dist/ReactToastify.css";
 
 import Navbar from "./components/Navbar.jsx";
@@ -16,6 +17,7 @@ import { AuthProvider } from "./contexts/AuthContext.jsx";
 import App from "./App.jsx";
 import Articles from "./pages/Articles";
 import CategoryPage from "./pages/article/CategoryDetail.jsx";
+import LatestArticlesPage from "./pages/article/LatestArticles.jsx";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Footer from "./components/Footer.jsx";
@@ -87,7 +89,17 @@ const router = createBrowserRouter([
     element: (
       <>
         <Navbar />
-        < CategoryPage />
+        <CategoryPage />
+        <Footer />
+      </>
+    ),
+  },
+  {
+    path: "/article/latest",
+    element: (
+      <>
+        <Navbar />
+        < LatestArticlesPage />
         <Footer />
       </>
     ),
@@ -251,7 +263,7 @@ const router = createBrowserRouter([
           },
           {
             path: "profile",
-            element: <ContriProfile/>,
+            element: <ContriProfile />,
           },
           {
             path: "article",
@@ -277,7 +289,7 @@ const router = createBrowserRouter([
       },
     ],
   },
-  
+
   {
     element: <PrivateRoute allowedRoles={["Contributor"]} />,
     children: [
@@ -298,7 +310,7 @@ const router = createBrowserRouter([
       }
     ]
   },
-  
+
   {
     element: <PrivateRoute allowedRoles={["Reader"]} />,
     children: [
@@ -359,9 +371,11 @@ createRoot(document.getElementById("root")).render(
       pauseOnHover
       theme="colored"
     />
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>
+    <HelmetProvider>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </HelmetProvider>
   </ThemeProvider>
   // {/* </StrictMode> */}
 );
