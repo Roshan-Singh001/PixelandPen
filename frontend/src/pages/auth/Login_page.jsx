@@ -7,6 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import LogoDark from "../../assets/images/Pixel & Pen(Main-B&W-New).png";
 import PixelPenLoader from "../../components/PixelPenLoader";
 import { useAuth } from "../../contexts/AuthContext";
+import MetaData from "../../components/MetaData";
 
 const inputBase =
   "w-full px-3 py-2.5 text-sm bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-slate-600 rounded focus:outline-none focus:border-[#1E3A5F] dark:focus:border-blue-400 focus:ring-2 focus:ring-[#1E3A5F]/10 dark:focus:ring-blue-400/10 placeholder-gray-400 dark:placeholder-slate-500 transition duration-150";
@@ -29,14 +30,14 @@ const EyeButton = ({ show, onToggle }) => (
 );
 
 const FEATURES = [
-  { n: "01", title: "Manage your content",  desc: "Access BlogFlow and all your drafts, posts, and analytics." },
+  { n: "01", title: "Manage your content", desc: "Access BlogFlow and all your drafts, posts, and analytics." },
   { n: "02", title: "Collaborate with teams", desc: "Work alongside contributors and admins in one place." },
-  { n: "03", title: "Publish anywhere",      desc: "Distribute content across platforms without leaving the ecosystem." },
+  { n: "03", title: "Publish anywhere", desc: "Distribute content across platforms without leaving the ecosystem." },
 ];
 
 function Login_Page() {
   const { loggedIn, userData, loading, login } = useAuth();
-  const [isLoading, setIsLoading]   = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ username: "", pass: "", loginAs: "" });
   const navigate = useNavigate();
@@ -75,6 +76,10 @@ function Login_Page() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFAF8] dark:bg-slate-900 font-[Inter,system-ui,sans-serif] antialiased">
+      <MetaData
+        title="Login"
+        noIndex
+      />
 
 
       <main className="flex-1 flex items-center justify-center p-4">
@@ -230,7 +235,7 @@ function Login_Page() {
               {/* Terms */}
               <p className="mt-6 text-xs text-center text-gray-400 dark:text-slate-500 leading-relaxed">
                 By signing in you agree to our{" "}
-                <Link to="/terms"   className="text-[#1E3A5F] dark:text-blue-400 hover:underline">Terms</Link>
+                <Link to="/terms" className="text-[#1E3A5F] dark:text-blue-400 hover:underline">Terms</Link>
                 {" "}and{" "}
                 <Link to="/privacy" className="text-[#1E3A5F] dark:text-blue-400 hover:underline">Privacy Policy</Link>.
               </p>

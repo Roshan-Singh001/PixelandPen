@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import MetaData from '../../components/MetaData';
 import AxiosInstance from '../../api/axiosInstance';
 import {
   Heart, Share2, BookmarkPlus, MessageCircle, Calendar, UserRound,
@@ -133,22 +133,26 @@ const ArticlePage = () => {
 
   const post = article[0];
   const tags = parseTags(post.tags);
+  const articleUrl = `/view/${post.slug}`;
+
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: post.title,
     description: post.description,
-    image: post.thumbnail_url ? [post.thumbnail_url] : [],
+    image: post.thumbnail_url
+      ? [post.thumbnail_url]
+      : [],
     datePublished: post.publish_at,
-    dateModified: post?.updated_at || post.publish_at,
+    dateModified: post.updated_at || post.publish_at,
     author: {
       "@type": "Person",
-      name: post.author
+      name: post.author,
     },
     publisher: {
       "@type": "Organization",
-      name: "Pixel & Pen"
-    }
+      name: "Pixel & Pen",
+    },
   };
 
 
@@ -249,39 +253,14 @@ const ArticlePage = () => {
   return (
     <div className="min-h-screen bg-[#FAFAF8] dark:bg-slate-900 font-[Inter,system-ui,sans-serif]">
 
-      <Helmet>
-        <title>{post.title} | Pixel & Pen</title>
-
-        <meta
-          name="description"
-          content={post.description}
-        />
-
-        <link
-          rel="canonical"
-          href={`${SITE_URL}/view/${post.slug}`}
-        />
-
-        {/* Open Graph */}
-        <meta property="og:title" content={post.title} />
-        <meta property="og:description" content={post.description} />
-        <meta property="og:image" content={post.thumbnail_url} />
-        <meta
-          property="og:url"
-          content={`${SITE_URL}/view/${post.slug}`}
-        />
-        <meta property="og:type" content="article" />
-
-        {/* Twitter / X */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={post.title} />
-        <meta name="twitter:description" content={post.description} />
-        <meta name="twitter:image" content={post.thumbnail_url} />
-
-        <script type="application/ld+json">
-          {JSON.stringify(articleSchema)}
-        </script>
-      </Helmet>
+      <MetaData
+        title={post.title}
+        description={post.description}
+        image={post.thumbnail_url}
+        url={articleUrl}
+        type="article"
+        schema={articleSchema}
+      />
 
       {/* Sticky nav */}
       <nav className={`fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-gray-200 dark:border-slate-700 transition-all duration-200 ${isNavVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'

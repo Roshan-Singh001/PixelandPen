@@ -5,6 +5,7 @@ import {
   Search, Clock, ArrowRight, FileText, TrendingUp, Tag, Eye,
   UserRound, Sparkles, Flame, ChevronLeft, ChevronRight, X, Loader2, SearchX
 } from "lucide-react";
+import MetaData from "../components/MetaData";
 
 function formatDate(dateString) {
   if (!dateString) return "";
@@ -141,6 +142,11 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-[#FAFAF8] dark:bg-[#0B1220] font-['Inter',sans-serif]">
+      <MetaData
+        title="Articles"
+        description="Fresh writing on technology, design, and the way we work — curated daily."
+        url="/articles"
+      />
 
       {/* Hero / Search band */}
       <div className="relative overflow-hidden bg-[#1E3A5F] dark:bg-[#0B1220] dark:border-b dark:border-[#243247]">

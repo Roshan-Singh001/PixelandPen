@@ -5,6 +5,7 @@ import { Slate, Editable, withReact, useSlate } from 'slate-react';
 import { Node, Text, createEditor, Editor, Range, Transforms, Element as SlateElement } from 'slate';
 import { withHistory, HistoryEditor } from 'slate-history';
 import isHotkey from 'is-hotkey';
+import MetaData from '../../components/MetaData';
 
 import PixelPenLoaderSmall from '../../components/PixelPenLoaderSmall';
 import PixelPenLoader from '../../components/PixelPenLoader';
@@ -146,7 +147,6 @@ const ArticleEditor = () => {
       currentSlug,
       title,
       description,
-      currentSlug,
       categoryId,
       tags,
       featuredImage,
@@ -304,10 +304,6 @@ const ArticleEditor = () => {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isContentDirty]);
-
-  useEffect(() => {
-    document.title = 'Article Editor · Pixel & Pen';
-  }, []);
 
   // Render elements
   const renderElement = useCallback((props) => {
@@ -572,10 +568,12 @@ const ArticleEditor = () => {
     return <PixelPenLoader />
   }
 
-  console.log(allCategories)
-
   return (
     <div className="min-h-screen bg-[#FAFAF8] dark:bg-[#0B1220] text-[#1F2937] dark:text-[#F8FAFC] transition-colors duration-300 p-4 ">
+      <MetaData
+        title="Article Editor"
+        noIndex
+      />
       <div className="mb-4 sm:mb-6">
         <h1 className="text-2xl sm:text-3xl font-['Newsreader'] font-black tracking-tight">Article Editor</h1>
         <p className="mt-1 text-sm text-[#6B7280] dark:text-[#AAB4C5]">

@@ -5,6 +5,7 @@ import {
   ExternalLink, Eye, UserMinus, Tag
 } from 'lucide-react';
 import AxiosInstance from '../../api/axiosInstance';
+import MetaData from '../../components/MetaData';
 
 function memberSince(dateString) {
   if (!dateString) return "";
@@ -137,6 +138,11 @@ const ReadProfilePage = () => {
 
   return (
     <div className="space-y-8 font-[Inter,system-ui,sans-serif] mx-auto my-20 max-w-4xl">
+      <MetaData
+        title={profile.username ? `${profile.username} · Pixel & Pen` : "Contributor Profile · Pixel & Pen"}
+        description={profile.bio || "This contributor hasn't added a bio yet."}
+        url={`/profile/reader/${profile.username}`}
+      />
 
       {/* Profile card */}
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-8 sm:p-10 flex flex-col items-center text-center">

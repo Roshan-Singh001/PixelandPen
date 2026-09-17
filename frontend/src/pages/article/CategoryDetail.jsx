@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AxiosInstance from "../../api/axiosInstance.jsx";
+import MetaData from "../../components/MetaData.jsx";
 import {
   ArrowLeft, FileText, Eye, ChevronRight, Loader2, FolderX, Tag
 } from "lucide-react";
@@ -71,7 +72,6 @@ const CategoryPage = () => {
   const [articles, setArticles] = useState([]);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [notFound, setNotFound] = useState(false);
 
@@ -176,6 +176,11 @@ const CategoryPage = () => {
 
   return (
     <div className="min-h-screen bg-[#FAFAF8] dark:bg-[#0B1220] font-['Inter',sans-serif]">
+      <MetaData
+        title={`${category?.name} Articles`}
+        description={`Read the latest ${category?.name} articles on Pixel & Pen.`}
+        url={`/category/${slug}`}
+      />
 
       {/* Header */}
       <div className="relative overflow-hidden bg-[#1E3A5F] dark:bg-[#0B1220] dark:border-b dark:border-[#243247]">

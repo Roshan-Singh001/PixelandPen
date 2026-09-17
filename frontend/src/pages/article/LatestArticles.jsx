@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AxiosInstance from "../../api/axiosInstance";
+import MetaData from "../../components/MetaData";
 import {
   FileText, Eye, ArrowLeft, BookOpen, SlidersHorizontal,
   ChevronDown, X, AlertCircle
@@ -84,7 +85,6 @@ const LatestArticlesPage = () => {
 
   const [sortBy, setSortBy] = useState("newest");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     document.title = 'All Articles · Pixel & Pen';
@@ -182,6 +182,11 @@ const LatestArticlesPage = () => {
 
   return (
     <div className="min-h-screen bg-[#FAFAF8] dark:bg-[#0B1220] font-['Inter',sans-serif]">
+      <MetaData
+        title="Latest Articles"
+        description="Read the latest articles, stories, and insights from Pixel & Pen."
+        url="/article/latest"
+      />
 
       {/* Header */}
       <div className="relative overflow-hidden bg-[#1E3A5F] dark:bg-[#0B1220] dark:border-b dark:border-[#243247]">

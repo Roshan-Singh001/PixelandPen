@@ -8,8 +8,9 @@ import { FaBars } from "react-icons/fa";
 import { BiSolidDashboard, BiSolidCommentDetail } from "react-icons/bi";
 import { MdArticle, MdAnalytics, MdLogout } from "react-icons/md";
 import { IoPersonAdd, IoSettingsSharp } from "react-icons/io5";
-import { FaAnglesRight, FaAnglesLeft, FaBullhorn, FaTags  } from "react-icons/fa6";
+import { FaAnglesRight, FaAnglesLeft, FaBullhorn, FaTags } from "react-icons/fa6";
 import { FaBookReader } from "react-icons/fa";
+import MetaData from "../../components/MetaData";
 
 import { useAuth } from "../../contexts/AuthContext";
 import PixelPenLoader from "../../components/PixelPenLoader";
@@ -33,12 +34,12 @@ const NAV_ITEMS = [
   {
     label: "Reader",
     path: "reader",
-    icon: <FaBookReader  size={18} />,
+    icon: <FaBookReader size={18} />,
   },
   {
     label: "Announcements",
     path: "announcements",
-    icon: <FaBullhorn  size={18} />,
+    icon: <FaBullhorn size={18} />,
   },
   {
     label: "Comments",
@@ -48,7 +49,7 @@ const NAV_ITEMS = [
   {
     label: "Category",
     path: "category",
-    icon: <FaTags  size={18} />,
+    icon: <FaTags size={18} />,
   },
   {
     label: "Analytics",
@@ -73,10 +74,6 @@ const AdminDashboard = () => {
   const [statsData, setStatsData] = useState([]);
   const [articleRequests, setArticleRequests] = useState([]);
   const [contributorRequests, setContributorRequests] = useState([]);
-
-  useEffect(() => {
-    document.title = 'Admin · Pixel & Pen';
-  }, []);
 
   const activeItem = NAV_ITEMS.find(({ path }) => {
     if (path === "") {
@@ -123,6 +120,10 @@ const AdminDashboard = () => {
 
   return (
     <div className="font-[Inter,system-ui,sans-serif] flex h-screen overflow-hidden bg-[#FAFAF8] dark:bg-slate-900 text-gray-800 dark:text-gray-100 antialiased">
+      <MetaData
+        title="Admin"
+        noIndex
+      />
 
       {/* Mobile overlay */}
       {mobileOpen && (

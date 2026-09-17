@@ -1,6 +1,13 @@
+import MetaData from "../components/MetaData";
+
 const About = () => {
   return (
     <>
+      <MetaData
+        title="About"
+        description="Learn more about Pixel & Pen, our mission, and the stories we publish."
+        url="/about"
+      />
       <section className="dark:bg-gray-900 text-gray-800 dark:text-gray-100 px-4 py-12 sm:px-8 md:px-16 lg:px-24 xl:px-32">
         <div className="max-w-5xl mx-auto">
           <h1 className="text-4xl sm:text-5xl font-bold mb-8 text-center text-indigo-600 dark:text-indigo-400">

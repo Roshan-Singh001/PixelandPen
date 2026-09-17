@@ -1,6 +1,7 @@
 import React from 'react';
 import { FaGithub, FaLinkedin} from 'react-icons/fa';
 import { FaXTwitter } from "react-icons/fa6";
+import MetaData from '../components/MetaData';
 
 const Contact = () => {
   const teamMembers = [
@@ -26,6 +27,11 @@ const Contact = () => {
 
   return (
     <section className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 px-4 py-12 sm:px-8 md:px-16 lg:px-24 xl:px-32">
+      <MetaData
+        title="Contact"
+        description="Get in touch with the Pixel & Pen team."
+        url="/contact"
+      />
       <div className="max-w-4xl mx-auto text-center">
         <h1 className="text-4xl sm:text-5xl font-bold mb-8 text-indigo-600 dark:text-indigo-400">
           Contact Us

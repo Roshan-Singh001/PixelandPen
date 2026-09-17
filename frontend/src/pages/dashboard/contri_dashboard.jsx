@@ -25,6 +25,7 @@ import { IoIosAddCircle } from "react-icons/io";
 
 import PixelPenLoader from "../../components/PixelPenLoader";
 import { useAuth } from "../../contexts/AuthContext";
+import MetaData from "../../components/MetaData";
 
 
 
@@ -43,10 +44,6 @@ const ContributorDashboard = () => {
 
   const [recentArticles, setRecentArticles] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
-
-  useEffect(() => {
-    document.title = 'Contributor · Pixel & Pen';
-  }, []);
 
   const NAV_ITEMS = [
     {
@@ -181,6 +178,10 @@ const ContributorDashboard = () => {
 
   return (
     <div className="font-[Inter,system-ui,sans-serif] flex h-screen overflow-hidden bg-[#FAFAF8] dark:bg-slate-900 text-gray-800 dark:text-gray-100 antialiased">
+      <MetaData
+        title="Contributor"
+        noIndex
+      />
 
       {/* Mobile Sidebar Backdrop*/}
       {mobileOpen && (

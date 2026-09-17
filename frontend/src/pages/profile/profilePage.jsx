@@ -10,6 +10,7 @@ import { FaXTwitter } from 'react-icons/fa6';
 import { FaGithub, FaLinkedin, FaFacebook } from "react-icons/fa";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import MetaData from '../../components/MetaData';
 
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -222,6 +223,11 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-[#FAFAF8] dark:bg-slate-900 font-[Inter,system-ui,sans-serif]">
+      <MetaData
+        title={contributor.username ? `${contributor.username} · Pixel & Pen` : "Contributor Profile · Pixel & Pen"}
+        description={contributor.bio || "This contributor hasn't added a bio yet."}
+        url={`/profile/cont/${contributor.username}`}
+      />
 
       {/* Hero */}
       <div className="bg-[#1E3A5F] relative overflow-hidden">
