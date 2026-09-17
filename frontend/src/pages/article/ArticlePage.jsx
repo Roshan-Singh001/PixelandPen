@@ -37,7 +37,6 @@ function parseTags(tags) {
 const ArticlePage = () => {
   const navigate = useNavigate();
   const { slug } = useParams();
-  const SITE_URL = import.meta.env.VITE_SITE_URL;
   const { loggedIn, userData } = useAuth();
 
   const [article, setArticle] = useState(null);
@@ -67,8 +66,17 @@ const ArticlePage = () => {
         setLikesCount(res.data.article[0].likes || 0);
       })
       .catch((err) => {
-        console.error('Error fetching article:', err);
-        navigate("/notfound");
+        const status = err.response?.status;
+        if (status === 404) {
+          navigate("/notfound");
+        }
+        else if(status === 429) {
+          toast.error("Too many requests. Please wait a few minutes before trying again.");
+        }
+        else {
+          console.error('Error fetching article:', err);
+          navigate("/notfound");
+        }
       });
   }, [slug]);
 
@@ -82,7 +90,12 @@ const ArticlePage = () => {
           console.log('View recorded:', res.data);
         })
         .catch((err) => {
-          console.error('Error recording view:', err);
+          const status = err.response?.status;
+          if (status === 429) {
+            toast.error("Too many requests. Please wait a few minutes before trying again.");
+          } else {
+            console.error('Error recording view:', err);
+          }
         });
     }, 10000);
 
@@ -170,7 +183,12 @@ const ArticlePage = () => {
       setIsLiked((prev) => !prev);
       setLikesCount((prev) => (isLiked ? prev - 1 : prev + 1));
     } catch (error) {
-      console.log(error);
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.error('Error liking article:', error);
+      }
     }
     setIsLiking(false);
   };
@@ -188,7 +206,12 @@ const ArticlePage = () => {
       await AxiosInstance.post('/action/bookmark', { article_id: post.article_id });
       setIsBookmarked((prev) => !prev);
     } catch (error) {
-      console.log(error);
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.error('Error bookmarking article:', error);
+      }
     }
     setIsMarking(false);
   };
@@ -220,8 +243,13 @@ const ArticlePage = () => {
       ]);
       setComment('');
     } catch (error) {
-      console.log(error);
-      toast.error("Cannot comment yet");
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.error('Error commenting on article:', error);
+        toast.error("Cannot comment yet");
+      }
     }
     setIsCommenting(false);
   };

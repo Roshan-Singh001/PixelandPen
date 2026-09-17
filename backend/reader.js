@@ -6,6 +6,7 @@ import fs from "fs";
 import FormData from 'form-data';
 import bcrypt from "bcryptjs";
 import { authMiddleware, authorizeReader } from './middleware.js';
+import { passwordResetLimiter, deleteLimiter } from "./rateLimitMiddleware.js";
 
 const readRouter = express.Router();
 
@@ -107,7 +108,7 @@ readRouter.get("/stat/reads/week", async (req, res) => {
         const queryWeekReads = `
             SELECT COUNT(*) AS week_reads 
             FROM article_views
-            WHERE reader_id = ? AND viewed_at >= DATE_SUB(NOW(), INTERVAL 1 WEEK)
+            WHERE reader_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 1 WEEK)
         `;
         const [weekReadsResult] = await db.query(queryWeekReads, [userId]);
         const weekReads = weekReadsResult[0].week_reads || 0;
@@ -126,7 +127,7 @@ readRouter.get("/stat/reads/month", async (req, res) => {
         const queryMonthReads = `
             SELECT COUNT(*) AS month_reads 
             FROM article_views
-            WHERE reader_id = ? AND viewed_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            WHERE reader_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
         `;
         const [monthReadsResult] = await db.query(queryMonthReads, [userId]);
         const monthReads = monthReadsResult[0].month_reads || 0;
@@ -205,7 +206,7 @@ readRouter.get("/recent/reads", async (req, res) => {
 
     try {
         const queryRecentReads = `
-        SELECT a.article_id, a.slug, a.title, a.thumbnail_url, c.name AS category_name, a.author, a.views, a.likes, a.created_at
+        SELECT a.article_id, a.slug, a.title, a.thumbnail_url, c.name AS category_name, a.author, a.views, a.likes, a.publish_at
         FROM articles a
         JOIN article_views av ON a.article_id = av.article_id
         JOIN categories c ON a.category_id = c.id
@@ -222,7 +223,6 @@ readRouter.get("/recent/reads", async (req, res) => {
 })
 
 // Bookmarks
-
 readRouter.get("/bookmarks", async (req, res) => {
     const userId = req.user.id;
 
@@ -265,7 +265,6 @@ readRouter.delete("/bookmark/:articleId", async (req, res) => {
 })
 
 // Likes
-
 readRouter.get("/likes", async (req, res) => {
     const userId = req.user.id;
 
@@ -561,7 +560,7 @@ readRouter.put("/profile/update", upload.single("profile_pic"), async (req, res)
 
 // Settings
 
-readRouter.put("/settings/password", async (req, res) => {
+readRouter.put("/settings/password", passwordResetLimiter, async (req, res) => {
     const userId = req.user.id;
     const { current_password, new_password } = req.body;
 
@@ -589,7 +588,7 @@ readRouter.put("/settings/password", async (req, res) => {
     }
 });
 
-readRouter.delete("/delete", async (req, res) => {
+readRouter.delete("/delete", deleteLimiter, async (req, res) => {
     const userId = req.user.id;
 
     try {

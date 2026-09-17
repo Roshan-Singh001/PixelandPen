@@ -10,6 +10,7 @@ import { MdArticle, MdAnalytics, MdLogout } from "react-icons/md";
 import { IoPersonAdd, IoSettingsSharp } from "react-icons/io5";
 import { FaAnglesRight, FaAnglesLeft, FaBullhorn, FaTags } from "react-icons/fa6";
 import { FaBookReader } from "react-icons/fa";
+import { ToastContainer, toast } from "react-toastify";
 import MetaData from "../../components/MetaData";
 
 import { useAuth } from "../../contexts/AuthContext";
@@ -100,7 +101,15 @@ const AdminDashboard = () => {
           { title: "Total Contributors", value: r3.data.total_c || 0, icon: UserCheck },
           { title: "Total Readers", value: r4.data.total_r || 0, icon: Users },
         ]);
-      } catch (e) { console.error(e); }
+      } catch (e) { 
+        const status = e.response?.status;
+        if (status === 429) {
+          toast.error("Too many requests. Please wait a few minutes before trying again.");
+        } else {
+          console.log(e);
+          toast.error("Failed to fetch dashboard statistics. Please try again later.");
+        }
+      }
 
       try {
         const [ra, rc] = await Promise.all([
@@ -232,6 +241,15 @@ const AdminDashboard = () => {
             />
           </div>
         </main>
+
+        <ToastContainer
+          position="top-right"
+          autoClose={4000}
+          hideProgressBar
+          closeOnClick
+          pauseOnHover
+          theme="light"
+        />
 
       </div>
     </div>

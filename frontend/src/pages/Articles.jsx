@@ -6,6 +6,7 @@ import {
   UserRound, Sparkles, Flame, ChevronLeft, ChevronRight, X, Loader2, SearchX
 } from "lucide-react";
 import MetaData from "../components/MetaData";
+import { toast } from "react-toastify";
 
 function formatDate(dateString) {
   if (!dateString) return "";
@@ -22,11 +23,6 @@ function formatNumber(num) {
 const HomePage = () => {
 
   const navigate = useNavigate();
-
-  useEffect(() => {
-    document.title = 'Articles · Pixel & Pen';
-  }, []);
-
   const [featuredArticles, setFeaturedArticles] = useState([]);
   const [latestArticles, setLatestArticles] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -68,7 +64,12 @@ const HomePage = () => {
       }
     } catch (error) {
       console.log(error);
-      setLoadError("Couldn't load articles. Please try again later.");
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        setLoadError("Couldn't load articles. Please try again later.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -89,8 +90,13 @@ const HomePage = () => {
       })
       .catch((err) => {
         console.log(err);
-        setSearchError("Couldn't complete the search. Please try again.");
-        setSearchResults([]);
+        const status = err.response?.status;
+        if (status === 429) {
+          toast.error("Too many requests. Please wait a few minutes before trying again.");
+        } else {
+          setSearchError("Couldn't complete the search. Please try again.");
+          setSearchResults([]);
+        }
       })
       .finally(() => setIsSearching(false));
   };

@@ -4,6 +4,7 @@ import {
   AlertCircle, Loader2, Tag
 } from 'lucide-react';
 import AxiosInstance from '../../../api/axiosInstance';
+import { toast } from 'react-toastify';
 
 function formatDate(dateString) {
   if (!dateString) return "";
@@ -32,7 +33,6 @@ const ArticleRequests = () => {
 
   useEffect(() => {
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRender]);
 
   const fetchData = async () => {
@@ -53,8 +53,12 @@ const ArticleRequests = () => {
         setLoadError("Couldn't load articles. Please refresh.");
       }
     } catch (error) {
-      console.log(error);
-      setLoadError("Couldn't load articles. Please refresh.");
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        setLoadError("Couldn't load articles. Please refresh.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -79,9 +83,15 @@ const ArticleRequests = () => {
         author: article.author,
         publish_At: date,
       });
+      toast.success(`Article "${article.title}" approved successfully.`);
       setRender((r) => r + 1);
     } catch (error) {
-      console.log(error);
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.log(error);
+      }
     } finally {
       setBusyId(null);
     }
@@ -109,7 +119,13 @@ const ArticleRequests = () => {
       setRejectReason('');
       setSelectedArticle(null);
     } catch (error) {
-      console.log(error);
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.log(error);
+        toast.error("Failed to reject article.");
+      }
     } finally {
       setIsRejecting(false);
     }
@@ -125,7 +141,13 @@ const ArticleRequests = () => {
       });
       setRender((r) => r + 1);
     } catch (error) {
-      console.log(error);
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.log(error);
+        toast.error("Failed to update article feature status.");
+      }
     } finally {
       setBusyId(null);
     }
@@ -146,7 +168,13 @@ const ArticleRequests = () => {
       setRender((r) => r + 1);
       setDeleteTarget(null);
     } catch (error) {
-      console.log(error);
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.log(error);
+        toast.error("Failed to delete article.");
+      }
     } finally {
       setIsDeleting(false);
     }

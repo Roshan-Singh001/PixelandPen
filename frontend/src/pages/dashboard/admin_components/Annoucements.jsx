@@ -4,6 +4,7 @@ import {
   Megaphone, Plus, Calendar, Users, Eye, Edit3, Trash2, Save, X,
   AlertCircle, Check, Send, FileText, Loader2
 } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const AUDIENCE_META = {
   All: { label: "All Users", icon: Users, color: "text-[#1E3A5F] dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-900/20" },
@@ -57,7 +58,12 @@ const Announcements = () => {
       }
     } catch (error) {
       console.log(error);
-      setLoadError("Couldn't load announcements. Please refresh.");
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        setLoadError("Couldn't load announcements. Please refresh.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -143,11 +149,16 @@ const Announcements = () => {
 
         showNotification("Announcement created successfully");
       }
+      
 
       closeModal();
     } catch (error) {
-      console.log(error);
-      setFormError(editingAnnouncement ? "Couldn't update this announcement." : "Couldn't create this announcement.");
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        setFormError(editingAnnouncement ? "Couldn't update this announcement." : "Couldn't create this announcement.");
+      }
     } finally {
       setIsSaving(false);
     }

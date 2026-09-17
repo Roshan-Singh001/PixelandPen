@@ -12,16 +12,26 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = async () => {
 
       try {
-          const response = await AxiosInstance.get("/auth/profile");
-      
-          const { username, role, id } = response.data;
-          setUserData({ userName: username, userRole: role, user_id: id });
-          setLoggedIn(true);
+        const response = await AxiosInstance.get("/auth/profile");
+
+        const { username, role, id } = response.data;
+        setUserData({ userName: username, userRole: role, user_id: id });
+        setLoggedIn(true);
       }
       catch (err) {
-        console.error("Auth check failed:", err);
-        logout();
-      } 
+        const status = err.response?.status;
+
+        if (status === 401) {
+          setLoggedIn(false);
+          setUserData(null);
+        }
+        else if (status === 429) {
+          console.error("Too many authentication requests");
+        }
+        else {
+          console.error("Auth check failed:", err);
+        }
+      }
       finally {
         setLoading(false);
       }
@@ -53,8 +63,11 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error("Login failed:", error);
-      await logout();
-      return { success: false, error: error.response?.data?.message || "Login failed" };
+      return {
+        success: false,
+        status: error.response?.status,
+        error: error.response?.data?.message || "Login failed",
+      };
     } finally {
       setLoading(false);
     }
@@ -63,19 +76,18 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await AxiosInstance.post("/logout");
-    } 
+    }
     catch (error) {
       console.error("Logout failed:", error);
     }
-    finally{
-      localStorage.removeItem("authToken");
+    finally {
       setLoggedIn(false);
       setUserData(null);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ loggedIn, setLoggedIn,loading, logout,login, userData }}>
+    <AuthContext.Provider value={{ loggedIn, setLoggedIn, loading, logout, login, userData }}>
       {!loading && children}
     </AuthContext.Provider>
   );

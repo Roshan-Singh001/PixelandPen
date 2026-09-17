@@ -6,8 +6,6 @@ import {
   ArrowLeft, FileText, Eye, ChevronRight, Loader2, FolderX, Tag
 } from "lucide-react";
 
-const PAGE_SIZE = 9;
-
 function formatDate(dateString) {
   if (!dateString) return "";
   return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -80,10 +78,6 @@ const CategoryPage = () => {
     window.scrollTo({ top: 0 });
   }, [slug]);
 
-  useEffect(() => {
-    document.title = category ? `${category.name} · Pixel & Pen` : 'Pixel & Pen';
-  }, [category]);
-
   const fetchCategory = () => {
     setIsLoading(true);
     setLoadError("");
@@ -104,7 +98,11 @@ const CategoryPage = () => {
         console.log(err);
         if (err.response?.status === 404) {
           setNotFound(true);
-        } else {
+        }
+        else if (err.response?.status === 429) {
+          setLoadError("Too many requests. Please wait a few minutes before trying again.");
+        } 
+        else {
           setLoadError("Couldn't load this category. Please refresh.");
         }
       })

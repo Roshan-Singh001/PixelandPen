@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, HeartOff, Eye, Tag, FileText, CalendarDays, TrendingUp } from 'lucide-react';
 import AxiosInstance from '../../../api/axiosInstance';
+import { toast } from 'react-toastify';
 
 function daysAgo(dateString) {
   if (!dateString) return "";
@@ -46,7 +47,13 @@ const Likes = () => {
       setLikedArticles(likesRes.data.likes);
 
     } catch (error) {
-      console.log(error);
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.log(error);
+        toast.error("Failed to fetch liked articles. Please try again later.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -62,11 +69,23 @@ const Likes = () => {
           setunlikingId(null);
         })
         .catch((err) => {
-          console.log(err);
+          const status = err.response?.status;
+          if (status === 429) {
+            toast.error("Too many requests. Please wait a few minutes before trying again.");
+          } else {
+            console.log(err);
+            toast.error("Failed to unlike article. Please try again later.");
+          }
           setunlikingId(null);
         });
     } catch (error) {
-      console.log(error);
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.log(error);
+        toast.error("Failed to unlike article. Please try again later.");
+      }
       setunlikingId(null);
     }
   };

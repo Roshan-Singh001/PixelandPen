@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
 
 import {
   FileText,
@@ -134,7 +135,6 @@ const ContributorDashboard = () => {
           setAccecpted(true);
         }
 
-
         const response1 = await AxiosInstance.get('/dashboard/contri/stat/posts');
         setStatsData((prev) => ([...prev, { title: "Total Posts", value: response1.data.total_p || 0, color: "blue", icon: FileText }]));
 
@@ -148,7 +148,13 @@ const ContributorDashboard = () => {
         setStatsData((prev) => ([...prev, { title: "Followers", value: response4.data.total_f || 0, color: "purple", icon: Users }]));
 
       } catch (error) {
-        console.log(error);
+        const status = error.response?.status;
+        if (status === 429) {
+          toast.error("Too many requests. Please wait a few minutes before trying again.");
+        } else {
+          console.log(error);
+          toast.error("Failed to fetch dashboard statistics. Please try again later.");
+        }
 
       }
     }
@@ -162,7 +168,13 @@ const ContributorDashboard = () => {
         setAnnouncements(response1.data.announce);
 
       } catch (error) {
-        console.log(error);
+        const status = error.response?.status;
+        if (status === 429) {
+          toast.error("Too many requests. Please wait a few minutes before trying again.");
+        } else {
+          console.log(error);
+          toast.error("Failed to fetch recent articles or announcements. Please try again later.");
+        }
       }
 
     }
@@ -307,6 +319,15 @@ const ContributorDashboard = () => {
             />
           </div>
         </main>
+
+        <ToastContainer
+          position="top-right"
+          autoClose={4000}
+          hideProgressBar
+          closeOnClick
+          pauseOnHover
+          theme="light"
+        />
 
       </div>
     </div>

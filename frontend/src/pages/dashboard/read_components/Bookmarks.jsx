@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bookmark, BookmarkX, Eye, Tag, FileText, CalendarCheck } from 'lucide-react';
 import AxiosInstance from '../../../api/axiosInstance';
+import { toast } from 'react-toastify';
 
 function daysAgo(dateString) {
   if (!dateString) return "";
@@ -36,11 +37,23 @@ const Bookmarks = () => {
           setIsLoading(false);
         })
         .catch((err) => {
-          console.log(err);
+          const status = err.response?.status;
+          if (status === 429) {
+            toast.error("Too many requests. Please wait a few minutes before trying again.");
+          } else {
+            console.log(err);
+            toast.error("Failed to fetch bookmarks. Please try again later.");
+          }
           setIsLoading(false);
         });
     } catch (error) {
-      console.log(error);
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.log(error);
+        toast.error("Failed to fetch bookmarks. Please try again later.");
+      }
       setIsLoading(false);
     }
   };
@@ -54,11 +67,23 @@ const Bookmarks = () => {
           setremovingId(null);
         })
         .catch((err) => {
-          console.log(err);
+          const status = err.response?.status;
+          if (status === 429) {
+            toast.error("Too many requests. Please wait a few minutes before trying again.");
+          } else {
+            console.log(err);
+            toast.error("Failed to remove bookmark. Please try again later.");
+          }
           setremovingId(null);
         });
     } catch (error) {
-      console.log(error);
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.log(error);
+        toast.error("Failed to remove bookmark. Please try again later.");
+      }
       setremovingId(null);
     }
   };

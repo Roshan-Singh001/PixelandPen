@@ -52,8 +52,14 @@ const PreviewArticlePage = () => {
         setAuthName(res.data.authName);
       })
       .catch((err) => {
-        console.error('Error fetching article:', err);
-        navigate("/notfound");
+        const status = err.response?.status;
+        if (status === 404) {
+          navigate("/404");
+        } else if (status === 429) {
+          alert("Too many requests. Please wait a few minutes before trying again.");
+        } else {
+          console.error('Error fetching article preview:', err);
+        }
       });
   }, [slug, loggedIn]);
 

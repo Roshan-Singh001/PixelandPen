@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import AxiosInstance from "../../../api/axiosInstance";
 import { BookOpen, CalendarDays, TrendingUp, FileText, Eye, Heart, ExternalLink } from "lucide-react";
+import { toast } from "react-toastify";
 
 function formatRelativeDate(dateString) {
   if (!dateString) return "";
@@ -32,10 +33,10 @@ const MyReads = () => {
       setLoading(true);
       try {
         const [readTotal, readWeek, readMonth, articlesRes] = await Promise.all([
-          AxiosInstance.get('/dashboard/reader/reads/total'),
-          AxiosInstance.get('/dashboard/reader/reads/week'),
-          AxiosInstance.get('/dashboard/reader/reads/month'),
-          AxiosInstance.get('/dashboard/reader/reads'),
+          AxiosInstance.get('/dashboard/reader/stat/reads/total'),
+          AxiosInstance.get('/dashboard/reader/stat/reads/week'),
+          AxiosInstance.get('/dashboard/reader/stat/reads/month'),
+          AxiosInstance.get('/dashboard/reader/recent/reads'),
         ]);
 
         setStats({
@@ -44,11 +45,17 @@ const MyReads = () => {
           month: readMonth.data.month || 0,
         });
 
-        const rows = articlesRes.data.articles || [];
+        const rows = articlesRes.data.recents || [];
         setArticles(rows);
 
       } catch (error) {
-        console.log(error);
+        const status = error.response?.status;
+        if (status === 429) {
+          toast.error("Too many requests. Please wait a few minutes before trying again.");
+        } else {
+          console.log(error);
+          toast.error("Failed to fetch read articles. Please try again later.");
+        }
       } finally {
         setLoading(false);
       }

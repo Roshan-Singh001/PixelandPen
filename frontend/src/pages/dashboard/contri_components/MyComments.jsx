@@ -4,6 +4,7 @@ import {
   MessageSquare, CheckCircle, Clock, Trash2, UserRound, Calendar,
   Eye, MoreHorizontal, Search, X, ChevronDown, Copy, AlertCircle
 } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const PAGE_SIZE = 15;
 
@@ -68,8 +69,12 @@ const Comments = () => {
         });
       })
       .catch((err) => {
-        console.log(err);
-        setLoadError("Couldn't load comments. Please refresh.");
+        const status = err.response?.status;
+        if (status === 429) {
+          toast.error("Too many requests. Please wait a few minutes before trying again.");
+        } else {
+          setLoadError("Couldn't load comments. Please refresh.");
+        }
       })
       .finally(() => setIsLoading(false));
   };

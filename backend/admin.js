@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import db from './db.js';
 import { authMiddleware, authorizeAdmin } from './middleware.js';
 const adminRouter = express.Router();
+import { passwordResetLimiter, deleteLimiter } from './rateLimitMiddleware.js';
 
 adminRouter.use(authMiddleware);
 adminRouter.use(authorizeAdmin);
@@ -710,7 +711,7 @@ adminRouter.post('/category/edit', async (req, res) => {
 
 // Settings
 
-adminRouter.put("/settings/password", async (req, res) => {
+adminRouter.put("/settings/password", passwordResetLimiter, async (req, res) => {
   const userId = req.user.id;
   const { current_password, new_password } = req.body;
 
@@ -738,7 +739,7 @@ adminRouter.put("/settings/password", async (req, res) => {
   }
 });
 
-adminRouter.get('/delete', async (req, res) => {
+adminRouter.get('/delete', deleteLimiter, async (req, res) => {
   const userId = req.user.id;
 
   try {

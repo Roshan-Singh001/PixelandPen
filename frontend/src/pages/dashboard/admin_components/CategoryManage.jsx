@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import AxiosInstance from "../../../api/axiosInstance";
 import { FiPlus, FiX, FiFolder, FiCheckCircle, FiAlertCircle, FiEdit2 } from "react-icons/fi";
+import { toast } from "react-toastify";
 
 
 const EMPTY_FORM = { name: "", description: "" };
@@ -23,7 +24,12 @@ const CategoryManage = () => {
       const { data } = await AxiosInstance.get("/dashboard/admin/fetch/category");
       setCategories(data.categories || []);
     } catch (error) {
-      setLoadError("Couldn't load categories. Refresh the page to try again.");
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        setLoadError("Couldn't load categories. Refresh the page to try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -90,7 +96,12 @@ const CategoryManage = () => {
       }
       setIsModalOpen(false);
     } catch (error) {
-      setFormError(editingId ? "Couldn't update this category." : "Couldn't add this category.");
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        setFormError(editingId ? "Couldn't update this category." : "Couldn't add this category.");
+      }
     } finally {
       setIsSaving(false);
     }

@@ -6,6 +6,7 @@ import { Node, Text, createEditor, Editor, Range, Transforms, Element as SlateEl
 import { withHistory, HistoryEditor } from 'slate-history';
 import isHotkey from 'is-hotkey';
 import MetaData from '../../components/MetaData';
+import { ToastContainer, toast } from "react-toastify";
 
 import PixelPenLoaderSmall from '../../components/PixelPenLoaderSmall';
 import PixelPenLoader from '../../components/PixelPenLoader';
@@ -102,11 +103,18 @@ const ArticleEditor = () => {
             setIsArticleNew(false);
           })
           .catch((err) => {
-            console.log(err);
+            const status = err.response?.status;
+            if (status === 429) {
+              toast.error("Too many requests. Please wait a few minutes before trying again.");
+            } else {
+              console.log(err);
+              toast.error("Failed to fetch article for editing. Please try again later.");
+            }
           });
 
       } catch (error) {
         console.log(error);
+        toast.error("Failed to fetch article for editing. Please try again later.");
       }
     }
     const fetchCategories = async () => {
@@ -114,8 +122,13 @@ const ArticleEditor = () => {
         const res = await AxiosInstance.get('/article/fetch/categories');
         setAllCategories(res.data);
       } catch (error) {
-        console.log(error);
-
+        const status = error.response?.status;
+        if (status === 429) {
+          toast.error("Too many requests. Please wait a few minutes before trying again.");
+        } else {
+          console.log(error);
+          toast.error("Failed to fetch categories. Please try again later.");
+        }
       }
     }
 
@@ -187,7 +200,13 @@ const ArticleEditor = () => {
       }
 
     } catch (error) {
-      console.log(error);
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.log(error);
+        toast.error("Failed to save article. Please try again later.");
+      }
     }
     setInProgress(false);
   }
@@ -203,12 +222,16 @@ const ArticleEditor = () => {
         slug: slug,
         title: title,
       });
-      console.log(response);
 
 
     } catch (error) {
-      console.log(error);
-
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.log(error);
+        toast.error("Failed to send article. Please try again later.");
+      }
     }
     setSaveInProgress(false);
     setIsSend(true);
@@ -230,7 +253,13 @@ const ArticleEditor = () => {
       setIsSave(false);
       setIsThumbImageDirty(true);
     } catch (err) {
-      console.error("Frontend Upload Error:", err);
+      const status = err.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.error("Frontend Upload Error:", err);
+        toast.error("Failed to upload featured image. Please try again later.");
+      }
     }
   };
 
@@ -788,6 +817,15 @@ const ArticleEditor = () => {
 
           </div>
         </aside>}
+
+        <ToastContainer
+          position="top-right"
+          autoClose={4000}
+          hideProgressBar
+          closeOnClick
+          pauseOnHover
+          theme="light"
+        />
       </div>
     </div>
   );

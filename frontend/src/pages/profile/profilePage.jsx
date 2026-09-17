@@ -84,11 +84,27 @@ const ProfilePage = () => {
             });
             setIsFollowing(response2.data.isFollow);
           } catch (error) {
-            console.log(error);
+            const status = error.response?.status;
+            if (status === 429) {
+              setIsFollowing(false);
+              toast.error("Too many requests. Please wait a few minutes before trying again.");
+            } else {
+              console.log(error);
+              toast.error("Couldn't check follow status. Please try again.");
+            }
           }
         }
       } catch (error) {
-        console.log(error);
+        const status = error.response?.status;
+        if (status === 429) {
+          toast.error("Too many requests. Please wait a few minutes before trying again.");
+        } 
+        else if (status === 404) {
+          toast.error("Contributor not found");
+        }
+        else {
+          toast.error("Couldn't fetch contributor data. Please try again.");
+        }
         setNotFound(true);
       }
       setIsLoading(false);
@@ -134,13 +150,18 @@ const ProfilePage = () => {
         follow: newFollowState,
       });
     } catch (error) {
-      console.log(error);
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.log(error);
+        toast.error("Failed to update follow status. Please try again.");
+      }
       setIsFollowing(previousFollowing);
       setContributor((prev) => ({
         ...prev,
         followers: previousFollowing ? prev.followers + 1 : Math.max(0, prev.followers - 1),
       }));
-      toast.error("Failed to update follow status");
     } finally {
       setFollowBusy(false);
     }

@@ -5,6 +5,7 @@ import {
     MoreHorizontal, Trash2, X, UserRound, Calendar, Mail, MessageSquare,
     FileText, AlertCircle, Loader2, ExternalLink
 } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const SORT_OPTIONS = [
     { value: 'newest', label: 'Newest' },
@@ -85,7 +86,14 @@ const ReaderManage = () => {
             });
             
         } catch (error) {
-            setStatsLoading(false)
+            const status = error.response?.status;
+            if (status === 429) {
+                toast.error("Too many requests. Please wait a few minutes before trying again.");
+            } else {
+                console.error(error);
+                toast.error("Couldn't load stats. Please refresh.");
+            }
+            setStatsLoading(false);
         }
         finally{
             setStatsLoading(false);
@@ -101,8 +109,13 @@ const ReaderManage = () => {
                 setReaders(res.data.readers || []);
             })
             .catch((err) => {
-                console.log(err);
-                setLoadError("Couldn't load readers. Please refresh.");
+                const status = err.response?.status;
+                if (status === 429) {
+                    toast.error("Too many requests. Please wait a few minutes before trying again.");
+                } else {
+                    console.error(err);
+                    setLoadError("Couldn't load readers. Please refresh.");
+                }
             })
             .finally(() => setIsLoading(false));
     };
@@ -155,8 +168,13 @@ const ReaderManage = () => {
                 });
             })
             .catch((err) => {
-                console.log(err);
-                setDetailError("Couldn't load this reader's activity.");
+                const status = err.response?.status;
+                if (status === 429) {
+                    toast.error("Too many requests. Please wait a few minutes before trying again.");
+                } else {
+                    console.error(err);
+                    setDetailError("Couldn't load this reader's activity.");
+                }
             })
             .finally(() => setDetailLoading(false));
     };
@@ -176,7 +194,13 @@ const ReaderManage = () => {
             setStats((prev) => ({ ...prev, total: Math.max(0, prev.total - 1) }));
             setDeleteTarget(null);
         } catch (error) {
-            console.log(error);
+            const status = error.response?.status;
+            if (status === 429) {
+                toast.error("Too many requests. Please wait a few minutes before trying again.");
+            } else {
+                console.error(error);
+                toast.error("Couldn't delete this reader. Please try again.");
+            }
         } finally {
             setIsDeleting(false);
         }

@@ -1,13 +1,8 @@
 import React, { useState, useEffect } from "react";
 
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
 
-import {
-  BookOpen,
-  Bookmark,
-  Heart,
-  Users,
-} from 'lucide-react';
 import AxiosInstance from "../../api/axiosInstance";
 
 import {
@@ -20,6 +15,10 @@ import { MdLogout } from "react-icons/md";
 import { IoSettingsSharp } from "react-icons/io5";
 import { FaAnglesRight } from "react-icons/fa6";
 import { FaAnglesLeft } from "react-icons/fa6";
+import { FaHeart } from "react-icons/fa6";
+import { FaBookReader } from "react-icons/fa";
+import { MdBookmarks } from "react-icons/md";
+import { HiUsers } from "react-icons/hi2";
 
 import PixelPenLoader from "../../components/PixelPenLoader";
 import { useAuth } from "../../contexts/AuthContext";
@@ -52,25 +51,25 @@ const ReaderDashboard = () => {
     {
       label: "My Reads",
       path: "reads",
-      icon: <BookOpen size={18} />,
+      icon: <FaBookReader size={18} />,
       status: true,
     },
     {
       label: "Bookmarks",
       path: "bookmarks",
-      icon: <Bookmark size={18} />,
+      icon: <MdBookmarks size={18} />,
       status: true,
     },
     {
       label: "Likes",
       path: "likes",
-      icon: <Heart size={18} />,
+      icon: <FaHeart size={18} />,
       status: true,
     },
     {
       label: "Following",
       path: "following",
-      icon: <Users size={18} />,
+      icon: <HiUsers size={18} />,
       status: true,
     },
     {
@@ -116,8 +115,13 @@ const ReaderDashboard = () => {
         setSavedArticlesCount(response3.data.total_bookmarks || 0);
 
       } catch (error) {
-        console.log(error);
-
+        const status = error.response?.status;
+        if (status === 429) {
+          toast.error("Too many requests. Please wait a few minutes before trying again.");
+        } else {
+          console.log(error);
+          toast.error("Failed to fetch dashboard statistics. Please try again later.");
+        }
       }
     }
 
@@ -272,6 +276,14 @@ const ReaderDashboard = () => {
             />
           </div>
         </main>
+        <ToastContainer
+          position="top-right"
+          autoClose={4000}
+          hideProgressBar
+          closeOnClick
+          pauseOnHover
+          theme="light"
+        />
 
       </div>
     </div>

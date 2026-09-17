@@ -3,8 +3,7 @@ import AxiosInstance from '../../../api/axiosInstance';
 import {
   Search, UserRound, Users, X, BookOpen, Bookmark, Calendar, ExternalLink, Loader2
 } from 'lucide-react';
-
-const PAGE_SIZE = 15;
+import { toast } from 'react-toastify';
 
 function timeAgo(dateString) {
   if (!dateString) return "";
@@ -69,8 +68,12 @@ const Followers = () => {
         setFollowers(rows);
       })
       .catch((err) => {
-        console.log(err);
-        if (reset) setLoadError("Couldn't load your followers. Please refresh.");
+        const status = err.response?.status;
+        if (status === 429) {
+          toast.error("Too many requests. Please wait a few minutes before trying again.");
+        } else {
+          if (reset) setLoadError("Couldn't load your followers. Please refresh.");
+        }
       })
       .finally(() => {
         setIsLoading(false);
@@ -94,9 +97,13 @@ const Followers = () => {
         setStatsLoading(false);
       })
       .catch((err) => {
-        console.log(err);
-        setStatsError("Couldn't load this reader's activity.");
-        setStatsLoading(false);
+        const status = err.response?.status;
+        if (status === 429) {
+          toast.error("Too many requests. Please wait a few minutes before trying again.");
+        } else {
+          setStatsError("Couldn't load this reader's activity.");
+          setStatsLoading(false);
+        }
       });
   };
 

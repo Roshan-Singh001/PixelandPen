@@ -62,8 +62,14 @@ function Login_Page() {
       if (result.success) {
         toast.success("Welcome back!");
         navigate(`/dashboard/${result.userRole.toLowerCase()}`);
+      } else if (result.status === 429) {
+        toast.error(
+          "Too many login attempts. Please wait a few minutes before trying again."
+        );
       } else {
-        toast.error(result.error || "Login failed — check your credentials.");
+        toast.error(
+          result.error || "Login failed — check your credentials."
+        );
       }
     } catch {
       toast.error("An unexpected error occurred.");
@@ -71,7 +77,6 @@ function Login_Page() {
     setIsLoading(false);
   }
 
-  if (isLoading || loading) return <PixelPenLoader />;
   if (loggedIn && userData?.userRole) return null;
 
   return (
@@ -226,9 +231,10 @@ function Login_Page() {
                 {/* Submit */}
                 <button
                   type="submit"
+                  disabled={isLoading}
                   className="w-full mt-1 py-3 px-6 bg-[#1E3A5F] hover:bg-[#162d4a] dark:bg-blue-500 dark:hover:bg-blue-600 text-white text-xs font-semibold tracking-widest uppercase rounded transition-all duration-150 hover:-translate-y-px active:translate-y-0"
                 >
-                  Sign in
+                   {isLoading ? "Signing in..." : "Sign in"}
                 </button>
               </form>
 

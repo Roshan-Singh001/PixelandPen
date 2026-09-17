@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { FaXTwitter } from 'react-icons/fa6';
 import { FaGithub, FaLinkedin, FaFacebook } from "react-icons/fa";
+import { toast } from 'react-toastify';
 
 const EMPTY_LINKS = { facebook: '', twitter: '', github: '', linkedin: '' };
 
@@ -64,8 +65,12 @@ const ContriProfile = () => {
       initialRef.current = { profile: profileData, expertise: fetchedExpertise, links: fetchedLinks };
 
     } catch (error) {
-      console.log(error);
-      setLoadError('Failed to load profile data.');
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        setLoadError('Failed to load profile data.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -163,9 +168,14 @@ const ContriProfile = () => {
       });
       const profile_image = response.data.imageUrl;
       setProfile((prev) => ({ ...prev, profile_pic: profile_image }));
+      toast.success("Profile image uploaded successfully!");
     } catch (error) {
-      console.log(error);
-      setErrors((prev) => ({ ...prev, image: "Couldn't upload image. Try again." }));
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        setErrors((prev) => ({ ...prev, image: "Couldn't upload image. Try again." }));
+      }
     } finally {
       setIsUploading(false);
     }
@@ -249,9 +259,14 @@ const ContriProfile = () => {
         links,
       };
       setSaveSuccess(true);
+      toast.success("Profile updated successfully!");
     } catch (error) {
-      console.log(error);
-      setErrors((prev) => ({ ...prev, submit: error.response?.data?.message || 'Failed to update profile. Please try again.' }));
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        setErrors((prev) => ({ ...prev, submit: error.response?.data?.message || 'Failed to update profile. Please try again.' }));
+      }
     } finally {
       setIsSaving(false);
     }

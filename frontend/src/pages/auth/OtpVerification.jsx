@@ -96,10 +96,14 @@ function OtpVerification() {
       toast.success("Email verified! You can now log in.");
       navigate("/login");
     } catch (err) {
-      console.log(err);
-      const msg = err.response?.data?.message || "OTP verification failed";
-      toast.error(msg);
-      setError(msg);
+      const status = err.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        const msg = err.response?.data?.message || "OTP verification failed";
+        toast.error(msg);
+        setError(msg);
+      }
     } finally {
       setIsVerifying(false);
     }

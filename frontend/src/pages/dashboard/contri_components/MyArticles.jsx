@@ -5,6 +5,7 @@ import {
   Eye, Edit, FileText, Clock, CheckCircle, XCircle, Calendar, Tag,
   Plus, X, Heart, Bookmark, MessageSquare, Loader2, AlertCircle
 } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const statusMeta = {
   pending: { text: "text-amber-700 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-900/20", Icon: Clock },
@@ -61,8 +62,13 @@ const MyArticles = () => {
         setLoadError("Couldn't load your articles. Please refresh.");
       }
     } catch (error) {
-      console.log(error);
-      setLoadError("Couldn't load your articles. Please refresh.");
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.log(error);
+        setLoadError("Couldn't load your articles. Please refresh.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -101,8 +107,13 @@ const MyArticles = () => {
         setPerformanceLoading(false);
       })
       .catch((err) => {
-        console.log(err);
-        setPerformanceError("Couldn't load performance data.");
+        const status = err.response?.status;
+        if (status === 429) {
+          toast.error("Too many requests. Please wait a few minutes before trying again.");
+        } else {
+          console.log(err);
+          setPerformanceError("Couldn't load performance data.");
+        }
         setPerformanceLoading(false);
       });
   };

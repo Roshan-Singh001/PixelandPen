@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { FaXTwitter } from 'react-icons/fa6';
 import { FaGithub, FaLinkedin, FaFacebook } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 
 function formatDate(dateString) {
   if (!dateString) return "";
@@ -56,8 +57,13 @@ const ContriRequest = () => {
         setLoadError("Couldn't load contributors. Please refresh.");
       }
     } catch (err) {
-      console.error(err);
-      setLoadError("Couldn't load contributors. Please refresh.");
+      const status = err.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.error(err);
+        setLoadError("Couldn't load contributors. Please refresh.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -72,9 +78,15 @@ const ContriRequest = () => {
     try {
       await AxiosInstance.post('/dashboard/admin/cont/approve', { cont_id });
     } catch (err) {
-      console.error(err);
-      setApprovedContributors((prev) => prev.filter((c) => c.cont_id !== cont_id));
-      setPendingContributors((prev) => [contributor, ...prev]);
+      const status = err.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.error(err);
+        toast.error("Couldn't approve this contributor. Please try again.");
+        setApprovedContributors((prev) => prev.filter((c) => c.cont_id !== cont_id));
+        setPendingContributors((prev) => [contributor, ...prev]);
+      }
     } finally {
       setActionId(null);
     }
@@ -106,8 +118,13 @@ const ContriRequest = () => {
       setRejectReason('');
       setRejectTarget(null);
     } catch (err) {
-      console.error(err);
-      setRejectError("Couldn't reject this application. Try again.");
+      const status = err.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.error(err);
+        setRejectError("Couldn't reject this application. Try again.");
+      }
     } finally {
       setIsRejecting(false);
     }
@@ -123,7 +140,13 @@ const ContriRequest = () => {
       setRejectedContributors((prev) => prev.filter((c) => c.cont_id !== contributor.cont_id));
       setDeleteTarget(null);
     } catch (err) {
-      console.error(err);
+      const status = err.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.error(err);
+        toast.error("Couldn't delete this account. Please try again.");
+      }
     } finally {
       setIsDeleting(false);
     }
@@ -139,8 +162,14 @@ const ContriRequest = () => {
     try {
       await AxiosInstance.post('/dashboard/admin/cont/status', { cont_id, set_status: nextStatus });
     } catch (err) {
-      console.error(err);
-      setApprovedContributors((prev) => prev.map((c) => c.cont_id === cont_id ? { ...c, status: contributor.status } : c));
+      const status = err.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.error(err);
+        setApprovedContributors((prev) => prev.map((c) => c.cont_id === cont_id ? { ...c, status: contributor.status } : c));
+        toast.error("Couldn't change this contributor's status. Please try again.");
+      }
     } finally {
       setActionId(null);
     }

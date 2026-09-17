@@ -24,7 +24,14 @@ import {
   X,
 } from "lucide-react";
 import { BarChart, Bar, ResponsiveContainer, Tooltip, XAxis } from "recharts";
-
+import {
+  FaUsers,
+  FaBookOpen,
+  FaUserShield,
+  FaArrowRight,
+} from "react-icons/fa";
+import LogoLight from "./assets/images/Pixel & Pen(Main-New).png";
+import LogoDark from "./assets/images/Pixel & Pen(Main-B&W-New).png";
 import { useTheme } from "./contexts/ThemeContext.jsx";
 
 export default function PixelAndPenLanding() {
@@ -176,9 +183,9 @@ function HeroDemoCard() {
 }
 
 function Hero() {
-    useEffect(() => {
-      document.title = 'Home · Pixel & Pen';
-    }, []);
+  useEffect(() => {
+    document.title = 'Home · Pixel & Pen';
+  }, []);
   return (
     <section id="top" className="relative overflow-hidden px-6 pb-24 pt-8 lg:px-8 lg:pb-32 lg:pt-16">
       <PixelGrid className="text-[#1E3A5F]/[0.05] dark:text-[#4F8EF7]/[0.06]" />
@@ -394,10 +401,10 @@ function ContributorDemo() {
           </div>
           <span
             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-medium transition-colors ${status === "submitted"
-                ? "bg-[#16A34A]/10 text-[#16A34A] dark:bg-[#22C55E]/10 dark:text-[#22C55E]"
-                : status === "saved"
-                  ? "bg-[#D97706]/10 text-[#D97706] dark:bg-[#F59E0B]/10 dark:text-[#F59E0B]"
-                  : `${t.border} border ${t.muted}`
+              ? "bg-[#16A34A]/10 text-[#16A34A] dark:bg-[#22C55E]/10 dark:text-[#22C55E]"
+              : status === "saved"
+                ? "bg-[#D97706]/10 text-[#D97706] dark:bg-[#F59E0B]/10 dark:text-[#F59E0B]"
+                : `${t.border} border ${t.muted}`
               }`}
           >
             <span className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -442,8 +449,8 @@ function ReaderDemo() {
                 onClick={() => toggleLike(p.id)}
                 aria-pressed={p.liked}
                 className={`flex h-9 items-center gap-1.5 rounded-full border px-2.5 transition-colors ${p.liked
-                    ? "border-[#F97316] bg-[#F97316]/10 text-[#F97316] dark:border-[#FF8A3D] dark:bg-[#FF8A3D]/10 dark:text-[#FF8A3D]"
-                    : `${t.border} ${t.muted}`
+                  ? "border-[#F97316] bg-[#F97316]/10 text-[#F97316] dark:border-[#FF8A3D] dark:bg-[#FF8A3D]/10 dark:text-[#FF8A3D]"
+                  : `${t.border} ${t.muted}`
                   }`}
               >
                 <Heart className="h-3.5 w-3.5" fill={p.liked ? "currentColor" : "none"} />
@@ -453,8 +460,8 @@ function ReaderDemo() {
                 onClick={() => toggleBookmark(p.id)}
                 aria-pressed={p.bookmarked}
                 className={`flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${p.bookmarked
-                    ? "border-[#1E3A5F] bg-[#1E3A5F]/10 text-[#1E3A5F] dark:border-[#4F8EF7] dark:bg-[#4F8EF7]/10 dark:text-[#4F8EF7]"
-                    : `${t.border} ${t.muted}`
+                  ? "border-[#1E3A5F] bg-[#1E3A5F]/10 text-[#1E3A5F] dark:border-[#4F8EF7] dark:bg-[#4F8EF7]/10 dark:text-[#4F8EF7]"
+                  : `${t.border} ${t.muted}`
                   }`}
               >
                 <Bookmark className="h-3.5 w-3.5" fill={p.bookmarked ? "currentColor" : "none"} />
@@ -587,14 +594,14 @@ function HowItWorks() {
                     key={r.id}
                     onClick={() => setActiveRole(r.id)}
                     className={`group flex flex-1 items-start gap-4 rounded-2xl border px-5 py-4 text-left transition-all duration-300 lg:flex-none ${isActive
-                        ? `border-[#F97316] bg-[#FAFAF8] dark:border-[#FF8A3D] dark:bg-[#0B1220] ${cardShadow}`
-                        : `${t.border} hover:border-[#F97316]/50 dark:hover:border-[#FF8A3D]/50`
+                      ? `border-[#F97316] bg-[#FAFAF8] dark:border-[#FF8A3D] dark:bg-[#0B1220] ${cardShadow}`
+                      : `${t.border} hover:border-[#F97316]/50 dark:hover:border-[#FF8A3D]/50`
                       }`}
                   >
                     <span
                       className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${isActive
-                          ? "bg-[#1E3A5F] dark:bg-[#4F8EF7] dark:text-[#0B1220] text-white"
-                          : `border ${t.border} text-[#6B7280] dark:text-[#AAB4C5]`
+                        ? "bg-[#1E3A5F] dark:bg-[#4F8EF7] dark:text-[#0B1220] text-white"
+                        : `border ${t.border} text-[#6B7280] dark:text-[#AAB4C5]`
                         }`}
                     >
                       <Icon className="h-5 w-5" />
@@ -680,19 +687,141 @@ function Features() {
 
 /* Why Pixel & Pen */
 function VennDiagram() {
+  const { isDarkMode } = useTheme();
+
+  const nodes = [
+    {
+      key: "contributors",
+      label: "Contributors",
+      Icon: FaUsers,
+      style: { top: "2%", left: "40%", transform: "translateX(-50%)" },
+      color: "#1E3A5F",
+      darkColor: "#5B9BFF",
+      delay: "0s",
+    },
+    {
+      key: "readers",
+      label: "Readers",
+      Icon: FaBookOpen,
+      style: { bottom: "2%", left: "2%" },
+      color: "#F97316",
+      darkColor: "#FF9D52",
+      delay: "1.2s",
+    },
+    {
+      key: "administrators",
+      label: "Administrators",
+      Icon: FaUserShield,
+      style: { bottom: "2%", right: "2%" },
+      color: "#D97706",
+      darkColor: "#F6B93B",
+      delay: "2.4s",
+    },
+  ];
+
+  const badgeSize = "clamp(50px, 13vw, 62px)";
+
   return (
-    <div className="relative mx-auto flex h-80 w-80 items-center justify-center sm:h-96 sm:w-96">
-      <div className="absolute left-2 top-6 h-52 w-52 rounded-full bg-[#1E3A5F]/25 mix-blend-multiply dark:bg-[#4F8EF7]/25 dark:mix-blend-screen sm:h-60 sm:w-60" />
-      <div className="absolute right-2 top-6 h-52 w-52 rounded-full bg-[#F97316]/25 mix-blend-multiply dark:bg-[#FF8A3D]/25 dark:mix-blend-screen sm:h-60 sm:w-60" />
-      <div className="absolute bottom-2 h-52 w-52 rounded-full bg-[#F59E0B]/25 mix-blend-multiply dark:bg-[#F6B93B]/25 dark:mix-blend-screen sm:h-60 sm:w-60" />
+    <div className="mx-auto w-full max-w-[440px] px-2 pb-6 pt-10 sm:pt-12">
+      <div className="relative w-full" style={{ paddingBottom: "100%" }}>
+        <div className="absolute inset-0">
 
-      <span className="absolute left-4 top-0 text-xs font-semibold text-[#1E3A5F] dark:text-[#4F8EF7] sm:left-6">Contributors</span>
-      <span className="absolute right-6 top-0 text-xs font-semibold text-[#F97316] dark:text-[#FF8A3D]">Readers</span>
-      <span className="absolute bottom-2 text-xs font-semibold text-[#D97706] dark:text-[#F6B93B]">Administrators</span>
+          {/* Ambient glow */}
+          <div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
+            style={{
+              width: "90%",
+              height: "90%",
+              background: isDarkMode
+                ? "radial-gradient(circle, rgba(79,142,247,0.12), transparent 70%)"
+                : "radial-gradient(circle, rgba(30,58,95,0.07), transparent 70%)",
+            }}
+          />
 
-      <span className={`relative rounded-full border ${t.border} ${t.surface} px-4 py-2 font-['Newsreader'] text-sm font-semibold ${cardShadow}`}>
-        Pixel &amp; Pen
-      </span>
+          {/* Outer dashed orbit */}
+          <div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-slate-300 dark:border-slate-700"
+            style={{ width: "64%", height: "64%" }}
+          />
+
+
+          {/* Role nodes */}
+          {nodes.map(({ key, label, Icon, style, color, darkColor, delay }) => (
+            <div
+              key={key}
+              className="absolute flex flex-col items-center gap-2 animate-[float_5s_ease-in-out_infinite]"
+              style={{ ...style, animationDelay: delay }}
+            >
+              <div
+                className="relative"
+                style={{ width: badgeSize, height: badgeSize }}
+              >
+                <span
+                  className="absolute inset-0 rounded-2xl animate-ping opacity-20"
+                  style={{ backgroundColor: isDarkMode ? darkColor : color, animationDuration: "3s" }}
+                />
+                <div
+                  className="relative flex h-full w-full items-center justify-center rounded-2xl shadow-md transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                  style={{
+                    background: isDarkMode
+                      ? `linear-gradient(135deg, ${darkColor}30, ${darkColor}10)`
+                      : `linear-gradient(135deg, ${color}1f, ${color}08)`,
+                    border: `1px solid ${isDarkMode ? darkColor + "40" : color + "33"}`,
+                  }}
+                >
+                  <Icon
+                    style={{ color: isDarkMode ? darkColor : color }}
+                    className="text-xl sm:text-2xl"
+                  />
+                </div>
+              </div>
+              <span
+                className="whitespace-nowrap text-xs font-bold tracking-tight sm:text-sm"
+                style={{ color: isDarkMode ? darkColor : color }}
+              >
+                {label}
+              </span>
+            </div>
+          ))}
+
+          {/* Center hub */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div
+              className="absolute rounded-full animate-spin"
+              style={{
+                inset: "-10%",
+                animationDuration: "6s",
+                background: `conic-gradient(from 0deg, ${isDarkMode ? "#4F8EF7" : "#1E3A5F"}, ${isDarkMode ? "#FF8A3D" : "#F97316"}, ${isDarkMode ? "#F6B93B" : "#D97706"}, ${isDarkMode ? "#4F8EF7" : "#1E3A5F"})`,
+                maskImage: "radial-gradient(circle, transparent 62%, black 63%, black 100%)",
+                WebkitMaskImage: "radial-gradient(circle, transparent 62%, black 63%, black 100%)",
+                opacity: 0.8,
+              }}
+            />
+            <div
+              className="absolute inset-0 rounded-full blur-2xl"
+              style={{
+                transform: "scale(1.7)",
+                background: isDarkMode ? "rgba(79,142,247,0.25)" : "rgba(30,58,95,0.15)",
+              }}
+            />
+            <div
+              className="relative z-10 flex items-center justify-center rounded-full border bg-white shadow-xl dark:border-slate-700 dark:bg-slate-800"
+              style={{
+                width: "clamp(80px, 23vw, 100px)",
+                height: "clamp(80px, 23vw, 100px)",
+                borderColor: isDarkMode ? "#334155" : "#e2e8f0",
+              }}
+            >
+              <img
+                src={isDarkMode ? LogoDark : LogoLight}
+                alt="Pixel & Pen"
+                className="w-1/2"
+              />
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
   );
 }

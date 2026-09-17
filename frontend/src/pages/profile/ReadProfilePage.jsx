@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import AxiosInstance from '../../api/axiosInstance';
 import MetaData from '../../components/MetaData';
+import { toast } from 'react-toastify';
 
 function memberSince(dateString) {
   if (!dateString) return "";
@@ -68,7 +69,12 @@ const ReadProfilePage = () => {
       })
       .catch((err) => {
         console.log(err);
-        setProfileError(err.response?.status === 404 ? "This profile doesn't exist." : "Couldn't load this profile.");
+        const status = err.response?.status;
+        if (status === 429) {
+          toast.error("Too many requests. Please wait a few minutes before trying again.");
+        } else {
+          setProfileError(status === 404 ? "This profile doesn't exist." : "Couldn't load this profile.");
+        }
         setProfileLoading(false);
         setStatsLoading(false);
       });
@@ -85,7 +91,12 @@ const ReadProfilePage = () => {
       })
       .catch((err) => {
         console.log(err);
-        setTabError("Couldn't load this section.");
+        const status = err.response?.status;
+        if (status === 429) {
+          toast.error("Too many requests. Please wait a few minutes before trying again.");
+        } else {
+          setTabError("Couldn't load this section.");
+        }
         setTabLoading(false);
       });
   };

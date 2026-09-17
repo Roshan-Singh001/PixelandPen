@@ -6,6 +6,7 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import {
   Moon, Lock, Eye, EyeOff, Check, Loader2, AlertTriangle, Trash2, X
 } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const ReadSettings = () => {
   const { isDarkMode, toggleDark } = useTheme();
@@ -45,15 +46,26 @@ const ReadSettings = () => {
           setPwSuccess(true);
           setPasswordForm({ current: "", next: "", confirm: "" });
           setPwSaving(false);
+          toast.success("Password updated successfully!");
         })
         .catch((err) => {
           console.log(err);
-          setPwError(err.response?.data?.message || "Couldn't update password. Check your current password.");
+          const status = err.response?.status;
+          if (status === 429) {
+            toast.error("Too many requests. Please wait a few minutes before trying again.");
+          } else {
+            setPwError(err.response?.data?.message || "Couldn't update password. Check your current password.");
+          }
           setPwSaving(false);
         });
     } catch (error) {
       console.log(error);
-      setPwError("Couldn't update password. Try again.");
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        setPwError("Couldn't update password. Try again.");
+      }
       setPwSaving(false);
     }
   };
@@ -74,7 +86,12 @@ const ReadSettings = () => {
     }
     catch (error) {
       console.log(error);
-      setDeleteError("Couldn't delete your account. Please try again.");
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        setDeleteError("Couldn't delete your account. Please try again.");
+      }
     }
     setIsDeleting(false);
   }

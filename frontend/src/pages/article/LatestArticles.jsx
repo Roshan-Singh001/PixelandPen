@@ -86,11 +86,6 @@ const LatestArticlesPage = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  useEffect(() => {
-    document.title = 'All Articles · Pixel & Pen';
-    fetchData();
-  }, []);
-
   const fetchData = async () => {
     setIsLoading(true);
     setLoadError("");
@@ -107,8 +102,12 @@ const LatestArticlesPage = () => {
         setLoadError("Couldn't load articles. Please refresh.");
       }
     } catch (error) {
-      console.log(error);
-      setLoadError("Couldn't load articles. Please refresh.");
+      const status = error.response?.status;
+      if (status === 429) {
+        setLoadError("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        setLoadError("Couldn't load articles. Please refresh.");
+      }
     } finally {
       setIsLoading(false);
     }

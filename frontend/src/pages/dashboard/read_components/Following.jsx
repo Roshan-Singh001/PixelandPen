@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Users, UserRound, UserMinus, ExternalLink, FileText } from 'lucide-react';
 import AxiosInstance from '../../../api/axiosInstance';
+import { toast } from 'react-toastify';
 
 const Following = () => {
   const [authors, setAuthors] = useState([]);
@@ -20,11 +21,23 @@ const Following = () => {
           setIsLoading(false);
         })
         .catch((err) => {
-          console.log(err);
+          const status = err.response?.status;
+          if (status === 429) {
+            toast.error("Too many requests. Please wait a few minutes before trying again.");
+          } else {
+            console.log(err);
+            toast.error("Failed to fetch following authors. Please try again later.");
+          }
           setIsLoading(false);
         });
     } catch (error) {
-      console.log(error);
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.log(error);
+        toast.error("Failed to fetch following authors. Please try again later.");
+      }
       setIsLoading(false);
     }
   };
@@ -38,11 +51,23 @@ const Following = () => {
           setUnfollowingId(null);
         })
         .catch((err) => {
-          console.log(err);
+          const status = err.response?.status;
+          if (status === 429) {
+            toast.error("Too many requests. Please wait a few minutes before trying again.");
+          } else {
+            console.log(err);
+            toast.error("Failed to unfollow author. Please try again later.");
+          }
           setUnfollowingId(null);
         });
     } catch (error) {
-      console.log(error);
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.log(error);
+        toast.error("Failed to unfollow author. Please try again later.");
+      }
       setUnfollowingId(null);
     }
   };

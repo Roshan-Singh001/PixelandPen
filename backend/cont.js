@@ -6,6 +6,7 @@ import axios from 'axios';
 import { authMiddleware, authorizeContri } from './middleware.js';
 import db from './db.js';
 const contriRouter = express.Router();
+import { passwordResetLimiter, deleteLimiter } from './rateLimitMiddleware.js';
 
 contriRouter.use(authMiddleware);
 contriRouter.use(authorizeContri);
@@ -1044,7 +1045,7 @@ contriRouter.get('/analytics', async (req, res) => {
 
 // Settings
 
-contriRouter.put("/settings/password", async (req, res) => {
+contriRouter.put("/settings/password", passwordResetLimiter, async (req, res) => {
   const userId = req.user.id;
   const { current_password, new_password } = req.body;
 
@@ -1072,7 +1073,7 @@ contriRouter.put("/settings/password", async (req, res) => {
   }
 });
 
-contriRouter.get('/delete', async (req, res) => {
+contriRouter.get('/delete', deleteLimiter, async (req, res) => {
   const userId = req.user.id;
   const username = req.user.username;
 

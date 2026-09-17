@@ -35,7 +35,7 @@ function Sign_Up_Page() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [form, setForm] = useState({ pass: "", cpass: "", email: "", username: "", RegisterAs: "" });
   const [strength, setStrength] = useState(null);
-  const [passMatch, setPassMatch] = useState(null); // "matched" | "mismatch" | null
+  const [passMatch, setPassMatch] = useState(null);
   const [isEmailExist, setIsEmailExist] = useState(null);
   const [isUserExist, setIsUserExist] = useState(null);
 
@@ -52,7 +52,15 @@ function Sign_Up_Page() {
     const timer = setTimeout(() => {
       AxiosInstance.get(`/check-email/${email}`)
         .then((res) => setIsEmailExist(res.data.exists))
-        .catch(() => { });
+        .catch((err) => {
+          const status = err.response?.status;
+          if (status === 429) {
+            toast.error("Too many requests. Please wait a few minutes before trying again.");
+          }
+          else {
+            toast.error("An error occurred while checking the email.");
+          }
+        });
     }, 500);
 
     return () => clearTimeout(timer);
@@ -71,7 +79,15 @@ function Sign_Up_Page() {
     const timer = setTimeout(() => {
       AxiosInstance.get(`/check-username/${username}`)
         .then((res) => setIsUserExist(res.data.exists))
-        .catch(() => { });
+        .catch((err) => {
+          const status = err.response?.status;
+          if (status === 429) {
+            toast.error("Too many requests. Please wait a few minutes before trying again.");
+          }
+          else {
+            toast.error("An error occurred while checking the username.");
+          }
+        });
     }, 500);
 
     return () => clearTimeout(timer);
@@ -112,7 +128,12 @@ function Sign_Up_Page() {
       setStrength(null);
       setPassMatch(null);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Something went wrong.");
+      const status = err.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        toast.error(err.response?.data?.message || "Something went wrong.");
+      }
     }
   }
 

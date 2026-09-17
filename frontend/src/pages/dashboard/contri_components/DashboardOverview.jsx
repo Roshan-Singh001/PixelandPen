@@ -1,6 +1,7 @@
 import AxiosInstance from "../../../api/axiosInstance";
 import { useNavigate } from 'react-router-dom';
 import { TrendingUp, Clock, XCircle, CheckCircle, Ban, FileText, Megaphone, Calendar } from "lucide-react";
+import { toast } from "react-toastify";
 
 const DashboardOverview = ({ userData, status, announcements, statsData, recentArticles, rejectReason }) => {
     const navigate = useNavigate();
@@ -11,7 +12,12 @@ const DashboardOverview = ({ userData, status, announcements, statsData, recentA
 
         } catch (error) {
             console.log(error);
-
+            const status = error.response?.status;
+            if (status === 429) {
+                toast.error("Too many requests. Please wait a few minutes before trying again.");
+            } else {
+                toast.error("Failed to resend application. Please try again.");
+            }
         }
     }
 

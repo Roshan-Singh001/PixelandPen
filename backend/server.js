@@ -16,6 +16,7 @@ import contriRouter from './cont.js';
 import profileRouter from './profile.js';
 import actionRouter from "./actions.js";
 import readRouter from "./reader.js";
+import { otpLimiter, authLimiter, apiLimiter, publicApiLimiter } from "./rateLimitMiddleware.js";
 // import db from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -36,12 +37,12 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/dashboard/admin', adminRouter);
-app.use('/dashboard/contri', contriRouter);
-app.use('/dashboard/reader', readRouter);
-app.use('/profile', profileRouter);
-app.use('/article', articleRouter);
-app.use('/action', actionRouter);
+app.use('/dashboard/admin', apiLimiter, adminRouter);
+app.use('/dashboard/contri', apiLimiter, contriRouter);
+app.use('/dashboard/reader', apiLimiter, readRouter);
+app.use('/profile', publicApiLimiter, profileRouter);
+app.use('/article', publicApiLimiter, articleRouter);
+app.use('/action', apiLimiter, actionRouter);
 
 const databasePass = process.env.DATABASE_PASS;
 const db_host = process.env.DB_HOST;
@@ -284,7 +285,7 @@ connectToDatabase()
 
 app.use(bodyParser.json());
 
-app.get("/check-email/:email", async (req, res) => {
+app.get("/check-email/:email", authLimiter, async (req, res) => {
   try {
     let email = req.params.email;
     const query = "SELECT * FROM users WHERE email = ?";
@@ -299,7 +300,7 @@ app.get("/check-email/:email", async (req, res) => {
   }
 });
 
-app.get("/check-username/:username", async (req, res) => {
+app.get("/check-username/:username", authLimiter, async (req, res) => {
   try {
     let username = req.params.username;
     const query = "SELECT * FROM users WHERE username = ?";
@@ -369,7 +370,7 @@ async function sendOtpEmail(email, otp) {
   }
 }
 
-app.post("/submit", async (req, res) => {
+app.post("/submit", authLimiter, async (req, res) => {
   try {
     const { email, username, password, RegisterAs } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -406,7 +407,7 @@ app.post("/submit", async (req, res) => {
   }
 });
 
-app.post("/OtpVerification", async (req, res) => {
+app.post("/OtpVerification", otpLimiter, async (req, res) => {
   try {
     const { email, otp } = req.body;
 
@@ -528,7 +529,7 @@ app.post("/OtpVerification", async (req, res) => {
   }
 });
 
-app.post("/validate", async (req, res) => {
+app.post("/validate", authLimiter, async (req, res) => {
   const JWT_SECRET = process.env.JWT_SECRET;
   const { username, password, role } = req.body;
 
@@ -626,7 +627,7 @@ function verifyToken(req, res, next) {
   }
 }
 
-app.get("/auth/profile", verifyToken, (req, res) => {
+app.get("/auth/profile", authLimiter, verifyToken, (req, res) => {
   res.json({
     username: req.user.username,
     role: req.user.role,
@@ -634,7 +635,7 @@ app.get("/auth/profile", verifyToken, (req, res) => {
   });
 });
 
-app.post("/logout", (req, res) => {
+app.post("/logout", authLimiter, (req, res) => {
   res.cookie("token", "", {
     httpOnly: true,
     secure: false, // Set to true if your site uses HTTPS

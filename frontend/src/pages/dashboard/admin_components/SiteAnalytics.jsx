@@ -8,6 +8,7 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer, Cell
 } from 'recharts';
+import { toast } from 'react-toastify';
 
 const RANGE_OPTIONS = [
   { value: '7d', label: 'Last 7 Days' },
@@ -106,7 +107,13 @@ const AdminAnalytics = () => {
         applyData(res.data);
       })
       .catch((err) => {
-        console.log(err);
+        const status = err.response?.status;
+        if (status === 429) {
+          toast.error("Too many requests. Please wait a few minutes before trying again.");
+        } else {
+          console.error(err);
+          setLoadError("Couldn't load analytics. Please refresh.");
+        }
       })
       .finally(() => {
         setIsLoading(false);

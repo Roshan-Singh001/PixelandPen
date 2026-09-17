@@ -4,6 +4,7 @@ import {
   Check, UserRound, X, Trash2, MessageSquare, Clock, CheckCircle,
   AlertCircle, Eye, Calendar, RotateCcw, Loader2
 } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 function formatDate(dateString) {
   if (!dateString) return "";
@@ -47,8 +48,13 @@ const CommentsManage = () => {
         setLoadError("Couldn't load comments. Please refresh.");
       }
     } catch (error) {
-      console.log(error);
-      setLoadError("Couldn't load comments. Please refresh.");
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.log(error);
+        setLoadError("Couldn't load comments. Please refresh.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -79,7 +85,13 @@ const CommentsManage = () => {
         setPendingComments((prev) => [updated, ...prev]);
       }
     } catch (error) {
-      console.log(error);
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        console.log(error);
+        toast.error("Couldn't update comment status. Please try again.");
+      }
     } finally {
       setBusyId(null);
     }

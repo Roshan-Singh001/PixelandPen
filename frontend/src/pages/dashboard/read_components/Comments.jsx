@@ -33,7 +33,7 @@ const Comments = (props) => {
   useEffect(() => {
     fetchComments();
   }, []);
-
+ 
   const fetchComments = async () => {
     setIsLoading(true);
     try {
@@ -47,7 +47,7 @@ const Comments = (props) => {
         approved: statsRes.data.approved || 0,
         pending: statsRes.data.pending || 0,
       });
-      setComments(commentsRes.data);
+      setComments(commentsRes.data.comments);
 
     } catch (error) {
       console.log(error);
@@ -81,7 +81,7 @@ const Comments = (props) => {
   };
 
   const handleViewArticle = (slug) => {
-    navigate(`/article/${slug}`);
+    navigate(`/view/${slug}`);
   };
 
   const statsData = [

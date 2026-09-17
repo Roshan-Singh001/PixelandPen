@@ -4,6 +4,7 @@ import {
   Pencil, X, Check, Loader2
 } from 'lucide-react';
 import AxiosInstance from '../../../api/axiosInstance';
+import { toast } from 'react-toastify';
 
 function memberSince(dateString) {
   if (!dateString) return "";
@@ -49,12 +50,22 @@ const ReadProfile = () => {
         })
         .catch((err) => {
           console.log(err);
-          setProfileError("Couldn't load your profile. Please refresh.");
+          const status = err.response?.status;
+          if (status === 429) {
+            toast.error("Too many requests. Please wait a few minutes before trying again.");
+          } else {
+            setProfileError("Couldn't load your profile. Please refresh.");
+          }
           setProfileLoading(false);
         });
     } catch (error) {
       console.log(error);
-      setProfileError("Couldn't load your profile. Please refresh.");
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      } else {
+        setProfileError("Couldn't load your profile. Please refresh.");
+      }
       setProfileLoading(false);
     }
   }
@@ -70,13 +81,19 @@ const ReadProfile = () => {
       ]);
 
       setStats({
-        reads: readsRes.status === 'fulfilled' ? (readsRes.value.data.total || 0) : 0,
+        reads: readsRes.status === 'fulfilled' ? (readsRes.value.data.total_reads || 0) : 0,
         bookmarks: bookmarksRes.status === 'fulfilled' ? (bookmarksRes.value.data.total_bookmarks || 0) : 0,
         likes: likesRes.status === 'fulfilled' ? (likesRes.value.data.total_likes || 0) : 0,
         following: followingRes.status === 'fulfilled' ? (followingRes.value.data.total_following || 0) : 0,
       });
     } catch (error) {
-      console.log(error);
+      const status = error.response?.status;
+      if (status === 429) {
+        toast.error("Too many requests. Please wait a few minutes before trying again.");
+      }
+      else{
+        toast.error("Couldn't load your stats. Please refresh.");
+      }
     } finally {
       setStatsLoading(false);
     }
@@ -170,10 +187,15 @@ const ReadProfile = () => {
           setImageFile(null);
           setImagePreview(null);
           setSaving(false);
+          toast.success("Profile updated successfully!");
         })
         .catch((err) => {
-          console.log(err);
-          setSaveError(err.response?.data?.message || "Couldn't save changes. Try again.");
+          const status = err.response?.status;
+          if (status === 429) {
+            toast.error("Too many requests. Please wait a few minutes before trying again.");
+          } else {
+            setSaveError(err.response?.data?.message || "Couldn't save changes. Try again.");
+          }
           setSaving(false);
         });
     } catch (error) {
