@@ -86,6 +86,10 @@ const LatestArticlesPage = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   const fetchData = async () => {
     setIsLoading(true);
     setLoadError("");

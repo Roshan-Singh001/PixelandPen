@@ -246,7 +246,6 @@ function Sign_Up_Page() {
                       className={`${inputBase} appearance-none pr-8 ${!form.RegisterAs ? "text-gray-400 dark:text-slate-500" : ""}`}
                     >
                       <option value="" disabled hidden>Select a role</option>
-                      <option value="Admin">Admin</option>
                       <option value="Contributor">Contributor</option>
                       <option value="Reader">Reader</option>
                     </select>

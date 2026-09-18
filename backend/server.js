@@ -17,7 +17,8 @@ import profileRouter from './profile.js';
 import actionRouter from "./actions.js";
 import readRouter from "./reader.js";
 import { otpLimiter, authLimiter, apiLimiter, publicApiLimiter } from "./rateLimitMiddleware.js";
-// import db from './db.js';
+import db, { MyDbName } from "./db.js";
+import { runMigrations } from "./migrations.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,244 +45,73 @@ app.use('/profile', publicApiLimiter, profileRouter);
 app.use('/article', publicApiLimiter, articleRouter);
 app.use('/action', apiLimiter, actionRouter);
 
-const databasePass = process.env.DATABASE_PASS;
-const db_host = process.env.DB_HOST;
-const db_user = process.env.DB_USER;
 const email_user = process.env.EMAIL_USER;
 const email_pass = process.env.EMAIL_PASS;
 
 
+async function createDatabase() {
+  const connection = await mysql.createConnection({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DATABASE_PASS,
+  });
 
-var db;
-const MyDbName = "Pixel_and_Pen";
-
-async function connectToDatabase() {
   try {
-    const serverConnection = await mysql.createConnection({
-      host: db_host,
-      user: db_user,
-      password: databasePass,
-    });
-
-    await serverConnection.query(
-      `CREATE DATABASE IF NOT EXISTS \`${MyDbName}\`;`
+    await connection.query(
+      `CREATE DATABASE IF NOT EXISTS \`${MyDbName}\``
     );
-    console.log(`Database "${MyDbName}" created or already exists.`);
-    await serverConnection.end();
 
-    db = await mysql.createConnection({
-      host: db_host,
-      user: db_user,
-      password: databasePass,
-      database: MyDbName,
-    });
-
-
-    const query_temp_user_table = `CREATE TABLE IF NOT EXISTS temp_users (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      username VARCHAR(100) NOT NULL,
-      email VARCHAR(100) NOT NULL ,
-      password VARCHAR(255) NOT NULL,
-      role ENUM('Admin', 'Reader', 'Contributor') NOT NULL,
-      otp VARCHAR(10),
-      otp_expiry DATETIME
-    )`;
-    await db.execute(query_temp_user_table);
-
-    const query_user_table = `CREATE TABLE IF NOT EXISTS users (
-      id VARCHAR(255) PRIMARY KEY,
-      username VARCHAR(100),
-      email VARCHAR(100) ,
-      password VARCHAR(255) ,
-      role ENUM('Admin', 'Reader', 'Contributor'),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`;
-    await db.execute(query_user_table);
-
-    const query_admin_table = `CREATE TABLE IF NOT EXISTS admin (
-      admin_id VARCHAR(255) PRIMARY KEY,
-      username VARCHAR(100) NOT NULL,
-      email VARCHAR(100) NOT NULL UNIQUE,
-      password VARCHAR(255) NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`;
-    await db.execute(query_admin_table);
-
-    const query_contributor_table = `CREATE TABLE IF NOT EXISTS contributor (
-      cont_id VARCHAR(255) PRIMARY KEY,
-      username VARCHAR(100) NOT NULL,
-      slug VARCHAR(255) UNIQUE,
-      email VARCHAR(100) NOT NULL UNIQUE,
-      password VARCHAR(255) NOT NULL,
-      bio VARCHAR(255),
-      profile_pic VARCHAR(255),
-      dob DATE,
-      expertise JSON,
-      links JSON,
-      city VARCHAR(255),
-      country VARCHAR(255),
-      status ENUM('Pending','Approved', 'Rejected', 'Block') DEFAULT 'Pending',
-      reject_reason TEXT DEFAULT NULL,
-      followers INT DEFAULT 0,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`;
-    await db.execute(query_contributor_table);
-
-    const query_reader_table = `CREATE TABLE IF NOT EXISTS reader (
-      sub_id VARCHAR(255) PRIMARY KEY,
-      username VARCHAR(100) NOT NULL,
-      email VARCHAR(100) NOT NULL UNIQUE,
-      password VARCHAR(255) NOT NULL,
-      bio VARCHAR(255),
-      profile_pic VARCHAR(255),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`;
-    await db.execute(query_reader_table);
-
-    const query_category = `CREATE TABLE IF NOT EXISTS categories (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      name VARCHAR(255) NOT NULL,
-      slug VARCHAR(255) UNIQUE NOT NULL DEFAULT 'Unknown',
-      description TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`;
-
-    await db.execute(query_category);
-
-    const query_articles_table = `CREATE TABLE IF NOT EXISTS articles (
-      article_id VARCHAR(255) PRIMARY KEY,
-      slug VARCHAR(255) UNIQUE,
-      title VARCHAR(255) NOT NULL,
-      category_id INT NOT NULL,
-      description VARCHAR(200),
-      content JSON NOT NULL,
-      tags JSON,
-      thumbnail_url VARCHAR(255),
-      author VARCHAR(255) NOT NULL,
-      cont_id VARCHAR(255) NOT NULL,
-      views INT DEFAULT 0,
-      likes INT DEFAULT 0,
-      is_featured BOOLEAN DEFAULT FALSE,
-      publish_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-      FOREIGN KEY (category_id) REFERENCES categories(id)
-    )`;
-
-    await db.execute(query_articles_table);
-
-    const query_likes_table = `CREATE TABLE IF NOT EXISTS article_likes (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      reader_id VARCHAR(255),
-      article_id VARCHAR(255),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(reader_id, article_id),
-      FOREIGN KEY (reader_id) REFERENCES reader(sub_id) ON DELETE CASCADE,
-      FOREIGN KEY (article_id) REFERENCES articles(article_id) ON DELETE CASCADE
-    )`;
-
-    await db.execute(query_likes_table);
-
-    const query_view_table = `CREATE TABLE IF NOT EXISTS article_views (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      reader_id VARCHAR(255),
-      article_id VARCHAR(255),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(reader_id, article_id),
-      FOREIGN KEY (reader_id) REFERENCES reader(sub_id) ON DELETE CASCADE,
-      FOREIGN KEY (article_id) REFERENCES articles(article_id) ON DELETE CASCADE
-      )`;
-
-    await db.execute(query_view_table);
-
-    const query_follow_table = `CREATE TABLE IF NOT EXISTS reader_follows (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      reader_id VARCHAR(255),
-      contributor_id VARCHAR(255),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(reader_id, contributor_id),
-      FOREIGN KEY (reader_id) REFERENCES reader(sub_id) ON DELETE CASCADE,
-      FOREIGN KEY (contributor_id) REFERENCES contributor(cont_id) ON DELETE CASCADE
-    )`;
-
-    await db.execute(query_follow_table);
-
-    const query_bookmark_table = `CREATE TABLE IF NOT EXISTS bookmarks (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      reader_id VARCHAR(255),
-      article_id VARCHAR(255),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(reader_id, article_id),
-      FOREIGN KEY (reader_id) REFERENCES reader(sub_id) ON DELETE CASCADE,
-      FOREIGN KEY (article_id) REFERENCES articles(article_id) ON DELETE CASCADE
-    )`;
-
-    await db.execute(query_bookmark_table);
-
-
-
-    const query_review_article = `CREATE TABLE IF NOT EXISTS review_articles (
-      review_id INT AUTO_INCREMENT PRIMARY KEY,
-      slug VARCHAR(255) UNIQUE,
-      title VARCHAR(255) NOT NULL,
-      author VARCHAR(255) NOT NULL,
-      cont_id VARCHAR(255) NOT NULL,
-      status ENUM('Approved', 'Rejected', 'Pending') DEFAULT 'Pending',
-      is_featured BOOLEAN DEFAULT FALSE,
-      reject_reason TEXT DEFAULT NULL,
-      reject_at TIMESTAMP DEFAULT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )`;
-
-    await db.execute(query_review_article);
-
-    const query_comment = `CREATE TABLE IF NOT EXISTS comments (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      article_id VARCHAR(255) NOT NULL,
-      article_title VARCHAR(255),
-      user_id VARCHAR(255),
-      username VARCHAR(255),
-      content TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      status ENUM('Pending', 'Approved', 'Deleted') DEFAULT 'Pending',
-
-      FOREIGN KEY (article_id) REFERENCES articles(article_id) ON DELETE CASCADE,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
-    )`;
-
-    await db.execute(query_comment);
-
-    const query_announce = `CREATE TABLE IF NOT EXISTS announcements (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      title VARCHAR(255) NOT NULL,
-      content TEXT,
-      audience ENUM('All','Contributors','Readers') DEFAULT 'All',
-      status ENUM('Draft','Published') DEFAULT 'Draft',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      published_at DATETIME DEFAULT NULL
-    )`;
-
-    await db.execute(query_announce);
-
-
-
-
-  } catch (error) {
-    console.error("Database connection error:", error.message);
-    throw error;
+    console.log(`Database "${MyDbName}" is ready.`);
+  } finally {
+    await connection.end();
   }
 }
 
-connectToDatabase()
-  .then(() => {
+async function initializeFirstAdmin() {
+  try {
+    const firstAdminEmail = process.env.FIRST_ADMIN_EMAIL;
+    const firstAdminPassword = process.env.FIRST_ADMIN_PASSWORD;
+    const firstAdminUsername = process.env.FIRST_ADMIN_USERNAME;
+
+    const checkAdminQuery = "SELECT * FROM users WHERE username = ? AND role = 'Admin'";
+    const [adminResult] = await db.execute(checkAdminQuery, [firstAdminUsername]);
+    if (adminResult.length > 0) {
+      console.log("First admin already initialized.");
+      return;
+    }
+
+    let a_id = uuidv4();
+    const user_id = a_id.replaceAll("-", "_");
+    const hashedPassword = await bcrypt.hash(firstAdminPassword, 10);
+
+    const query = "INSERT INTO users (id, email, username, password, role) VALUES (?, ?, ?, ?, ?)";
+    await db.execute(query, [`${'admin_' + user_id}`, firstAdminEmail, firstAdminUsername, hashedPassword, "Admin"]);
+
+    const queryAdmin = "INSERT INTO admin (admin_id, email, username, password) VALUES (?, ?, ?, ?)";
+    await db.execute(queryAdmin, [`${'admin_' + user_id}`, firstAdminEmail, firstAdminUsername, hashedPassword]);
+
+    console.log("First admin initialized.");
+  } catch (error) {
+    console.error("Error initializing first admin:", error.message);
+  }
+}
+
+async function startServer() {
+  try {
+    await createDatabase();
+    await runMigrations();
+    await initializeFirstAdmin();
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
-  })
-  .catch(() => {
-    console.error("Server startup failed.");
+
+  } catch (error) {
+    console.error("Server startup failed:", error);
     process.exit(1);
-  });
+  }
+}
+
+startServer();
 
 app.use(bodyParser.json());
 
@@ -367,18 +197,25 @@ async function sendOtpEmail(email, otp) {
     console.log("Email sent: ", info.response);
   } catch (error) {
     console.error("Failed to send email:", error);
+    throw new Error("Failed to send OTP email");
   }
 }
 
 app.post("/submit", authLimiter, async (req, res) => {
+  let connection;
   try {
     const { email, username, password, RegisterAs } = req.body;
+    if (RegisterAs === "Admin") {
+      return res.status(400).json({ message: "Admin registration is not allowed." });
+    }
+    connection = await db.getConnection();
+    await connection.beginTransaction();
     const hashedPassword = await bcrypt.hash(password, 10);
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
     const query =
       "INSERT INTO temp_users (email, username, password, role, otp, otp_expiry ) VALUES (?, ?, ?, ?, ?, ?)";
-    const [result] = await db.execute(query, [
+    const [result] = await connection.execute(query, [
       email,
       username,
       hashedPassword,
@@ -386,35 +223,44 @@ app.post("/submit", authLimiter, async (req, res) => {
       otp,
       otpExpiry,
     ]);
-    console.log(otp);
+
     try {
       await sendOtpEmail(email, otp);
-
+      await connection.commit();
       res.status(201).json({
         message: "OTP sent successfully",
         userId: result.insertId,
       });
     } catch (error) {
       console.error("Failed to send OTP:", error);
+      await connection.rollback();
       res.status(500).json({
         message: "Failed to send OTP",
         error: error.message,
       });
     }
+    finally {
+      connection.release();
+    }
   } catch (err) {
+    await connection.rollback();
     console.error(err);
     res.status(500).json({ error: "Failed to register user" });
+  }
+  finally {
+    connection.release();
   }
 });
 
 app.post("/OtpVerification", otpLimiter, async (req, res) => {
+  let connection;
   try {
+    connection = await db.getConnection();
     const { email, otp } = req.body;
 
-    // Fetch OTP and expiry for the given email from temp_user
     const query =
       "SELECT * FROM temp_users WHERE email = ? ORDER BY id DESC LIMIT 1";
-    const [result] = await db.execute(query, [email]);
+    const [result] = await connection.execute(query, [email]);
 
     if (result.length === 0) {
       return res.status(404).json({ message: "Email not found" });
@@ -438,42 +284,28 @@ app.post("/OtpVerification", otpLimiter, async (req, res) => {
       return res.status(400).json({ message: "OTP has expired" });
     }
 
-    // Use transaction to move user from temp_user to user atomically
-    // Starts a new SQL transaction so that either both the insert and delete happen, or none do. Ensures atomicity (no partial operations).
-    await db.beginTransaction();
+
+
+    await connection.beginTransaction();
 
     let a_id = uuidv4();
     const user_id = a_id.replaceAll("-", "_");
-    if (role == "Admin") {
+    if (role == "Contributor") {
       const moveUserQuery = `
         INSERT INTO users (id) VALUES (?)
       `;
-      await db.execute(moveUserQuery, [`${'admin_' + user_id}`]);
+      await connection.execute(moveUserQuery, [`${'cont_' + user_id}`]);
 
       const updatequery = `UPDATE users
                            SET username = ?, email = ?, password = ?, role = ?
                            WHERE id = ?`;
-      await db.execute(updatequery, [username, email, password, role, `${'admin_' + user_id}`]);
-
-      const finalSetAdmin = `INSERT INTO admin (admin_id,username, email, password) VALUES (?,?,?,?)`;
-      await db.execute(finalSetAdmin, [`${'admin_' + user_id}`, username, email, password]);
-    }
-    else if (role == "Contributor") {
-      const moveUserQuery = `
-        INSERT INTO users (id) VALUES (?)
-      `;
-      await db.execute(moveUserQuery, [`${'cont_' + user_id}`]);
-
-      const updatequery = `UPDATE users
-                           SET username = ?, email = ?, password = ?, role = ?
-                           WHERE id = ?`;
-      await db.execute(updatequery, [username, email, password, role, `${'cont_' + user_id}`]);
+      await connection.execute(updatequery, [username, email, password, role, `${'cont_' + user_id}`]);
 
       const slug = username.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
 
 
       const finalSetContri = `INSERT INTO contributor (cont_id,username,slug, email, password) VALUES (?,?,?,?,?)`;
-      await db.execute(finalSetContri, [`${'cont_' + user_id}`, username, slug, email, password]);
+      await connection.execute(finalSetContri, [`${'cont_' + user_id}`, username, slug, email, password]);
 
       const tableName = `${'cont_' + user_id}` + '_articles';
 
@@ -497,35 +329,37 @@ app.post("/OtpVerification", otpLimiter, async (req, res) => {
 
         FOREIGN KEY (category_id) REFERENCES categories(id)
       )`;
-      await db.execute(query_cont_articles_table);
+      await connection.execute(query_cont_articles_table);
 
     }
     else if (role == "Reader") {
       const moveUserQuery = `
         INSERT INTO users (id) VALUES (?)
       `;
-      await db.execute(moveUserQuery, [`${'sub_' + user_id}`]);
+      await connection.execute(moveUserQuery, [`${'sub_' + user_id}`]);
 
       const updatequery = `UPDATE users
                            SET username = ?, email = ?, password = ?, role = ?
                            WHERE id = ?`;
-      await db.execute(updatequery, [username, email, password, role, `${'sub_' + user_id}`]);
+      await connection.execute(updatequery, [username, email, password, role, `${'sub_' + user_id}`]);
 
 
       const finalSetSubs = `INSERT INTO reader (sub_id,username, email, password) VALUES (?,?,?,?)`;
-      await db.execute(finalSetSubs, [`${'sub_' + user_id}`, username, email, password]);
+      await connection.execute(finalSetSubs, [`${'sub_' + user_id}`, username, email, password]);
     }
 
     const deleteTempUserQuery = "DELETE FROM temp_users WHERE email = ?";
-    await db.execute(deleteTempUserQuery, [email]);
-
-    await db.commit(); //If everything succeeded, the changes are saved permanently with commit.
+    await connection.execute(deleteTempUserQuery, [email]);
+    await connection.commit();
 
     res.status(200).json({ message: "OTP verified successfully" });
   } catch (err) {
-    await db.rollback();
+    await connection.rollback();
     console.error(err);
     res.status(500).json({ error: "Failed to verify OTP" });
+  }
+  finally {
+    connection.release();
   }
 });
 

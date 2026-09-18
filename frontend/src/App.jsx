@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   Feather,
@@ -183,9 +184,7 @@ function HeroDemoCard() {
 }
 
 function Hero() {
-  useEffect(() => {
-    document.title = 'Home · Pixel & Pen';
-  }, []);
+  const navigate = useNavigate();
   return (
     <section id="top" className="relative overflow-hidden px-6 pb-24 pt-8 lg:px-8 lg:pb-32 lg:pt-16">
       <PixelGrid className="text-[#1E3A5F]/[0.05] dark:text-[#4F8EF7]/[0.06]" />
@@ -195,8 +194,8 @@ function Hero() {
       <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 lg:grid-cols-2">
         <Reveal>
 
-          <h1 className="text-[clamp(2.5rem,2rem+2.5vw,4.25rem)] font-['Newsreader'] font-black leading-[1.08] tracking-tight">
-            Where Great Stories <span className="font-medium italic">Find Their Voice</span>
+          <h1 className="text-[clamp(2.5rem,3rem+3.5vw,4.8rem)] font-['Newsreader'] font-black leading-[1.08] tracking-tight">
+            Where Great Stories <span className="font-medium italic text-[#F97316]">Find Their Voice</span>
           </h1>
           <p className={`mt-6 max-w-xl text-lg leading-relaxed ${t.muted}`}>
             A modern blogging platform designed for creators, readers, and communities. Write, publish, discover, and
@@ -204,13 +203,13 @@ function Hero() {
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-4">
             <button
-              onClick={() => scrollToId("how-it-works")}
+              onClick={() => navigate("/articles")}
               className="inline-flex items-center gap-2 rounded-md text-white bg-[#1E3A5F] dark:bg-[#4F8EF7] dark:text-[#0B1220] px-7 py-3.5 text-sm font-semibold shadow-md transition-transform duration-300 hover:scale-[1.03] active:scale-[0.98]"
             >
               Explore Articles <ArrowRight className="h-4 w-4" />
             </button>
             <button
-              onClick={() => scrollToId("cta")}
+              onClick={() => navigate("/register")}
               className={`inline-flex items-center gap-2 rounded-md border ${t.border} px-7 py-3.5 text-sm font-semibold ${t.text} transition-colors hover:border-[#1E3A5F] dark:hover:border-[#4F8EF7]`}
             >
               Become a Contributor
@@ -893,6 +892,7 @@ function Vision() {
 
 /* CTA */
 function CTA() {
+  const navigate = useNavigate();
   return (
     <section id="cta" className="relative overflow-hidden px-6 py-24 lg:px-8">
       <div className="absolute inset-0 bg-gradient-to-br from-[#1E3A5F] to-[#0f2338] dark:from-[#0B1220] dark:to-[#162033]" />
@@ -900,14 +900,14 @@ function CTA() {
       <div aria-hidden className="pointer-events-none absolute -top-32 right-0 h-96 w-96 rounded-full bg-[#F97316]/20 blur-3xl" />
       <div className="relative mx-auto max-w-3xl text-center">
         <Reveal>
-          <h2 className="text-[clamp(1.875rem,1.5rem+1.5vw,2.75rem)] font-['Newsreader'] font-semibold tracking-tight text-white">
-            Start Writing. Start Reading. Start Sharing.
+          <h2 className="text-[clamp(1.875rem,1.5rem+1.5vw,2.75rem)] font-['Newsreader'] font-semibold  tracking-tight leading-11 text-white">
+            Start Writing. Start Reading. <br /> Start Sharing.
           </h2>
           <p className="mx-auto mt-5 max-w-xl leading-relaxed text-white/70">
             Whether you're here to publish your first article, discover fresh perspectives, or build a thriving
             content community, Pixel &amp; Pen gives you the tools to make it happen.
           </p>
-          <button className="mt-9 inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-[#F97316] to-[#F59E0B] px-8 py-4 text-sm font-semibold text-white shadow-lg transition-transform duration-300 hover:scale-[1.03] active:scale-[0.98] dark:from-[#FF8A3D] dark:to-[#F6B93B]">
+          <button onClick={() => navigate("/register")} className="mt-9 inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-[#F97316] to-[#F59E0B] px-8 py-4 text-sm font-semibold text-white shadow-lg transition-transform duration-300 hover:scale-[1.03] active:scale-[0.98] dark:from-[#FF8A3D] dark:to-[#F6B93B]">
             Join Pixel &amp; Pen Today <ArrowRight className="h-4 w-4" />
           </button>
         </Reveal>
