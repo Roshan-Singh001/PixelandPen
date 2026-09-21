@@ -390,7 +390,7 @@ adminRouter.post('/cont/status', async (req, res) => {
 adminRouter.get('/fetch/reader/list', async (req, res) => {
   try {
     const queryReaders = `
-      SELECT r.sub_id, r.username, r.email, r.profile_pic, r.created_at, COUNT(v.id) AS total_view, COUNT(l.id) AS total_like
+      SELECT r.sub_id, r.username, r.email, r.profile_pic, r.created_at, COUNT(DISTINCT v.id) AS total_view, COUNT(DISTINCT l.id) AS total_like
       FROM reader r
       LEFT JOIN article_views v ON r.sub_id = v.reader_id
       LEFT JOIN article_likes l ON r.sub_id = l.reader_id

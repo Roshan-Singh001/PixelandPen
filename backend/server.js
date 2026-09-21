@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -16,7 +17,7 @@ import contriRouter from './cont.js';
 import profileRouter from './profile.js';
 import actionRouter from "./actions.js";
 import readRouter from "./reader.js";
-import { otpLimiter, authLimiter, apiLimiter, publicApiLimiter } from "./rateLimitMiddleware.js";
+import { otpLimiter, authLimiter, apiLimiter, publicApiLimiter, passwordResetLimiter } from "./rateLimitMiddleware.js";
 import db, { MyDbName } from "./db.js";
 import { runMigrations } from "./migrations.js";
 
@@ -158,39 +159,230 @@ async function sendOtpEmail(email, otp) {
     from: `"Pixel & Pen" <${email_user}>`,
     to: email,
     subject: "Pixel & Pen OTP Code",
-    html: `<div style="max-width: 500px; margin: auto; background: #ffffff; border-radius: 12px; padding: 30px; font-family: 'Segoe UI', sans-serif; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #e0e0e0;">
-  <div style="text-align: center; padding-bottom: 20px;">
-    <h2 style="margin: 0; color: #1E90FF;">🔒 Pixel & Pen OTP Verification</h2>
+    html: `<div style="margin:0; padding:40px 16px; background:#FAFAF8; font-family:Inter, Arial, Helvetica, sans-serif; color:#1F2937;">
+
+  <div style="max-width:560px; margin:0 auto;">
+
+    <!-- Email Card -->
+    <div style="background:#FFFFFF; border:1px solid #E5E7EB; border-radius:16px; overflow:hidden;">
+
+      <!-- Header -->
+      <div style="padding:32px 36px 26px; border-bottom:1px solid #E5E7EB; text-align:center;">
+
+        <img
+          src="https://raw.githubusercontent.com/Roshan-Singh001/PixelandPen/main/frontend/src/assets/images/Pixel%20%26%20Pen(Main-New).png"
+          alt="Pixel & Pen"
+          style="height:42px; width:auto; display:inline-block;"
+        />
+
+      </div>
+
+      <!-- Content -->
+      <div style="padding:40px 36px 36px;">
+
+        <div style="margin-bottom:28px;">
+          <p style="margin:0 0 8px; font-size:11px; line-height:1.4; letter-spacing:2px; text-transform:uppercase; font-weight:600; color:#F59E0B;">
+            Password reset
+          </p>
+
+          <h1 style="margin:0; font-family:'Newsreader', Georgia, serif; font-size:34px; line-height:1.15; font-weight:500; letter-spacing:-0.5px; color:#1E3A5F;">
+            Let's get you back in.
+          </h1>
+        </div>
+
+        <p style="margin:0 0 18px; font-size:15px; line-height:1.7; color:#1F2937;">
+          Hello,
+        </p>
+
+        <p style="margin:0 0 26px; font-size:15px; line-height:1.7; color:#6B7280;">
+          We received a request to reset the password for your
+          <strong style="color:#1F2937;">Pixel & Pen</strong> account.
+          Use the verification code below to continue.
+        </p>
+
+        <!-- OTP -->
+        <div style="margin:30px 0; padding:26px 20px; background:#FAFAF8; border:1px solid #E5E7EB; border-radius:12px; text-align:center;">
+
+          <p style="margin:0 0 12px; font-size:11px; line-height:1.4; letter-spacing:1.8px; text-transform:uppercase; font-weight:600; color:#6B7280;">
+            Verification code
+          </p>
+
+          <div style="font-family:Inter, Arial, sans-serif; font-size:32px; line-height:1; letter-spacing:8px; font-weight:700; color:#1E3A5F;">
+            ${otp}
+          </div>
+
+        </div>
+
+        <p style="margin:0 0 10px; font-size:13px; line-height:1.6; color:#6B7280;">
+          This code will expire in
+          <strong style="color:#1F2937;">10 minutes</strong>.
+        </p>
+
+        <p style="margin:0 0 28px; font-size:13px; line-height:1.6; color:#6B7280;">
+          For your security, never share this code with anyone.
+          Pixel & Pen will never ask you for your verification code.
+        </p>
+
+        <!-- Security Note -->
+        <div style="padding:14px 16px; background:#FFF7E6; border-left:3px solid #F59E0B; border-radius:4px;">
+
+          <p style="margin:0; font-size:12px; line-height:1.6; color:#6B7280;">
+            If you didn't request a password reset, you can safely ignore
+            this email. Your password will remain unchanged.
+          </p>
+
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div style="padding:22px 36px; background:#FAFAF8; border-top:1px solid #E5E7EB; text-align:center;">
+
+        <p style="margin:0 0 6px; font-family:'Newsreader', Georgia, serif; font-size:14px; font-style:italic; color:#6B7280;">
+          A pixel paints, a pen writes — together, they build worlds.
+        </p>
+
+        <p style="margin:12px 0 0; font-size:11px; line-height:1.5; color:#9CA3AF;">
+          This is an automated message from Pixel & Pen.<br>
+          Please do not reply to this email.
+        </p>
+
+      </div>
+
+    </div>
+
   </div>
 
-  <p style="font-size: 16px; color: #333;">Hello,</p>
-
-  <p style="font-size: 16px; color: #333;">
-    Use the following OTP to complete your verification process:
-  </p>
-
-  <div style="text-align: center; margin: 30px 0;">
-    <span style="display: inline-block; background: linear-gradient(135deg, #1E90FF, #00BFFF); color: white; padding: 15px 30px; font-size: 28px; letter-spacing: 6px; font-weight: bold; border-radius: 8px;">
-      ${otp}
-    </span>
-  </div>
-
-  <p style="font-size: 14px; color: #555;">
-    This OTP is valid for <strong>10 minutes</strong>. Please do not share it with anyone.
-  </p>
-
-  <p style="font-size: 14px; color: #555;">
-    If you did not request this OTP, please ignore this email.
-  </p>
-
-  <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-
-  <p style="font-size: 12px; color: #999; text-align: center;">
-    This is an automated message from Pixel & Pen. Do not reply to this email.
-  </p>
 </div>
 `,
   };
+
+  try {
+    const info = await transport.sendMail(mailOptions);
+    console.log("Email sent: ", info.response);
+  } catch (error) {
+    console.error("Failed to send email:", error);
+    throw new Error("Failed to send OTP email");
+  }
+}
+
+async function sendPasswordResetOtpEmail(email, otp) {
+  const transport = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: email_user,
+      pass: email_pass,
+    },
+  });
+
+  const mailOptions = {
+    from: `"Pixel & Pen" <${email_user}>`,
+    to: email,
+    subject: "Pixel & Pen Password Reset OTP Code",
+    html: `
+      <div style="margin:0; padding:40px 16px; background:#FAFAF8; font-family:Inter, Arial, Helvetica, sans-serif; color:#1F2937;">
+
+  <div style="max-width:560px; margin:0 auto;">
+
+    <!-- Email Card -->
+    <div style="background:#FFFFFF; border:1px solid #E5E7EB; border-radius:16px; overflow:hidden;">
+
+      <!-- Header -->
+      <div style="padding:30px 36px; border-bottom:1px solid #E5E7EB; text-align:center;">
+
+        <img
+          src="https://raw.githubusercontent.com/Roshan-Singh001/PixelandPen/main/frontend/src/assets/images/Pixel%20%26%20Pen(Main-New).png"
+          alt="Pixel & Pen"
+          style="height:42px; width:auto; display:inline-block;"
+        />
+
+      </div>
+
+      <!-- Content -->
+      <div style="padding:40px 36px 36px;">
+
+        <!-- Heading -->
+        <div style="margin-bottom:26px;">
+
+          <p style="margin:0 0 8px; font-size:11px; line-height:1.4; letter-spacing:2px; text-transform:uppercase; font-weight:600; color:#F59E0B;">
+            Password reset
+          </p>
+
+          <h1 style="margin:0; font-family:'Newsreader', Georgia, serif; font-size:34px; line-height:1.15; font-weight:500; letter-spacing:-0.5px; color:#1E3A5F;">
+            Verify your request.
+          </h1>
+
+        </div>
+
+        <!-- Message -->
+        <p style="margin:0 0 18px; font-size:15px; line-height:1.7; color:#1F2937;">
+          Hello,
+        </p>
+
+        <p style="margin:0 0 28px; font-size:15px; line-height:1.7; color:#6B7280;">
+          We received a request to reset the password for your
+          <strong style="color:#1F2937;">Pixel & Pen</strong> account.
+          Enter the verification code below to continue.
+        </p>
+
+        <!-- OTP Box -->
+        <div style="margin:30px 0; padding:28px 20px; background:#FAFAF8; border:1px solid #E5E7EB; border-radius:12px; text-align:center;">
+
+          <p style="margin:0 0 14px; font-size:10px; line-height:1.4; letter-spacing:2px; text-transform:uppercase; font-weight:600; color:#6B7280;">
+            Your verification code
+          </p>
+
+          <div style="font-family:Inter, Arial, Helvetica, sans-serif; font-size:32px; line-height:1; letter-spacing:8px; font-weight:700; color:#1E3A5F;">
+            ${otp}
+          </div>
+
+        </div>
+
+        <!-- Expiry -->
+        <p style="margin:0 0 8px; font-size:13px; line-height:1.6; color:#6B7280;">
+          This code expires in
+          <strong style="color:#1F2937;">10 minutes</strong>.
+        </p>
+
+        <p style="margin:0 0 28px; font-size:13px; line-height:1.6; color:#6B7280;">
+          For your security, please don't share this code with anyone.
+          Pixel & Pen will never ask you for your OTP.
+        </p>
+
+        <!-- Security Notice -->
+        <div style="padding:14px 16px; background:#FFF7E6; border-left:3px solid #F59E0B; border-radius:4px;">
+
+          <p style="margin:0; font-size:12px; line-height:1.6; color:#6B7280;">
+            If you didn't request a password reset, you can safely ignore
+            this email. Your password will not be changed.
+          </p>
+
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div style="padding:22px 36px; background:#FAFAF8; border-top:1px solid #E5E7EB; text-align:center;">
+
+        <p style="margin:0 0 8px; font-family:'Newsreader', Georgia, serif; font-size:14px; font-style:italic; color:#6B7280;">
+          A pixel paints, a pen writes — together, they build worlds.
+        </p>
+
+        <p style="margin:0; font-size:11px; line-height:1.5; color:#9CA3AF;">
+          This is an automated message from Pixel & Pen.<br>
+          Please do not reply to this email.
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+    `
+  }
 
   try {
     const info = await transport.sendMail(mailOptions);
@@ -479,4 +671,388 @@ app.post("/logout", authLimiter, (req, res) => {
   });
 
   res.status(200).json({ message: "Logged out successfully" });
+});
+
+app.post("/auth/forgot-password", passwordResetLimiter, async (req, res) => {
+  const email = req.body.email?.trim().toLowerCase();
+
+  try {
+    if (!email) {
+      return res.status(400).json({
+        message: "Please enter your email address.",
+      });
+    }
+
+    const queryCheckUser = `
+      SELECT id
+      FROM users
+      WHERE email = ?
+    `;
+
+    const [userResult] = await db.execute(queryCheckUser, [email]);
+    if (userResult.length === 0) {
+      return res.status(200).json({
+        message:
+          "If an account exists with this email, we've sent a verification code.",
+      });
+    }
+
+    const userId = userResult[0].id;
+    await db.execute(
+      `
+        UPDATE password_reset_otps
+        SET used_at = NOW()
+        WHERE user_id = ?
+          AND used_at IS NULL
+      `,
+      [userId]
+    );
+
+    const otp = crypto
+      .randomInt(100000, 1000000)
+      .toString();
+
+    const otpExpiry = new Date(
+      Date.now() + 10 * 60 * 1000
+    );
+    const hashedOtp = await bcrypt.hash(otp, 10);
+    const queryInsertOtp = `
+      INSERT INTO password_reset_otps
+        (user_id, otp_hash, expires_at, attempts)
+      VALUES (?, ?, ?, 0)
+    `;
+    await db.execute(queryInsertOtp, [
+      userId,
+      hashedOtp,
+      otpExpiry,
+    ]);
+
+    await sendPasswordResetOtpEmail(email, otp);
+    return res.status(200).json({
+      message:
+        "If an account exists with this email, we've sent a verification code.",
+    });
+
+  } catch (error) {
+    console.error(
+      "Error in forgot-password:",
+      error
+    );
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+});
+
+app.post("/auth/verify-reset-otp", passwordResetLimiter, async (req, res) => {
+  const email = req.body.email?.trim().toLowerCase();
+  const otp = req.body.otp?.trim();
+
+  try {
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        message: "Invalid or expired OTP.",
+      });
+    }
+
+    // Find user
+    const queryCheckUser = `
+      SELECT id
+      FROM users
+      WHERE email = ?
+    `;
+
+    const [userResult] = await db.execute(
+      queryCheckUser,
+      [email]
+    );
+
+    if (userResult.length === 0) {
+      return res.status(400).json({
+        message: "Invalid or expired OTP.",
+      });
+    }
+
+    const userId = userResult[0].id;
+
+    // Get latest unused OTP
+    const queryGetOtp = `
+      SELECT *
+      FROM password_reset_otps
+      WHERE user_id = ?
+        AND used_at IS NULL
+      ORDER BY created_at DESC
+      LIMIT 1
+    `;
+
+    const [otpResult] = await db.execute(
+      queryGetOtp,
+      [userId]
+    );
+
+    if (otpResult.length === 0) {
+      return res.status(400).json({
+        message: "Invalid or expired OTP.",
+      });
+    }
+
+    const otpRecord = otpResult[0];
+
+    // Maximum attempts
+    if (otpRecord.attempts >= 5) {
+      return res.status(400).json({
+        message: "Invalid or expired OTP.",
+      });
+    }
+
+    // Check expiry
+    if (new Date() > new Date(otpRecord.expires_at)) {
+
+      await db.execute(
+        `
+          UPDATE password_reset_otps
+          SET used_at = NOW()
+          WHERE id = ?
+        `,
+        [otpRecord.id]
+      );
+
+      return res.status(400).json({
+        message: "Invalid or expired OTP.",
+      });
+    }
+
+    // Compare OTP
+    const isOtpValid = await bcrypt.compare(
+      otp,
+      otpRecord.otp_hash
+    );
+
+    // Invalid OTP
+    if (!isOtpValid) {
+
+      await db.execute(
+        `
+          UPDATE password_reset_otps
+          SET attempts = attempts + 1
+          WHERE id = ?
+        `,
+        [otpRecord.id]
+      );
+
+      return res.status(400).json({
+        message: "Invalid or expired OTP.",
+      });
+    }
+
+
+    // Generate temporary reset token
+    const resetToken = crypto
+      .randomBytes(32)
+      .toString("hex");
+
+    const resetTokenHash = await bcrypt.hash(
+      resetToken,
+      10
+    );
+
+    const resetTokenExpiry = new Date(
+      Date.now() + 10 * 60 * 1000
+    );
+
+    // Mark OTP as used and store reset token
+    await db.execute(
+      `
+        UPDATE password_reset_otps
+        SET
+          reset_token_hash = ?,
+          reset_token_expires_at = ?
+        WHERE id = ?
+      `,
+      [
+        resetTokenHash,
+        resetTokenExpiry,
+        otpRecord.id,
+      ]
+    );
+
+    return res.status(200).json({
+      message: "OTP verified successfully.",
+      resetToken,
+    });
+
+  } catch (error) {
+
+    console.error(
+      "Error in verify-reset-otp:",
+      error
+    );
+
+    return res.status(500).json({
+      message: "Internal server error.",
+    });
+  }
+});
+
+app.post("/auth/reset-password", passwordResetLimiter, async (req, res) => {
+  const email = req.body.email?.trim().toLowerCase();
+  const { resetToken, newPassword } = req.body;
+
+  console.log("Received reset password request:", {
+    email,
+    resetToken,
+    newPassword,
+  });
+
+  try {
+    if (!email || !resetToken || !newPassword) {
+      return res.status(400).json({
+        message: "Email, reset token, and new password are required.",
+      });
+    }
+
+    if (newPassword.length < 4 || newPassword.length > 16) {
+      return res.status(400).json({
+        message: "Password must be between 4 and 16 characters.",
+      });
+    }
+
+    // Find user
+    const queryCheckUser = `
+      SELECT id, role
+      FROM users
+      WHERE email = ?
+    `;
+
+    const [userResult] = await db.execute(
+      queryCheckUser,
+      [email]
+    );
+
+    if (userResult.length === 0) {
+      return res.status(400).json({
+        message: "Invalid reset token or email.",
+      });
+    }
+
+    const user = userResult[0];
+
+    if (user.role === "Admin") {
+      return res.status(400).json({
+        message: "Password reset for Admins is not allowed.",
+      });
+    }
+
+    const userId = user.id;
+
+    // Get latest reset token
+    const resetTokenQuery = `
+      SELECT *
+      FROM password_reset_otps
+      WHERE user_id = ?
+        AND used_at IS NULL
+        AND reset_token_hash IS NOT NULL
+      ORDER BY created_at DESC
+      LIMIT 1
+    `;
+
+    const [otpResult] = await db.execute(
+      resetTokenQuery,
+      [userId]
+    );
+
+    if (otpResult.length === 0) {
+      return res.status(400).json({
+        message: "Invalid reset token or email.",
+      });
+    }
+
+    const otpRecord = otpResult[0];
+
+    // Check reset token expiry
+    if (
+      !otpRecord.reset_token_expires_at ||
+      new Date() > new Date(otpRecord.reset_token_expires_at)
+    ) {
+      return res.status(400).json({
+        message: "Reset token has expired.",
+      });
+    }
+
+    // Verify reset token
+    const isResetTokenValid = await bcrypt.compare(
+      resetToken,
+      otpRecord.reset_token_hash
+    );
+
+    if (!isResetTokenValid) {
+      return res.status(400).json({
+        message: "Invalid reset token or email.",
+      });
+    }
+
+    // Hash new password
+    const hashedNewPassword = await bcrypt.hash(
+      newPassword,
+      10
+    );
+
+    await db.execute(
+      `
+        UPDATE users
+        SET password = ?
+        WHERE id = ?
+      `,
+      [hashedNewPassword, userId]
+    );
+
+    if (user.role === "Contributor") {
+
+      await db.execute(
+        `
+          UPDATE contributor
+          SET password = ?
+          WHERE cont_id = ?
+        `,
+        [hashedNewPassword, userId]
+      );
+
+    } else if (user.role === "Reader") {
+
+      await db.execute(
+        `
+          UPDATE reader
+          SET password = ?
+          WHERE reader_id = ?
+        `,
+        [hashedNewPassword, userId]
+      );
+    }
+
+    await db.execute(
+      `
+        UPDATE password_reset_otps
+        SET used_at = NOW()
+        WHERE id = ?
+      `,
+      [otpRecord.id]
+    );
+
+    return res.status(200).json({
+      message: "Password reset successfully.",
+    });
+
+  } catch (error) {
+
+    console.error(
+      "Error in reset-password:",
+      error
+    );
+
+    return res.status(500).json({
+      message: "Internal server error.",
+    });
+  }
 });

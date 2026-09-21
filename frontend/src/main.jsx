@@ -24,6 +24,7 @@ import Footer from "./components/Footer.jsx";
 import Login_page from "./pages/auth/Login_page.jsx";
 import Sign_Up_Page from "./pages/auth/Sign_Up_Page.jsx";
 import OtpVerification from "./pages/auth/OtpVerification.jsx";
+import PasswordReset from "./pages/auth/PasswordReset.jsx";
 import Error404 from "./pages/Error404.jsx";
 
 import Admin from "./pages/dashboard/admin_dashboard.jsx";
@@ -148,7 +149,14 @@ const router = createBrowserRouter([
       </>
     ),
   },
-
+  {
+    path: "/password-reset",
+    element: (
+      <>
+        <PasswordReset />
+      </>
+    ),
+  },
   {
     path: "/notfound",
     element: (

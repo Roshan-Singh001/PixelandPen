@@ -107,6 +107,7 @@ const ReaderManage = () => {
         AxiosInstance.get('/dashboard/admin/fetch/reader/list')
             .then((res) => {
                 setReaders(res.data.readers || []);
+                console.log("Fetched readers:", res.data.readers);
             })
             .catch((err) => {
                 const status = err.response?.status;

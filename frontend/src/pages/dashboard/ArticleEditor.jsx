@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback, useState, useEffect } from 'react';
-import { useNavigate, useParams} from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import AxiosInstance from '../../api/axiosInstance';
 import { Slate, Editable, withReact, useSlate } from 'slate-react';
 import { Node, Text, createEditor, Editor, Range, Transforms, Element as SlateElement } from 'slate';
@@ -218,7 +218,7 @@ const ArticleEditor = () => {
   const handleSend = async () => {
     setSaveInProgress(true);
     try {
-      const response = await AxiosInstance.post("/dashboard/contri/article/send", {
+      await AxiosInstance.post("/dashboard/contri/article/send", {
         slug: slug,
         title: title,
       });
@@ -341,9 +341,9 @@ const ArticleEditor = () => {
       center: 'text-center',
       right: 'text-right',
       justify: 'text-justify',
-    }[props.element.children[0].align || 'left'];
-    // console.log("ALignment: ",props.element.children[0].align, alignment);
-    console.log(props.element.type);
+    }[props.element.align || 'left'];
+    console.log("Rendering Element: ", props.element.align);
+
     switch (props.element.type) {
       case 'code':
         return <CodeElement {...props} alignment={alignment} />
@@ -433,9 +433,14 @@ const ArticleEditor = () => {
 
     Transforms.setNodes(
       editor,
-      { type: isActive ? 'paragraph' : isList ? 'list-item' : format },
-      { align: 'left' },
-      { match: n => SlateElement.isElement(n), split: true }
+      {
+        type: isActive ? 'paragraph' : isList ? 'list-item' : format,
+        align: 'left',
+      },
+      {
+        match: n => SlateElement.isElement(n),
+        split: true,
+      }
     );
 
     if (!isActive && isList) {
@@ -447,37 +452,35 @@ const ArticleEditor = () => {
   };
 
   const isAlignActive = (editor, format) => {
+    if (!editor.selection) return false;
+
     const [match] = Editor.nodes(editor, {
-      match: n => {
-        return !Editor.isEditor(n) && SlateElement.isElement(n) && n.align === format
-      },
-      mode: 'lowest',
+      at: editor.selection,
+      match: n =>
+        SlateElement.isElement(n) &&
+        Editor.isBlock(editor, n) &&
+        ((format === 'left' && !n.align) || n.align === format),
     });
+
     return !!match;
   };
 
   const toggleAlignment = (editor, format) => {
-    const isActive = isAlignActive(editor, format);
     Transforms.setNodes(
       editor,
       { align: format },
-      { match: n => Editor.isBlock(editor, n), mode: 'lowest' }
+      {
+        at: editor.selection,
+        match: n =>
+          SlateElement.isElement(n) &&
+          Editor.isBlock(editor, n),
+      }
     );
-
   };
 
   const handleCanBeSave = () => {
     if (title.length <= 5) return true;
     else if (getTextLength(value) == 0) return true;
-
-    console.log(!(
-      isTitleDirty ||
-      isContentDirty ||
-      isCategoryDirty ||
-      isDescriptionDirty ||
-      isTagDirty ||
-      isThumbImageDirty
-    ));
 
     return !(
       isTitleDirty ||
@@ -514,7 +517,6 @@ const ArticleEditor = () => {
     const [link] = Editor.nodes(editor, {
       match: n => !Editor.isEditor(n) && SlateElement.isElement(n) && n.type === 'link',
     });
-    console.log(link);
     return !!link;
   };
 
@@ -836,7 +838,7 @@ const Toolbar = ({ toggleMark, toggleBlock, isBlockActive, toggleAlignment, isAl
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto overflow-y-visible pb-2 border-b border-[#E5E7EB] dark:border-[#243247] [scrollbar-width:thin]">
+    <div className="flex flex-nowrap items-center gap-1.5 pb-2 border-b border-[#E5E7EB] dark:border-[#243247] [scrollbar-width:thin]">
 
       <ToolbarButton
         icon={<MdFormatBold />}
@@ -859,13 +861,6 @@ const Toolbar = ({ toggleMark, toggleBlock, isBlockActive, toggleAlignment, isAl
         toggleMark={toggleMark}
         title="Underline (Ctrl+U)"
       />
-      {/* <ToolbarButton 
-        icon={<MdCode />} 
-        format="code" 
-        editor={editor} 
-        toggleMark={toggleMark} 
-        title="Code (Ctrl+`)"
-      /> */}
 
       <BlockButton
         icon={<MdCode />}
@@ -891,6 +886,20 @@ const Toolbar = ({ toggleMark, toggleBlock, isBlockActive, toggleAlignment, isAl
       </button>
 
       <button
+        title='Align Right'
+        className={`shrink-0 p-2 rounded-md transition-colors text-lg ${isAlignActive(editor, 'right')
+          ? 'bg-[#1E3A5F] dark:bg-[#4F8EF7] text-white'
+          : 'text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F]/10 dark:hover:bg-[#4F8EF7]/10'
+          }`}
+        onMouseDown={e => {
+          e.preventDefault();
+          toggleAlignment(editor, 'right');
+        }}
+      >
+        <FaAlignRight />
+      </button>
+
+      <button
         title='Align Center'
         className={`shrink-0 p-2 rounded-md transition-colors text-lg ${isAlignActive(editor, 'center')
           ? 'bg-[#1E3A5F] dark:bg-[#4F8EF7] text-white'
@@ -902,6 +911,20 @@ const Toolbar = ({ toggleMark, toggleBlock, isBlockActive, toggleAlignment, isAl
         }}
       >
         <FaAlignCenter />
+      </button>
+
+      <button
+        title='Align Justify'
+        className={`shrink-0 p-2 rounded-md transition-colors text-lg ${isAlignActive(editor, 'justify')
+          ? 'bg-[#1E3A5F] dark:bg-[#4F8EF7] text-white'
+          : 'text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F]/10 dark:hover:bg-[#4F8EF7]/10'
+          }`}
+        onMouseDown={e => {
+          e.preventDefault();
+          toggleAlignment(editor, 'justify');
+        }}
+      >
+        <FaAlignJustify />
       </button>
 
       <div className="relative bg-transparent inline-block text-left">
