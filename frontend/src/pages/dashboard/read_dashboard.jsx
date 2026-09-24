@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
@@ -272,6 +272,7 @@ const ReaderDashboard = () => {
                 savedArticlesCount,
                 recentArticles,
                 announcements,
+                setIsRender,
               }}
             />
           </div>

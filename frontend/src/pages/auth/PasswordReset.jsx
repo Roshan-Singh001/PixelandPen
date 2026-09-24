@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AxiosInstance from "../../api/axiosInstance";
 import { MdEmail, MdMailOutline, MdLockOutline, MdVpnKey, MdCheck, MdCheckCircle } from "react-icons/md";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -13,7 +13,6 @@ const RESEND_SECONDS = 30;
 const REDIRECT_DELAY_MS = 2500;
 const LOGIN_PATH = "/Login";
 
-// Keep these in sync with your Sign Up page / backend validation.
 const PASSWORD_MIN = 4;
 const PASSWORD_MAX = 16;
 
@@ -49,14 +48,6 @@ const RAIL_STEPS = [
     { title: "Verify your email", desc: "Tell us where to send your code." },
     { title: "Enter the code", desc: "Confirm it's really you." },
     { title: "Choose a new password", desc: "Then sign back in." },
-];
-
-const PIXEL_GRID = [
-    [0, 0, 0, 1, 0],
-    [0, 0, 1, 0, 1],
-    [0, 1, 0, 1, 0],
-    [1, 0, 1, 0, 0],
-    [0, 1, 0, 0, 0],
 ];
 
 function apiMessage(err, fallback) {

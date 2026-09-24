@@ -1,4 +1,3 @@
-import React from 'react';
 import { Pen} from 'lucide-react';
 
 export default function PixelPenLoader() {
@@ -57,7 +56,7 @@ export default function PixelPenLoader() {
       </div>
 
       {/* Custom Styles */}
-      <style jsx>{`
+      <style>{`
         @keyframes pixelGlow {
           0%, 100% { opacity: 0.3; transform: scale(1); }
           50% { opacity: 1; transform: scale(1.1); }

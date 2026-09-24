@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import AxiosInstance from '../../../api/axiosInstance';
 import {
   Eye, Heart, MessageSquare, Users, ChevronDown, Info, TrendingUp,
-  FileText, Clock, XCircle, CheckCircle, AlertCircle, Sparkles
+  FileText, Clock, XCircle, CheckCircle, AlertCircle
 } from 'lucide-react';
 import {
   AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid,

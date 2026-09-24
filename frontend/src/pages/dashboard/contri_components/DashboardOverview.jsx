@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { TrendingUp, Clock, XCircle, CheckCircle, Ban, FileText, Megaphone, Calendar } from "lucide-react";
 import { toast } from "react-toastify";
 
-const DashboardOverview = ({ userData, status, announcements, statsData, recentArticles, rejectReason }) => {
+const DashboardOverview = ({ userData, status, announcements, statsData, recentArticles, rejectReason, setIsRender }) => {
     const navigate = useNavigate();
     const handleReject = async () => {
         try {
             await AxiosInstance.post('/dashboard/contri/resend');
-            setIsRender(isRender + 1);
+            setIsRender((prev) => prev + 1);
 
         } catch (error) {
             console.log(error);

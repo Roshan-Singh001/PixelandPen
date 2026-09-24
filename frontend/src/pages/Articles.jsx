@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import AxiosInstance from "../api/axiosInstance";
 import {
-  Search, Clock, ArrowRight, FileText, TrendingUp, Tag, Eye,
+  Search, ArrowRight, FileText, TrendingUp, Tag, Eye,
   UserRound, Sparkles, Flame, ChevronLeft, ChevronRight, X, Loader2, SearchX
 } from "lucide-react";
 import MetaData from "../components/MetaData";

@@ -22,7 +22,7 @@ function formatDate(dateString) {
   });
 }
 
-const Comments = (props) => {
+const Comments = () => {
 
   const navigate = useNavigate();
   const [comments, setComments] = useState([]);

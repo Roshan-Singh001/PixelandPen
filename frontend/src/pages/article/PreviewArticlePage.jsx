@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AxiosInstance from '../../api/axiosInstance';
 import {
@@ -29,7 +29,7 @@ function parseTags(tags) {
 const PreviewArticlePage = () => {
   const navigate = useNavigate();
   const { slug } = useParams();
-  const { loggedIn, userData } = useAuth();
+  const { loggedIn} = useAuth();
 
   const [article, setArticle] = useState(null);
   const [isLiked, setIsLiked] = useState(false);

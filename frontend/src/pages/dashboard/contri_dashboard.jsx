@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
@@ -18,7 +18,7 @@ import {
 } from "react-icons/fa";
 import { BiSolidDashboard } from "react-icons/bi";
 import { MdArticle, MdAnalytics, MdLogout } from "react-icons/md";
-import { IoPersonAdd, IoSettingsSharp } from "react-icons/io5";
+import { IoSettingsSharp } from "react-icons/io5";
 import { FaAnglesRight } from "react-icons/fa6";
 import { FaAnglesLeft } from "react-icons/fa6";
 import { FaUsers } from "react-icons/fa";
@@ -234,7 +234,7 @@ const ContributorDashboard = () => {
         </div>
 
         <nav className="flex-1 py-2 flex flex-col gap-0.5 overflow-y-auto overflow-x-hidden">
-          {NAV_ITEMS.map(({ label, path, icon, status, external }) => (
+          {NAV_ITEMS.map(({ label, path, icon, status }) => (
             <NavLink
               key={label}
               to={path}

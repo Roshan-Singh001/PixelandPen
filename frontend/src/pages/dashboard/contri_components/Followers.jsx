@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import AxiosInstance from '../../../api/axiosInstance';
 import {
-  Search, UserRound, Users, X, BookOpen, Bookmark, Calendar, ExternalLink, Loader2
+  Search, UserRound, Users, X, BookOpen, Bookmark, Calendar, ExternalLink
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 
@@ -72,7 +72,7 @@ const Followers = () => {
         if (status === 429) {
           toast.error("Too many requests. Please wait a few minutes before trying again.");
         } else {
-          if (reset) setLoadError("Couldn't load your followers. Please refresh.");
+          setLoadError("Couldn't load your followers. Please refresh.");
         }
       })
       .finally(() => {

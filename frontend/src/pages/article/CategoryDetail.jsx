@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AxiosInstance from "../../api/axiosInstance.jsx";
 import MetaData from "../../components/MetaData.jsx";
 import {
-  ArrowLeft, FileText, Eye, ChevronRight, Loader2, FolderX, Tag
+  ArrowLeft, FileText, Eye, FolderX, Tag
 } from "lucide-react";
 
 function formatDate(dateString) {

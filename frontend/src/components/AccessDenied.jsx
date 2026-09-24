@@ -1,4 +1,3 @@
-import React from 'react';
 import { Shield, ArrowLeft, RefreshCw } from 'lucide-react';
 
 export default function AccessDenied() {

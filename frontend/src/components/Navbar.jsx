@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
 import { useTheme } from "../contexts/ThemeContext";
@@ -8,7 +8,7 @@ import { useAuth } from "../contexts/AuthContext";
 import LogoLight from "../assets/images/Pixel & Pen(Main-New).png";
 import LogoDark from "../assets/images/Pixel & Pen(Main-B&W-New).png";
 
-// Icons — swapped to a single consistent set (Feather via react-icons)
+// Icons
 import {
   FiMenu,
   FiX,

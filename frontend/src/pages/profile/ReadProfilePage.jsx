@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   UserRound, MessageSquare, Users, Heart, FileText,
-  ExternalLink, Eye, UserMinus, Tag
+  ExternalLink, Eye, Tag
 } from 'lucide-react';
 import AxiosInstance from '../../api/axiosInstance';
 import MetaData from '../../components/MetaData';

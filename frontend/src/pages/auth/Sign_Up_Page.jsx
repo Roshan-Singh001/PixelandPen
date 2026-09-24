@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AxiosInstance from "../../api/axiosInstance";
 import { MdEmail, MdEdit, MdMenuBook, MdCheckCircle, MdError } from "react-icons/md";
 import { IoMdPerson } from "react-icons/io";
@@ -313,14 +313,6 @@ function Sign_Up_Page() {
     </div>
   );
 }
-
-const PIXEL_GRID = [
-  [0, 0, 0, 1, 0],
-  [0, 0, 1, 0, 1],
-  [0, 1, 0, 1, 0],
-  [1, 0, 1, 0, 0],
-  [0, 1, 0, 0, 0],
-];
 
 function BrandPanel() {
   return (

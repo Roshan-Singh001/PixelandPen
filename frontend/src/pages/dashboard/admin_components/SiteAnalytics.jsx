@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import AxiosInstance from '../../../api/axiosInstance';
 import {
-  Eye, Heart, Bookmark, MessageSquare, FileText, Users, Sparkles,
+  Eye, Heart, Bookmark, MessageSquare, FileText, Users,
   AlertCircle
 } from 'lucide-react';
 import {

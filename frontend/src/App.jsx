@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
@@ -29,7 +29,6 @@ import {
   FaUsers,
   FaBookOpen,
   FaUserShield,
-  FaArrowRight,
 } from "react-icons/fa";
 import LogoLight from "./assets/images/Pixel & Pen(Main-New).png";
 import LogoDark from "./assets/images/Pixel & Pen(Main-B&W-New).png";
@@ -71,10 +70,6 @@ const TINTS = [
   "bg-[#F59E0B]/10 text-[#F59E0B] dark:bg-[#F6B93B]/10 dark:text-[#F6B93B] group-hover:bg-[#F59E0B] dark:group-hover:bg-[#F6B93B]",
   "bg-[#F97316]/10 text-[#F97316] dark:bg-[#FF8A3D]/10 dark:text-[#FF8A3D] group-hover:bg-[#F97316] dark:group-hover:bg-[#FF8A3D]",
 ];
-
-
-
-const scrollToId = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 
 function useReducedMotion() {
   const [reduced, setReduced] = useState(false);

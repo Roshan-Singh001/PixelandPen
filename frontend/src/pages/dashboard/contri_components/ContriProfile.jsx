@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import AxiosInstance from '../../../api/axiosInstance';
 import {
   User, Camera, Calendar, FileText, Save, Upload, Check, AlertCircle,
@@ -184,7 +184,7 @@ const ContriProfile = () => {
   const sanitizeString = (str) => (typeof str === 'string' ? str.trim().replace(/[<>]/g, '') : str);
 
   const filteredLinks = (source) =>
-    Object.fromEntries(Object.entries(source).filter(([_, value]) => value.trim() !== ''));
+    Object.fromEntries(Object.entries(source).filter(([_,value]) => value.trim() !== ''));
 
   const getProfileChanges = () => {
     const changes = {};

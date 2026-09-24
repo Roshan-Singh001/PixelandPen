@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AxiosInstance from '../../api/axiosInstance';
 import {
   UserRound, MapPin, Calendar, Users, Heart, Eye, Share2,
   ExternalLink, BookOpen, TrendingUp, Award, Search,
-  ChevronRight, Globe, Mail, FileText, Tag
+  ChevronRight, Globe, Mail, FileText
 } from 'lucide-react';
 import { FaXTwitter } from 'react-icons/fa6';
 import { FaGithub, FaLinkedin, FaFacebook } from "react-icons/fa";

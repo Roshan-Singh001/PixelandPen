@@ -8,7 +8,8 @@ const DashboardHome3 = () => {
     savedArticlesCount,
     userData,
     announcements,
-    recentArticles, 
+    recentArticles,
+    setIsRender,
   } = useOutletContext();
 
   return (
@@ -19,6 +20,7 @@ const DashboardHome3 = () => {
       articlesReadCount={articlesReadCount}
       likedArticlesCount={likedArticlesCount}
       savedArticlesCount={savedArticlesCount}
+      setIsRender={setIsRender}
     />
   );
 };

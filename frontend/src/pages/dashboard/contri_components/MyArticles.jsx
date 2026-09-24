@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AxiosInstance from '../../../api/axiosInstance';
 import {
   Eye, Edit, FileText, Clock, CheckCircle, XCircle, Calendar, Tag,
-  Plus, X, Heart, Bookmark, MessageSquare, Loader2, AlertCircle
+  Plus, X, Heart, Bookmark, MessageSquare, AlertCircle
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 

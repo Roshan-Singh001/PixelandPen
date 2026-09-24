@@ -1,8 +1,8 @@
-import React, { useMemo, useCallback, useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useMemo, useCallback, useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import AxiosInstance from '../../api/axiosInstance';
 import { Slate, Editable, withReact, useSlate } from 'slate-react';
-import { Node, Text, createEditor, Editor, Range, Transforms, Element as SlateElement } from 'slate';
+import { Text, createEditor, Editor, Range, Transforms, Element as SlateElement } from 'slate';
 import { withHistory, HistoryEditor } from 'slate-history';
 import isHotkey from 'is-hotkey';
 import MetaData from '../../components/MetaData';
@@ -48,7 +48,6 @@ const ArticleEditor = () => {
   const { articleSlug } = useParams();
   const [isLoading, setIsLoading] = useState(true);
 
-  const navigate = useNavigate();
   const [isArticleNew, setIsArticleNew] = useState(true);
   const [value, setValue] = useState(INITIAL_VALUE);
   const [editorKey, setEditorKey] = useState(0);
@@ -567,7 +566,9 @@ const ArticleEditor = () => {
 
       return null;
     } catch (err) {
-      return null;
+      if(err instanceof TypeError) {
+        console.error("Invalid URL:", err);
+      }
     }
   }
 
@@ -641,7 +642,7 @@ const ArticleEditor = () => {
         </div>
         <div className='flex gap-2'>
           <button onClick={handlePreview} title='Preview' disabled={!isSave} className='py-2 px-3 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed text-lg text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F] dark:hover:bg-[#4F8EF7] hover:text-white transition-colors'><VscOpenPreview /></button>
-          <button onClick={e => { setIsRightSideBar(!isRightSideBar) }} title={isRightSideBar ? 'Sidebar Collapse' : 'Sidebar Expand'} className={`py-2 px-3 rounded-lg text-lg transition-colors ${isRightSideBar ? 'bg-[#1E3A5F] dark:bg-[#4F8EF7] text-white' : 'text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F] dark:hover:bg-[#4F8EF7] hover:text-white'}`}>
+          <button onClick={() => { setIsRightSideBar(!isRightSideBar) }} title={isRightSideBar ? 'Sidebar Collapse' : 'Sidebar Expand'} className={`py-2 px-3 rounded-lg text-lg transition-colors ${isRightSideBar ? 'bg-[#1E3A5F] dark:bg-[#4F8EF7] text-white' : 'text-[#1F2937] dark:text-[#F8FAFC] hover:bg-[#1E3A5F] dark:hover:bg-[#4F8EF7] hover:text-white'}`}>
             {isRightSideBar ? <GoSidebarCollapse /> : <GoSidebarExpand />}
           </button>
           <button title='Save Draft' onClick={handleSave} disabled={handleCanBeSave()} className={`flex justify-center items-center gap-2 py-2 px-4 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed text-sm font-semibold border border-[#E5E7EB] dark:border-[#243247] text-[#1F2937] dark:text-[#F8FAFC] hover:border-[#1E3A5F] dark:hover:border-[#4F8EF7] transition-colors`}>
@@ -1125,7 +1126,7 @@ const ImageElement = (props) => (
 );
 const YoutubeElement = (props) => (
   <div className='my-2' {...props.attributes} contentEditable={false}>
-    <iframe className='rounded m-auto' width="560" height="315" src={props.element.url} title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    <iframe className='rounded m-auto' width="560" height="315" src={props.element.url} title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
   </div>
 );
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import AxiosInstance from '../../../api/axiosInstance';
 import { Switch } from '@headlessui/react';
 import { useAuth } from "../../../contexts/AuthContext";

@@ -1,5 +1,3 @@
-import React from 'react'
-
 import { ShieldCheck, FileText, Users, XCircle, CheckCircle, Clock } from "lucide-react";
 
 const statusMeta = {
